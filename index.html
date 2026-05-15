@@ -1333,17 +1333,18 @@
 
             {/* LEFT: Book excerpt ONLY */}
             <div style={{ flex: '0 0 52%', minWidth: 0 }}>
-              <div style={{ background: 'var(--card)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.8)', borderRadius: 28, padding: '28px 32px', marginBottom: 24, textAlign: 'center', boxShadow: 'var(--shadow-md)', position: 'relative', overflow: 'hidden' }}>
+              <div style={{ background: 'var(--card)', height: 550, backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.8)', borderRadius: 28, padding: '28px 32px', marginBottom: 24, textAlign: 'center', boxShadow: 'var(--shadow-md)', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
                 <div style={{ position: 'absolute', top: -20, left: -20, fontSize: 100, opacity: 0.05, transform: 'rotate(-10deg)', pointerEvents: 'none' }}>📖</div>
                 <div style={{ display: 'inline-block', background: 'linear-gradient(135deg, #FEF3C7, #FDE68A)', padding: '5px 14px', borderRadius: 18, boxShadow: '0 4px 12px rgba(253,230,138,0.4)', marginBottom: 16 }}>
                   <span style={{ fontSize: 13, fontWeight: 800, color: '#92400E', letterSpacing: 2 }}>📖 책 속 한 장면</span>
                 </div>
-                <p style={{ fontSize: 19, color: 'var(--navy-dark)', lineHeight: 1.9, margin: '0 0 16px', fontWeight: 700, wordBreak: 'keep-all' }}>
-                  <span style={{ color: 'var(--primary)', fontSize: 22 }}>"</span>{BOOK_EXCERPT}<span style={{ color: 'var(--primary)', fontSize: 22 }}>"</span>
+                <p style={{ fontSize: 21, color: 'var(--navy-dark)', lineHeight: 1.9, margin: '0 0 24px', fontWeight: 700, wordBreak: 'keep-all' }}>
+                  <span style={{ color: 'var(--primary)', fontSize: 24 }}>"</span>{BOOK_EXCERPT}<span style={{ color: 'var(--primary)', fontSize: 24 }}>"</span>
                 </p>
-                <div style={{ display: 'inline-block', borderTop: '2px dashed var(--border-light)', paddingTop: 14 }}>
-                  <span className="a-spinfade" style={{ display: 'inline-block', fontSize: 14, color: 'var(--primary)', fontWeight: 800, background: 'var(--primary-soft)', padding: '7px 18px', borderRadius: 22 }}>🤔 다음엔 어떤 일이 일어났을까요?</span>
+                <div style={{ width: '100%', borderTop: '2px dashed var(--border-light)', paddingTop: 24, marginBottom: 24 }}>
+                  <span className="a-spinfade" style={{ display: 'inline-block', fontSize: 15, color: 'var(--primary)', fontWeight: 800, background: 'var(--primary-soft)', padding: '10px 24px', borderRadius: 24 }}>🤔 다음엔 어떤 일이 일어났을까요?</span>
                 </div>
+                <img src="img/tig.png" alt="호랑이" style={{ width: 300, height: 'auto', filter: 'drop-shadow(0 15px 30px rgba(0,0,0,0.1))', animation: 'bounce 3s ease-in-out infinite' }} />
               </div>
             </div>
 
