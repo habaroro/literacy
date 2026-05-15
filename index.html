@@ -145,8 +145,17 @@
     }
 
     @keyframes wrongOrangeFlash {
-      0%, 100% { background: #C4B9A9; }
-      50% { background: #FDBA74; } /* 조금 더 선명한 주황 톤 */
+
+      0%,
+      100% {
+        background: #C4B9A9;
+      }
+
+      50% {
+        background: #FDBA74;
+      }
+
+      /* 조금 더 선명한 주황 톤 */
     }
 
     .a-wrong-flash {
@@ -154,10 +163,13 @@
     }
 
     @keyframes softPulse {
-      0%, 100% {
+
+      0%,
+      100% {
         transform: scale(1);
         border-color: #F97316;
       }
+
       50% {
         transform: scale(1.08);
         border-color: #FB923C;
@@ -605,37 +617,37 @@
       cells: (() => {
         const a = Array(40).fill(null);
         const idx = (r, c) => r * 8 + c;
-        
+
         // 1. 창호지 (Vertical, Col 0, Rows 0-2)
         a[idx(0, 0)] = { kind: 'blank', id: 'b_cha', expected: '창', word: '창호지' };
         a[idx(1, 0)] = { kind: 'fixed', syl: '호' };
         a[idx(2, 0)] = { kind: 'fixed', syl: '지' };
-        
+
         // 2. 호랑이 (Horizontal, Row 1, Cols 0-2)
         a[idx(1, 1)] = { kind: 'blank', id: 'b_rang', expected: '랑', word: '호랑이' };
         a[idx(1, 2)] = { kind: 'fixed', syl: '이' };
-        
+
         // 3. 산골집 (Vertical, Col 4, Rows 0-2)
         a[idx(0, 4)] = { kind: 'blank', id: 'b_san', expected: '산', word: '산골집' };
         a[idx(1, 4)] = { kind: 'fixed', syl: '골' };
         a[idx(2, 4)] = { kind: 'fixed', syl: '집' };
-        
+
         // 4. 오빠 (Horizontal, Row 1, Cols 6-7)
         a[idx(1, 6)] = { kind: 'blank', id: 'b_o', expected: '오', word: '오빠' };
         a[idx(1, 7)] = { kind: 'fixed', syl: '빠' };
-        
+
         // 5. 부부 (Horizontal, Row 4, Cols 0-1)
         a[idx(4, 0)] = { kind: 'blank', id: 'b_bu', expected: '부', word: '부부' };
         a[idx(4, 1)] = { kind: 'fixed', syl: '부' };
-        
+
         // 6. 감자 (Horizontal, Row 4, Cols 3-4)
         a[idx(4, 3)] = { kind: 'blank', id: 'b_gam', expected: '감', word: '감자' };
         a[idx(4, 4)] = { kind: 'fixed', syl: '자' };
-        
+
         // 7. 남매 (Horizontal, Row 4, Cols 6-7) - 오빠와 수직 정렬
         a[idx(4, 6)] = { kind: 'blank', id: 'b_nam', expected: '남', word: '남매' };
         a[idx(4, 7)] = { kind: 'fixed', syl: '매' };
-        
+
         return a;
       })(),
       cards: [
@@ -1044,7 +1056,7 @@
       useEffect(() => {
         const timer = setTimeout(() => {
           if (mascotMessage === '빈 칸에 들어갈 단어를 눌러줘!') {
-             // Keep it for a while
+            // Keep it for a while
           }
         }, 5000);
         return () => clearTimeout(timer);
@@ -1064,7 +1076,7 @@
         if (card.syl === activeBlank.expected) {
           const msgs = ['와! 맞았어! 👍', '정말 대단해! ✨', '정답이야! 🎈', '멋지다! 😍'];
           setMascotMessage(msgs[Math.floor(Math.random() * msgs.length)]);
-          
+
           setFilled({ ...filled, [activeBlank.id]: card.syl });
           setUsedCards([...usedCards, card.id]);
           setJustId(activeBlank.id);
@@ -1073,7 +1085,7 @@
         } else {
           const msgs = ['에구.. 다시 해보자! 🧐', '이건 아닌 것 같아.. 😅', '다른 글자를 골라볼까? ✏️'];
           setMascotMessage(msgs[Math.floor(Math.random() * msgs.length)]);
-          
+
           setWrongId(activeBlank.id);
           setWrongKeyId(card.id);
           setTimeout(() => {
@@ -1168,26 +1180,26 @@
 
           <div style={{ width: 320, display: 'flex', flexDirection: 'column' }}>
             <div style={{ position: 'relative', height: 80, marginBottom: 0 }}>
-               {/* Mascot with Speech Bubble */}
-               <img src="img/cha_02.png" alt="" style={{ position: 'absolute', right: 10, bottom: 0, width: 65, filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.1))', zIndex: 5 }} />
-               <div className="jua a-pop" key={mascotMessage} style={{ 
-                 position: 'absolute', right: 85, top: 0, 
-                 background: '#FFF', padding: '10px 16px', borderRadius: '18px', 
-                 boxShadow: '0 8px 20px rgba(0,0,0,0.06)', border: '2px solid var(--primary-soft)',
-                 fontSize: 15, color: 'var(--navy-dark)', whiteSpace: 'nowrap', zIndex: 4
-               }}>
-                 {mascotMessage}
-                 {/* Speech Bubble Tail */}
-                 <div style={{ 
-                   position: 'absolute', right: -6, bottom: 10, 
-                   width: 12, height: 12, background: '#FFF', 
-                   borderRight: '2px solid var(--primary-soft)', 
-                   borderBottom: '2px solid var(--primary-soft)', 
-                   transform: 'rotate(-45deg)', zIndex: 1 
-                 }}></div>
-               </div>
+              {/* Mascot with Speech Bubble */}
+              <img src="img/cha_02.png" alt="" style={{ position: 'absolute', right: 10, bottom: 0, width: 65, filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.1))', zIndex: 5 }} />
+              <div className="jua a-pop" key={mascotMessage} style={{
+                position: 'absolute', right: 85, top: 0,
+                background: '#FFF', padding: '10px 16px', borderRadius: '18px',
+                boxShadow: '0 8px 20px rgba(0,0,0,0.06)', border: '2px solid var(--primary-soft)',
+                fontSize: 15, color: 'var(--navy-dark)', whiteSpace: 'nowrap', zIndex: 4
+              }}>
+                {mascotMessage}
+                {/* Speech Bubble Tail */}
+                <div style={{
+                  position: 'absolute', right: -6, bottom: 10,
+                  width: 12, height: 12, background: '#FFF',
+                  borderRight: '2px solid var(--primary-soft)',
+                  borderBottom: '2px solid var(--primary-soft)',
+                  transform: 'rotate(-45deg)', zIndex: 1
+                }}></div>
+              </div>
             </div>
-            
+
             <div style={{ background: 'var(--card-solid)', borderRadius: 32, padding: '24px', display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
               <div className="jua" style={{ fontSize: 20, color: 'var(--navy-dark)', marginBottom: 8 }}>
                 힌트
@@ -1219,7 +1231,7 @@
                   </div>
                 );
               })}
-              
+
               <div style={{ marginTop: 'auto', paddingTop: 20 }}>
                 {allFilled && (
                   <button className="btn-primary a-pop" style={{ width: '100%', padding: '20px', fontSize: 22, borderRadius: 24, boxShadow: '0 8px 24px rgba(99,102,241,.4)' }} onClick={onComplete}>
@@ -1605,7 +1617,7 @@
               </div>
 
               <div style={{ textAlign: 'center', paddingTop: 8 }}>
-                <button className="btn-ghost" style={{ padding: '13px 32px', fontSize: 14 }} onClick={onReset}>↺ 처음부터 다시하기</button>
+                <button className="btn-primary" style={{ padding: '13px 32px', fontSize: 14 }} onClick={onReset}>↺ 처음부터 다시하기</button>
               </div>
             </div>
 
@@ -1662,7 +1674,7 @@
                     </button>
                   ))}
                 </div>
-                <button onClick={() => setShowTonePopup(false)} className="btn-ghost" style={{ width: '100%', marginTop: 24, padding: '16px' }}>닫기</button>
+                <button onClick={() => setShowTonePopup(false)} className="btn-primary" style={{ width: '100%', marginTop: 24, padding: '16px' }}>닫기</button>
               </div>
             </div>
           )}
