@@ -144,6 +144,17 @@
       }
     }
 
+    @keyframes hintBlink {
+      0%, 100% { border-color: #F97316; box-shadow: 0 0 0 rgba(249,115,22,0); background: #FFF; }
+      50% { border-color: #FB923C; box-shadow: 0 0 20px rgba(249,115,22,0.3); background: #FFF7ED; }
+    }
+    .a-hint-blink {
+      animation: hintBlink 1.5s infinite ease-in-out;
+      border: 2px solid #F97316 !important;
+      transform: scale(1.02);
+      z-index: 10;
+    }
+
     @keyframes shake {
 
       0%,
@@ -1049,16 +1060,19 @@
 
           <div style={{ width: 320, paddingTop: 24 }}>
             <div className="jua" style={{ fontSize: 20, color: 'var(--gray)', marginBottom: 16 }}>💡 힌트</div>
-            <div style={{ background: 'var(--card-solid)', borderRadius: 32, padding: '32px 28px', marginBottom: 40, boxShadow: 'var(--shadow-md)', border: '2px solid var(--border-light)' }}>
-              {CW.hints.map((h, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: i < CW.hints.length - 1 ? 20 : 0 }}>
-                  <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, #FEF3C7, #FDE68A)', color: '#92400E', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, flexShrink: 0 }}>{i + 1}</div>
-                  <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--navy-dark)', margin: 0, lineHeight: 1.6 }}>
-                    {/* Render hint with nice letter highlight if needed, or just plain */}
-                    {h}
-                  </p>
-                </div>
-              ))}
+            <div style={{ background: 'var(--card-solid)', borderRadius: 32, padding: '32px 24px', marginBottom: 40, boxShadow: 'var(--shadow-md)', border: '2px solid var(--border-light)', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {CW.hints.map((h, i) => {
+                const hintWords = ['호랑이', '창호지', '산골집', '부부', '오빠', '감자', '남매'];
+                const isActive = activeBlank && hintWords[i] === activeBlank.word;
+                return (
+                  <div key={i} className={isActive ? 'a-hint-blink' : ''} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 16px', borderRadius: 20, transition: 'all .3s ease', border: '2px solid transparent' }}>
+                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: isActive ? 'var(--primary)' : 'linear-gradient(135deg, #FEF3C7, #FDE68A)', color: isActive ? '#fff' : '#92400E', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, flexShrink: 0, boxShadow: isActive ? '0 4px 12px rgba(79,70,229,0.3)' : 'none' }}>{i + 1}</div>
+                    <p style={{ fontSize: 16, fontWeight: 700, color: isActive ? 'var(--primary)' : 'var(--navy-dark)', margin: 0, lineHeight: 1.6 }}>
+                      {h}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
             {allFilled && <button className="btn-primary a-pop" style={{ width: '100%', padding: '20px', fontSize: 22, borderRadius: 24, boxShadow: '0 8px 24px rgba(99,102,241,.4)' }} onClick={onComplete}>다음 단계로 →</button>}
           </div>
