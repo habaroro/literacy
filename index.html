@@ -278,9 +278,11 @@
         padding: 20px 20px;
         gap: 60px;
       }
+
       .intro-content p {
         margin-bottom: 24px !important;
       }
+
       header div {
         height: 60px !important;
       }
@@ -518,32 +520,33 @@
     /* ── CROSSWORD 7x7 (with 호랑이 × 창호지 intersection) ── */
     const CW = {
       cols: 7,
+      rows: 5,
       cells: (() => {
-        const a = Array(49).fill(null);
+        const a = Array(35).fill(null);
         const idx = (r, c) => r * 7 + c;
-        // 창호지 vertical at col 0, rows 0-2 (창 blank, 호 fixed shared, 지 fixed)
+        // 창호지 vertical at col 0, rows 0-2
         a[idx(0, 0)] = { kind: 'blank', id: 'b_cha', expected: '창', word: '창호지' };
         a[idx(1, 0)] = { kind: 'fixed', syl: '호' };
         a[idx(2, 0)] = { kind: 'fixed', syl: '지' };
-        // 호랑이 horizontal at row 1, cols 0-2 (호 shared)
+        // 호랑이 horizontal at row 1, cols 0-2
         a[idx(1, 1)] = { kind: 'blank', id: 'b_rang', expected: '랑', word: '호랑이' };
         a[idx(1, 2)] = { kind: 'fixed', syl: '이' };
         // 산골집 vertical at col 5, rows 0-2
         a[idx(0, 5)] = { kind: 'blank', id: 'b_san', expected: '산', word: '산골집' };
         a[idx(1, 5)] = { kind: 'fixed', syl: '골' };
         a[idx(2, 5)] = { kind: 'fixed', syl: '집' };
-        // 부부 horizontal at row 4, cols 0-1
-        a[idx(4, 0)] = { kind: 'blank', id: 'b_bu', expected: '부', word: '부부' };
-        a[idx(4, 1)] = { kind: 'fixed', syl: '부' };
-        // 오빠 horizontal at row 4, cols 3-4
-        a[idx(4, 3)] = { kind: 'blank', id: 'b_o', expected: '오', word: '오빠' };
-        a[idx(4, 4)] = { kind: 'fixed', syl: '빠' };
-        // 감자 horizontal at row 6, cols 0-1
-        a[idx(6, 0)] = { kind: 'blank', id: 'b_gam', expected: '감', word: '감자' };
-        a[idx(6, 1)] = { kind: 'fixed', syl: '자' };
-        // 남매 horizontal at row 6, cols 3-4
-        a[idx(6, 3)] = { kind: 'blank', id: 'b_nam', expected: '남', word: '남매' };
-        a[idx(6, 4)] = { kind: 'fixed', syl: '매' };
+        // 부부 horizontal at row 3, cols 0-1
+        a[idx(3, 0)] = { kind: 'blank', id: 'b_bu', expected: '부', word: '부부' };
+        a[idx(3, 1)] = { kind: 'fixed', syl: '부' };
+        // 오빠 horizontal at row 3, cols 3-4
+        a[idx(3, 3)] = { kind: 'blank', id: 'b_o', expected: '오', word: '오빠' };
+        a[idx(3, 4)] = { kind: 'fixed', syl: '빠' };
+        // 감자 horizontal at row 4, cols 0-1
+        a[idx(4, 0)] = { kind: 'blank', id: 'b_gam', expected: '감', word: '감자' };
+        a[idx(4, 1)] = { kind: 'fixed', syl: '자' };
+        // 남매 horizontal at row 4, cols 3-4
+        a[idx(4, 3)] = { kind: 'blank', id: 'b_nam', expected: '남', word: '남매' };
+        a[idx(4, 4)] = { kind: 'fixed', syl: '매' };
         return a;
       })(),
       cards: [
@@ -651,7 +654,6 @@
       const opts = [
         {
           mode: 'cross',
-          icon: '✏️',
           title: '빈칸 맞추기',
           desc: '빈칸에 맞는 음절을\n채워봐!',
           tag: '카드로 채우기',
@@ -661,7 +663,6 @@
         },
         {
           mode: 'grid',
-          icon: '🔍',
           title: '글자 연결',
           desc: '격자에서 숨어있는\n단어를 찾아봐!',
           tag: '드래그로 연결',
@@ -985,7 +986,7 @@
                   : <span>...</span>}
             </p>
 
-            <div style={{ background: '#EAE1D3', border: '4px solid #D1C5B4', borderRadius: 36, padding: '40px 32px', display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 36, boxShadow: 'inset 0 8px 0 rgba(255,255,255,0.4), 0 16px 32px rgba(0,0,0,0.08)', position: 'relative' }}>
+            <div style={{ background: '#EAE1D3', border: '4px solid #D1C5B4', borderRadius: 36, padding: '20px 32px', display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 20, boxShadow: 'inset 0 8px 0 rgba(255,255,255,0.4), 0 16px 32px rgba(0,0,0,0.08)', position: 'relative' }}>
 
               {/* Cute Character Mascot */}
               <img src="img/cha_02.png" alt="" className="a-shake" style={{ position: 'absolute', left: -40, bottom: -14, width: 88, filter: 'drop-shadow(0 6px 16px rgba(0,0,0,0.15))', zIndex: 5 }} />
@@ -1046,7 +1047,7 @@
             </div>
           </div>
 
-          <div style={{ width: 320, paddingTop: 68 }}>
+          <div style={{ width: 320, paddingTop: 24 }}>
             <div className="jua" style={{ fontSize: 20, color: 'var(--gray)', marginBottom: 16 }}>💡 힌트</div>
             <div style={{ background: 'var(--card-solid)', borderRadius: 32, padding: '32px 28px', marginBottom: 40, boxShadow: 'var(--shadow-md)', border: '2px solid var(--border-light)' }}>
               {CW.hints.map((h, i) => (
