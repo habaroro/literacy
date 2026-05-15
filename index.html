@@ -1,0 +1,1573 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>낱말 퀴즈 · 글자 연결</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;700;800;900&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-1: #eef2ff;
+            --bg-2: #fdf2f8;
+            --bg-3: #ecfeff;
+            --card: rgba(255, 255, 255, .72);
+            --card-solid: #ffffff;
+            --stroke: rgba(255, 255, 255, .6);
+            --primary: #6366f1;
+            --primary-deep: #4f46e5;
+            --primary-soft: rgba(99, 102, 241, .12);
+            --accent: #f472b6;
+            --text: #0f172a;
+            --text-sub: #64748b;
+            --text-mute: #94a3b8;
+            --border-light: #e2e8f0;
+            --shadow-sm: 0 1px 2px rgba(15, 23, 42, .04), 0 4px 12px rgba(15, 23, 42, .04);
+            --shadow-md: 0 4px 12px rgba(15, 23, 42, .06), 0 12px 32px rgba(15, 23, 42, .08);
+            --shadow-lg: 0 20px 60px rgba(79, 70, 229, .18);
+            --radius: 16px;
+            --radius-lg: 24px;
+            --cell: clamp(46px, 9vw, 68px);
+            --font-cell: clamp(1.25rem, 3.6vw, 1.9rem);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            min-height: 100%;
+            overflow-x: hidden;
+            -webkit-user-select: none;
+            user-select: none;
+            touch-action: none;
+        }
+
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(ellipse 80% 60% at 10% 0%, var(--bg-2) 0%, transparent 50%),
+                radial-gradient(ellipse 80% 60% at 90% 100%, var(--bg-3) 0%, transparent 50%),
+                var(--bg-1);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            letter-spacing: -0.01em;
+        }
+
+        body::before,
+        body::after {
+            content: '';
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: .5;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        body::before {
+            width: 380px;
+            height: 380px;
+            background: #c7d2fe;
+            top: -100px;
+            left: -100px;
+        }
+
+        body::after {
+            width: 340px;
+            height: 340px;
+            background: #fbcfe8;
+            bottom: -80px;
+            right: -80px;
+        }
+
+        header {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            padding: 32px 20px 8px;
+        }
+
+        header h1 {
+            font-size: clamp(1.4rem, 3.8vw, 1.9rem);
+            font-weight: 900;
+            letter-spacing: -0.03em;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        header .subtitle {
+            margin-top: 4px;
+            font-size: .85rem;
+            color: var(--text-sub);
+            font-weight: 500;
+        }
+
+        .toolbar {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 16px;
+            flex-wrap: wrap;
+        }
+
+        .tool {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--card);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--stroke);
+            border-radius: 14px;
+            padding: 10px 14px;
+            font-family: inherit;
+            font-size: .85rem;
+            font-weight: 700;
+            color: var(--text);
+            cursor: pointer;
+            box-shadow: var(--shadow-sm);
+            transition: all .25s cubic-bezier(.4, 0, .2, 1);
+        }
+
+        .tool:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .tool.icon-only {
+            padding: 10px 12px;
+        }
+
+        .tool .ico {
+            font-size: 1.05rem;
+            line-height: 1;
+        }
+
+        .timer-bar {
+            width: 90px;
+            height: 6px;
+            background: rgba(99, 102, 241, .15);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .timer-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            border-radius: 3px;
+            transition: width .5s linear;
+        }
+
+        .timer-fill.warn {
+            background: linear-gradient(90deg, #f59e0b, #fbbf24);
+        }
+
+        .timer-fill.danger {
+            background: linear-gradient(90deg, #ef4444, #f87171);
+            animation: pulse .6s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: .5
+            }
+        }
+
+        .timer-text {
+            font-variant-numeric: tabular-nums;
+            min-width: 34px;
+            text-align: center;
+            font-weight: 800;
+        }
+
+        main {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 8px 20px 40px;
+            flex: 1;
+            flex-wrap: wrap;
+        }
+
+        .word-panel {
+            background: var(--card);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--stroke);
+            border-radius: var(--radius-lg);
+            padding: 22px 22px 18px;
+            box-shadow: var(--shadow-md);
+            width: 280px;
+            flex-shrink: 0;
+        }
+
+        .word-panel-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .word-panel-head h2 {
+            font-size: .95rem;
+            font-weight: 800;
+            color: var(--text);
+        }
+
+        .word-panel-head .badge {
+            background: linear-gradient(135deg, var(--primary), var(--primary-deep));
+            color: #fff;
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: .78rem;
+            font-weight: 800;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, .3);
+        }
+
+        .progress-ring {
+            height: 6px;
+            background: rgba(99, 102, 241, .12);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 14px;
+        }
+
+        .progress-ring .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            border-radius: 3px;
+            transition: width .5s cubic-bezier(.4, 0, .2, 1);
+        }
+
+        .word-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .word-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: rgba(255, 255, 255, .6);
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            transition: all .25s;
+        }
+
+        .word-item:hover {
+            background: #fff;
+            border-color: var(--primary-soft);
+            transform: translateX(2px);
+        }
+
+        .word-item.found {
+            opacity: .55;
+            background: rgba(241, 245, 249, .6);
+        }
+
+        .word-item.found .wtext {
+            text-decoration: line-through;
+            color: var(--text-mute);
+        }
+
+        .word-item .dot {
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, .8);
+        }
+
+        .word-item .wtext {
+            font-size: .92rem;
+            font-weight: 700;
+            flex: 1;
+        }
+
+        .word-item .check {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .7rem;
+            font-weight: 900;
+            opacity: 0;
+            transform: scale(.5);
+            transition: all .3s cubic-bezier(.34, 1.56, .64, 1);
+        }
+
+        .word-item.found .check {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .grid-area {
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .grid-border {
+            background: var(--card);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--stroke);
+            border-radius: var(--radius-lg);
+            padding: 14px;
+            box-shadow: var(--shadow-md);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(7, var(--cell));
+            grid-template-rows: repeat(7, var(--cell));
+            gap: 3px;
+        }
+
+        .cell {
+            width: var(--cell);
+            height: var(--cell);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--font-cell);
+            font-weight: 800;
+            color: var(--text);
+            background: rgba(255, 255, 255, .85);
+            border: 1px solid rgba(226, 232, 240, .6);
+            border-radius: 11px;
+            cursor: pointer;
+            position: relative;
+            z-index: 1;
+            transition: transform .12s cubic-bezier(.4, 0, .2, 1), box-shadow .2s;
+            letter-spacing: -0.02em;
+        }
+
+        .cell:hover {
+            transform: scale(1.06);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, .18);
+            z-index: 2;
+        }
+
+        .cell .bg {
+            position: absolute;
+            inset: 0;
+            border-radius: 10px;
+            opacity: 0;
+            transition: opacity .25s ease;
+            pointer-events: none;
+        }
+
+        .cell.selecting {
+            transform: scale(1.1);
+            box-shadow: 0 0 0 2.5px var(--primary), 0 6px 20px rgba(99, 102, 241, .3);
+            z-index: 3;
+        }
+
+        .cell.selecting .bg {
+            opacity: .32;
+        }
+
+        .cell.found {
+            border-color: transparent;
+            color: #1e293b;
+        }
+
+        .cell.found .bg {
+            opacity: .5;
+        }
+
+        .cell> :not(.bg) {
+            position: relative;
+            z-index: 1;
+        }
+
+        .svg-overlay {
+            position: absolute;
+            top: 14px;
+            left: 14px;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .svg-overlay line {
+            stroke-linecap: round;
+            stroke-width: 8;
+            opacity: .3;
+        }
+
+        .character {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+            pointer-events: none;
+            z-index: 10;
+            opacity: 0;
+            transition: left .14s ease-out, top .14s ease-out, opacity .25s;
+            filter: drop-shadow(0 6px 12px rgba(15, 23, 42, .2));
+        }
+
+        .character.visible {
+            opacity: 1;
+        }
+
+        .character.happy {
+            animation: charHappy .6s ease;
+        }
+
+        .character.shake {
+            animation: charShake .35s ease;
+        }
+
+        @keyframes charHappy {
+            0% {
+                transform: scale(1) rotate(0)
+            }
+
+            25% {
+                transform: scale(1.3) rotate(-8deg)
+            }
+
+            50% {
+                transform: scale(1.2) rotate(8deg)
+            }
+
+            100% {
+                transform: scale(1) rotate(0)
+            }
+        }
+
+        @keyframes charShake {
+
+            0%,
+            100% {
+                transform: translateX(0)
+            }
+
+            25% {
+                transform: translateX(-7px)
+            }
+
+            75% {
+                transform: translateX(7px)
+            }
+        }
+
+        .confetti-piece {
+            position: fixed;
+            top: -20px;
+            z-index: 300;
+            border-radius: 2px;
+            animation: confettiFall linear forwards;
+        }
+
+        @keyframes confettiFall {
+            0% {
+                opacity: 1;
+                transform: translateY(0) rotate(0)
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateY(100vh) rotate(720deg)
+            }
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, .4);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 400;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .35s;
+            padding: 20px;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-box {
+            background: var(--card-solid);
+            border-radius: 28px;
+            padding: 40px 44px;
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+            transform: scale(.85) translateY(20px);
+            transition: transform .45s cubic-bezier(.34, 1.56, .64, 1);
+            max-width: 380px;
+            width: 100%;
+        }
+
+        .modal-overlay.show .modal-box {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-box .emoji-big {
+            font-size: 3.5rem;
+            margin-bottom: 8px;
+        }
+
+        .modal-box img.modal-char {
+            width: 90px;
+            height: 90px;
+            object-fit: contain;
+            margin-bottom: 8px;
+            filter: drop-shadow(0 6px 12px rgba(15, 23, 42, .15));
+        }
+
+        .modal-box h2 {
+            font-size: 1.45rem;
+            font-weight: 900;
+            margin-bottom: 6px;
+            letter-spacing: -0.02em;
+        }
+
+        .modal-box p {
+            color: var(--text-sub);
+            font-size: .92rem;
+            margin-bottom: 6px;
+        }
+
+        .modal-box .score-display {
+            margin: 16px 0 24px;
+            font-weight: 900;
+            font-size: 2rem;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .modal-box .btn-row {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .modal-box button {
+            background: linear-gradient(135deg, var(--primary), var(--primary-deep));
+            color: #fff;
+            border: none;
+            padding: 13px 28px;
+            border-radius: 14px;
+            font-size: .95rem;
+            font-weight: 800;
+            font-family: inherit;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(99, 102, 241, .35);
+            transition: all .2s;
+        }
+
+        .modal-box button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 28px rgba(99, 102, 241, .45);
+        }
+
+        .modal-box button.secondary {
+            background: #f1f5f9;
+            color: var(--text);
+            box-shadow: none;
+        }
+
+        .modal-box button.secondary:hover {
+            background: #e2e8f0;
+        }
+
+        .hint-flash {
+            animation: hintPulse .45s ease 3;
+        }
+
+        @keyframes hintPulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(99, 102, 241, 0)
+            }
+
+            50% {
+                box-shadow: 0 0 0 10px rgba(99, 102, 241, .5)
+            }
+        }
+
+        /* ═══════════ LEVEL SCREEN — 메인 비주얼 ═══════════ */
+        .level-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 500;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 18px;
+            padding: 32px 20px;
+            background:
+                radial-gradient(ellipse 80% 60% at 10% 0%, var(--bg-2) 0%, transparent 55%),
+                radial-gradient(ellipse 80% 60% at 90% 100%, var(--bg-3) 0%, transparent 55%),
+                radial-gradient(ellipse 60% 50% at 50% 40%, rgba(255, 255, 255, .4) 0%, transparent 60%),
+                var(--bg-1);
+            transition: opacity .4s;
+        }
+
+        .level-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .level-screen .main-title-wrap {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        .level-screen .title-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 100px;
+            background: rgba(255, 255, 255, .7);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--stroke);
+            font-size: .78rem;
+            font-weight: 700;
+            color: var(--primary-deep);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 8px;
+        }
+
+        .level-screen .title-badge .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--primary);
+            animation: blink 1.5s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: .3
+            }
+        }
+
+        .level-screen h2 {
+            font-size: clamp(2rem, 5.5vw, 3rem);
+            font-weight: 900;
+            letter-spacing: -0.04em;
+            line-height: 1.1;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 50%, #fb923c 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .level-screen .lead {
+            color: var(--text-sub);
+            font-size: 1rem;
+            font-weight: 500;
+            max-width: 520px;
+            line-height: 1.5;
+        }
+
+        .level-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 22px;
+            margin-top: 16px;
+            max-width: 1080px;
+            width: 100%;
+        }
+
+        .level-card {
+            position: relative;
+            overflow: hidden;
+            background: #fff;
+            border: 1px solid rgba(255, 255, 255, .8);
+            border-radius: 28px;
+            padding: 32px 26px 28px;
+            text-align: center;
+            cursor: pointer;
+            transition: all .35s cubic-bezier(.34, 1.56, .64, 1);
+            box-shadow: var(--shadow-md);
+            min-height: 360px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+        }
+
+        .level-card.lv-easy {
+            background: linear-gradient(160deg, #f0f4ff 0%, #fff 55%, #fef3f7 100%);
+        }
+
+        .level-card.lv-medium {
+            background: linear-gradient(160deg, #fef3f7 0%, #fff 55%, #fff7ed 100%);
+        }
+
+        .level-card.lv-hard {
+            background: linear-gradient(160deg, #fff7ed 0%, #fff 55%, #fef2f2 100%);
+        }
+
+        .level-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            border-radius: 28px 28px 0 0;
+            opacity: .85;
+        }
+
+        .level-card.lv-easy::before {
+            background: linear-gradient(90deg, #a5b4fc, #818cf8);
+        }
+
+        .level-card.lv-medium::before {
+            background: linear-gradient(90deg, #fbcfe8, #f9a8d4);
+        }
+
+        .level-card.lv-hard::before {
+            background: linear-gradient(90deg, #fdba74, #fb923c);
+        }
+
+        .level-card .lv-rank {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            padding: 5px 11px;
+            border-radius: 100px;
+            font-size: .7rem;
+            font-weight: 800;
+            letter-spacing: .02em;
+            background: rgba(255, 255, 255, .85);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 2px 8px rgba(15, 23, 42, .06);
+        }
+
+        .level-card.lv-easy .lv-rank {
+            color: #6366f1;
+        }
+
+        .level-card.lv-medium .lv-rank {
+            color: #ec4899;
+        }
+
+        .level-card.lv-hard .lv-rank {
+            color: #ea580c;
+        }
+
+        .level-card .lv-char-wrap {
+            position: relative;
+            width: 140px;
+            height: 140px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 12px 0 18px;
+        }
+
+        .level-card .lv-char-bg {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            opacity: .5;
+            filter: blur(20px);
+            transition: all .4s;
+        }
+
+        .level-card.lv-easy .lv-char-bg {
+            background: radial-gradient(circle, #c7d2fe, transparent 70%);
+        }
+
+        .level-card.lv-medium .lv-char-bg {
+            background: radial-gradient(circle, #fbcfe8, transparent 70%);
+        }
+
+        .level-card.lv-hard .lv-char-bg {
+            background: radial-gradient(circle, #fed7aa, transparent 70%);
+        }
+
+        .level-card .lv-char {
+            position: relative;
+            z-index: 1;
+            width: 128px;
+            height: 128px;
+            object-fit: contain;
+            filter: drop-shadow(0 10px 20px rgba(15, 23, 42, .18));
+            transition: transform .4s cubic-bezier(.34, 1.56, .64, 1);
+        }
+
+        .level-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 50px rgba(15, 23, 42, .12);
+        }
+
+        .level-card:hover .lv-char {
+            transform: scale(1.08) rotate(-5deg);
+        }
+
+        .level-card:hover .lv-char-bg {
+            transform: scale(1.15);
+            opacity: .7;
+        }
+
+        .level-card .lv-name {
+            font-size: 1.5rem;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .level-card .lv-desc {
+            font-size: .92rem;
+            color: var(--text-sub);
+            font-weight: 600;
+            margin-bottom: 18px;
+        }
+
+        .level-card .lv-stats {
+            display: flex;
+            width: 100%;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .level-card .lv-stat {
+            flex: 1;
+            padding: 10px 8px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, .7);
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(226, 232, 240, .7);
+        }
+
+        .level-card .lv-stat .stat-label {
+            font-size: .68rem;
+            font-weight: 700;
+            color: var(--text-mute);
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            margin-bottom: 2px;
+        }
+
+        .level-card .lv-stat .stat-value {
+            font-size: 1.05rem;
+            font-weight: 900;
+            color: var(--text);
+        }
+
+        .level-card .lv-dirs {
+            font-size: .75rem;
+            font-weight: 600;
+            color: var(--text-sub);
+            margin-bottom: 18px;
+            padding: 6px 12px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, .6);
+        }
+
+        .level-card .lv-play {
+            margin-top: auto;
+            width: 100%;
+            padding: 13px 20px;
+            border-radius: 14px;
+            font-size: .95rem;
+            font-weight: 800;
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all .25s;
+            letter-spacing: -0.01em;
+        }
+
+        .level-card.lv-easy .lv-play {
+            background: linear-gradient(135deg, #818cf8, #6366f1);
+            box-shadow: 0 6px 18px rgba(99, 102, 241, .32);
+        }
+
+        .level-card.lv-medium .lv-play {
+            background: linear-gradient(135deg, #f9a8d4, #ec4899);
+            box-shadow: 0 6px 18px rgba(236, 72, 153, .32);
+        }
+
+        .level-card.lv-hard .lv-play {
+            background: linear-gradient(135deg, #fb923c, #ea580c);
+            box-shadow: 0 6px 18px rgba(234, 88, 12, .32);
+        }
+
+        .level-card:hover .lv-play {
+            transform: translateY(-1px);
+            filter: brightness(1.05);
+        }
+
+        .level-card .lv-play .arrow {
+            transition: transform .25s;
+        }
+
+        .level-card:hover .lv-play .arrow {
+            transform: translateX(4px);
+        }
+
+        .level-screen .footer-tip {
+            margin-top: 20px;
+            font-size: .8rem;
+            color: var(--text-mute);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .word-card {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(.8);
+            background: var(--card-solid);
+            border-radius: 22px;
+            padding: 24px 32px;
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+            z-index: 350;
+            opacity: 0;
+            pointer-events: none;
+            transition: all .35s cubic-bezier(.34, 1.56, .64, 1);
+            max-width: 300px;
+        }
+
+        .word-card.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .word-card .wc-icon {
+            font-size: 1.6rem;
+            margin-bottom: 4px;
+        }
+
+        .word-card .wc-word {
+            font-size: 1.8rem;
+            font-weight: 900;
+            margin: 6px 0 8px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .word-card .wc-mean {
+            font-size: .92rem;
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .word-card .wc-ex {
+            font-size: .82rem;
+            color: var(--text-sub);
+            margin-top: 8px;
+            font-style: italic;
+        }
+
+        @media (max-width:900px) {
+            .level-cards {
+                grid-template-columns: 1fr;
+                max-width: 420px;
+                gap: 16px;
+            }
+
+            .level-card {
+                min-height: auto;
+                padding: 26px 22px 22px;
+            }
+
+            .level-card .lv-char-wrap {
+                width: 120px;
+                height: 120px;
+            }
+
+            .level-card .lv-char {
+                width: 108px;
+                height: 108px;
+            }
+        }
+
+        @media (max-width:820px) {
+            main {
+                flex-direction: column;
+                align-items: center;
+                gap: 16px;
+            }
+
+            .word-panel {
+                width: 100%;
+                max-width: 480px;
+                padding: 16px;
+            }
+
+            .word-list {
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+
+            .word-item {
+                padding: 6px 12px;
+                flex: 0 0 auto;
+            }
+
+            .word-item .wtext {
+                font-size: .85rem;
+            }
+
+            header {
+                padding: 20px 12px 4px;
+            }
+
+            .character {
+                width: 50px;
+                height: 50px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="level-screen" id="levelScreen">
+        <div class="main-title-wrap">
+            <div class="title-badge"><span class="dot"></span>한글 단어 찾기 게임</div>
+            <h2>글자 연결<br>낱말 퀴즈</h2>
+            <p class="lead">상하좌우로 글자를 이어 숨겨진 단어를 찾아보세요.<br>난이도를 선택하고 도전을 시작합니다.</p>
+        </div>
+
+        <div class="level-cards">
+            <div class="level-card lv-easy" onclick="startLevel(0)">
+                <div class="lv-rank">⭐ LV.1</div>
+                <div class="lv-char-wrap">
+                    <div class="lv-char-bg"></div>
+                    <img class="lv-char" src="img/character_01.png" alt="쉬움 캐릭터">
+                </div>
+                <div class="lv-name">쉬움</div>
+                <div class="lv-desc">학교 주제 · 입문자 추천</div>
+                <div class="lv-stats">
+                    <div class="lv-stat">
+                        <div class="stat-label">단어</div>
+                        <div class="stat-value">4개</div>
+                    </div>
+                    <div class="lv-stat">
+                        <div class="stat-label">시간</div>
+                        <div class="stat-value">60초</div>
+                    </div>
+                </div>
+                <div class="lv-dirs">↔ ↕ 직선만</div>
+                <div class="lv-play">시작하기 <span class="arrow">→</span></div>
+            </div>
+
+            <div class="level-card lv-medium" onclick="startLevel(1)">
+                <div class="lv-rank">⭐⭐ LV.2</div>
+                <div class="lv-char-wrap">
+                    <div class="lv-char-bg"></div>
+                    <img class="lv-char" src="img/character_02.png" alt="보통 캐릭터">
+                </div>
+                <div class="lv-name">보통</div>
+                <div class="lv-desc">자연 · 동물 · 꺾임 등장</div>
+                <div class="lv-stats">
+                    <div class="lv-stat">
+                        <div class="stat-label">단어</div>
+                        <div class="stat-value">6개</div>
+                    </div>
+                    <div class="lv-stat">
+                        <div class="stat-label">시간</div>
+                        <div class="stat-value">90초</div>
+                    </div>
+                </div>
+                <div class="lv-dirs">↔ ↕ + ㄱ자 꺾임</div>
+                <div class="lv-play">시작하기 <span class="arrow">→</span></div>
+            </div>
+
+            <div class="level-card lv-hard" onclick="startLevel(2)">
+                <div class="lv-rank">⭐⭐⭐ LV.3</div>
+                <div class="lv-char-wrap">
+                    <div class="lv-char-bg"></div>
+                    <img class="lv-char" src="img/character_03.png" alt="어려움 캐릭터">
+                </div>
+                <div class="lv-name">어려움</div>
+                <div class="lv-desc">음식 · 일상 · 도전 모드</div>
+                <div class="lv-stats">
+                    <div class="lv-stat">
+                        <div class="stat-label">단어</div>
+                        <div class="stat-value">8개</div>
+                    </div>
+                    <div class="lv-stat">
+                        <div class="stat-label">시간</div>
+                        <div class="stat-value">120초</div>
+                    </div>
+                </div>
+                <div class="lv-dirs">ㄴ · ㄷ · 지그재그</div>
+                <div class="lv-play">시작하기 <span class="arrow">→</span></div>
+            </div>
+        </div>
+
+        <div class="footer-tip">💡 드래그로 글자를 이어 단어를 완성하세요</div>
+    </div>
+
+    <div id="gameScreen" style="display:none;width:100%;">
+        <header>
+            <h1>글자 연결 낱말 퀴즈</h1>
+            <div class="subtitle" id="levelLabel">레벨</div>
+        </header>
+        <div class="toolbar">
+            <button class="tool icon-only" onclick="goLevelSelect()" title="홈"><span class="ico">🏠</span></button>
+            <div class="tool"><span class="ico">⏱</span><span class="timer-text" id="timerText">1:30</span>
+                <div class="timer-bar">
+                    <div class="timer-fill" id="timerFill"></div>
+                </div>
+            </div>
+            <div class="tool"><span class="ico">🏆</span><span id="scoreText">0점</span></div>
+            <button class="tool" id="hintBtn" onclick="useHint()"><span class="ico">💡</span><span id="hintText">힌트
+                    3</span></button>
+            <button class="tool icon-only" id="soundBtn" onclick="toggleSound()"><span class="ico"
+                    id="soundIco">🔊</span></button>
+        </div>
+        <main>
+            <div class="word-panel">
+                <div class="word-panel-head">
+                    <h2>찾을 단어</h2>
+                    <span class="badge" id="progressBadge">0/0</span>
+                </div>
+                <div class="progress-ring">
+                    <div class="progress-fill" id="progressFill" style="width:0%"></div>
+                </div>
+                <div class="word-list" id="wordList"></div>
+            </div>
+            <div class="grid-area" id="gridArea">
+                <div class="grid-border">
+                    <div class="grid" id="grid"></div>
+                </div>
+                <svg class="svg-overlay" id="svgOverlay"></svg>
+                <img class="character" id="character" src="img/character_01.png" alt="">
+            </div>
+        </main>
+    </div>
+
+    <div class="word-card" id="wordCard">
+        <div class="wc-icon">✨</div>
+        <div class="wc-word" id="wcWord"></div>
+        <div class="wc-mean" id="wcMean"></div>
+        <div class="wc-ex" id="wcEx"></div>
+    </div>
+
+    <div class="modal-overlay" id="victoryModal">
+        <div class="modal-box">
+            <img class="modal-char" id="victoryChar" src="img/character_01.png" alt="">
+            <h2 id="victoryTitle">축하합니다!</h2>
+            <p id="victoryMsg">모든 단어를 찾았어요</p>
+            <div class="score-display" id="victoryScore">0점</div>
+            <div class="btn-row">
+                <button class="secondary" onclick="goLevelSelect()">홈으로</button>
+                <button id="victoryBtn" onclick="nextOrReset()">다시 하기</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* ═══════════ LEVEL DATA ═══════════ */
+        const LV0_WORDS = [
+            { word: '학교', hex: '#a5b4fc', mean: '학생들이 공부하는 곳', ex: '"학교에 갑니다."', path: [[0, 1], [1, 1]] },
+            { word: '연필', hex: '#fbcfe8', mean: '글씨를 쓰는 도구', ex: '"연필로 글씨를 써요."', path: [[2, 3], [2, 4]] },
+            { word: '칠판', hex: '#a7f3d0', mean: '교실에서 글씨를 쓰는 판', ex: '"칠판을 봅니다."', path: [[4, 0], [5, 0]] },
+            { word: '선생님', hex: '#fde68a', mean: '학생을 가르치는 사람', ex: '"선생님께 인사해요."', path: [[6, 2], [6, 3], [6, 4]] }
+        ];
+
+        const LV1_WORDS = [
+            { word: '무지개', hex: '#a5b4fc', mean: '비 온 뒤 하늘의 일곱 색', ex: '"무지개가 떴어요."', path: [[0, 0], [0, 1], [0, 2]] },
+            { word: '다람쥐', hex: '#fbcfe8', mean: '나무 위에 사는 작은 동물', ex: '"다람쥐가 도토리를 먹어요."', path: [[1, 5], [2, 5], [3, 5]] },
+            { word: '호랑이', hex: '#fde68a', mean: '산속의 큰 맹수', ex: '"호랑이가 울었어요."', path: [[2, 0], [2, 1], [3, 1]] },
+            { word: '코끼리', hex: '#a7f3d0', mean: '코가 매우 긴 큰 동물', ex: '"코끼리가 물을 마셔요."', path: [[5, 1], [5, 2], [5, 3]] },
+            { word: '해바라기', hex: '#fdba74', mean: '해를 향해 피는 큰 꽃', ex: '"해바라기가 폈어요."', path: [[3, 3], [4, 3], [4, 4], [4, 5]] },
+            { word: '단풍잎', hex: '#fca5a5', mean: '가을에 붉게 물든 잎', ex: '"단풍잎이 떨어져요."', path: [[6, 5], [6, 6], [5, 6]] }
+        ];
+
+        const LV2_WORDS = [
+            { word: '김치찌개', hex: '#fca5a5', mean: '김치로 만든 찌개', ex: '"김치찌개가 매워요."', path: [[0, 0], [0, 1], [1, 1], [1, 2]] },
+            { word: '비빔밥', hex: '#a7f3d0', mean: '여러 재료를 섞은 밥', ex: '"비빔밥을 비벼요."', path: [[2, 0], [3, 0], [3, 1]] },
+            { word: '떡볶이', hex: '#fbcfe8', mean: '떡으로 만든 분식', ex: '"떡볶이를 먹어요."', path: [[0, 5], [0, 6], [1, 6]] },
+            { word: '짜장면', hex: '#c4b5fd', mean: '검은 춘장으로 만든 면', ex: '"짜장면을 시켜요."', path: [[3, 4], [3, 5], [3, 6]] },
+            { word: '만두국', hex: '#a5b4fc', mean: '만두를 넣고 끓인 국', ex: '"만두국이 따뜻해요."', path: [[5, 0], [5, 1], [6, 1]] },
+            { word: '된장국', hex: '#fde68a', mean: '된장으로 끓인 국', ex: '"된장국을 끓였어요."', path: [[4, 3], [5, 3], [6, 3]] },
+            { word: '아이스크림', hex: '#67e8f9', mean: '얼린 단 디저트', ex: '"아이스크림이 시원해요."', path: [[2, 3], [2, 2], [3, 2], [4, 2], [5, 2]] },
+            { word: '초콜릿', hex: '#fdba74', mean: '카카오로 만든 단 과자', ex: '"초콜릿이 달아요."', path: [[6, 5], [6, 6], [5, 6]] }
+        ];
+
+        const FILLER_POOL = '가나다라마바사아자차카타파하거너더러머버서어저처커터퍼허고노도로모보소오조초코토포호구누두루무부수우주추쿠투푸후그느드르므브스으즈츠크트프흐기니디리미비시이지치키티피히';
+
+        function buildGridFromWords(words, size = 7) {
+            const grid = Array.from({ length: size }, () => Array(size).fill(null));
+            words.forEach(w => {
+                const chars = [...w.word];
+                w.path.forEach((p, i) => {
+                    const existing = grid[p[0]][p[1]];
+                    if (existing !== null && existing !== chars[i]) {
+                        console.warn(`경로 충돌: [${p[0]},${p[1]}]에 "${existing}"가 이미 있는데 "${w.word}"의 "${chars[i]}"를 덮어쓰려 함`);
+                    }
+                    grid[p[0]][p[1]] = chars[i];
+                });
+            });
+            for (let r = 0; r < size; r++) {
+                for (let c = 0; c < size; c++) {
+                    if (grid[r][c] === null) {
+                        grid[r][c] = FILLER_POOL[Math.floor(Math.random() * FILLER_POOL.length)];
+                    }
+                }
+            }
+            return grid;
+        }
+
+        /* ═══════════ LEVELS — 단계별 캐릭터 (img/ 폴더) ═══════════ */
+        const LEVELS = [
+            { name: '쉬움', emoji: '🌱', time: 60, words: LV0_WORDS, char: 'img/character_01.png' },
+            { name: '보통', emoji: '🌸', time: 90, words: LV1_WORDS, char: 'img/character_02.png' },
+            { name: '어려움', emoji: '🔥', time: 120, words: LV2_WORDS, char: 'img/character_03.png' }
+        ];
+
+        /* ═══════════ STATE ═══════════ */
+        let cells = [], isSelecting = false, selectedPath = [], foundWords = new Set(), foundPaths = {};
+        let curLevel = 0, WORDS = [], GRID_DATA = [];
+        let timerInterval = null, timeLeft = 0, totalTime = 0;
+        let score = 0, hintsLeft = 3, soundOn = true;
+        let audioCtx = null, eventsSet = false;
+
+        /* ═══════════ SOUND ═══════════ */
+        function getAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); return audioCtx; }
+        function playTone(freq, dur, type, vol) {
+            if (!soundOn) return;
+            try {
+                const a = getAudio(), o = a.createOscillator(), g = a.createGain();
+                o.connect(g); g.connect(a.destination); o.type = type || 'sine';
+                o.frequency.setValueAtTime(freq, a.currentTime);
+                g.gain.setValueAtTime(vol || .08, a.currentTime);
+                g.gain.exponentialRampToValueAtTime(.001, a.currentTime + dur);
+                o.start(); o.stop(a.currentTime + dur);
+            } catch (e) { }
+        }
+        function sndTap() { playTone(660, .08, 'sine', .05); }
+        function sndSuccess() { playTone(523, .12); setTimeout(() => playTone(659, .12), 100); setTimeout(() => playTone(784, .2), 200); }
+        function sndFail() { playTone(200, .25, 'square', .04); }
+        function sndVictory() { [0, 100, 200, 300, 400].forEach((d, i) => setTimeout(() => playTone(523 + i * 80, .15), d)); }
+        function toggleSound() { soundOn = !soundOn; document.getElementById('soundIco').textContent = soundOn ? '🔊' : '🔇'; }
+
+        /* ═══════════ TIMER ═══════════ */
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--; updateTimerUI();
+                if (timeLeft <= 0) { clearInterval(timerInterval); timeUp(); }
+            }, 1000);
+        }
+        function updateTimerUI() {
+            const m = Math.floor(timeLeft / 60), s = timeLeft % 60;
+            document.getElementById('timerText').textContent = m + ':' + (s < 10 ? '0' : '') + s;
+            const fill = document.getElementById('timerFill');
+            fill.style.width = (timeLeft / totalTime * 100) + '%';
+            fill.className = 'timer-fill' + (timeLeft <= 10 ? ' danger' : timeLeft <= 20 ? ' warn' : '');
+        }
+        function timeUp() {
+            isSelecting = false; clearSel();
+            document.getElementById('victoryTitle').textContent = '⏰ 시간 종료!';
+            document.getElementById('victoryMsg').textContent = foundWords.size + ' / ' + WORDS.length + '개 찾았어요';
+            document.getElementById('victoryScore').textContent = score + '점';
+            document.getElementById('victoryBtn').textContent = '다시 도전';
+            document.getElementById('victoryModal').classList.add('show');
+        }
+
+        /* ═══════════ SCORE & PROGRESS ═══════════ */
+        function addScore(pts) { score = Math.max(0, score + pts); document.getElementById('scoreText').textContent = score + '점'; }
+        function updateProgress() {
+            const pct = (foundWords.size / WORDS.length) * 100;
+            document.getElementById('progressBadge').textContent = foundWords.size + '/' + WORDS.length;
+            document.getElementById('progressFill').style.width = pct + '%';
+        }
+
+        /* ═══════════ HINT ═══════════ */
+        function useHint() {
+            if (hintsLeft <= 0) return;
+            const unfound = WORDS.map((w, i) => i).filter(i => !foundWords.has(i));
+            if (!unfound.length) return;
+            hintsLeft--;
+            document.getElementById('hintText').textContent = '힌트 ' + hintsLeft;
+            addScore(-50); sndTap();
+            const wi = unfound[Math.floor(Math.random() * unfound.length)];
+            const p = WORDS[wi].path[0];
+            const cell = cells[p[0]][p[1]];
+            cell.classList.add('hint-flash');
+            setTimeout(() => cell.classList.remove('hint-flash'), 1400);
+        }
+
+        /* ═══════════ WORD CARD ═══════════ */
+        function showWordCard(w) {
+            document.getElementById('wcWord').textContent = w.word;
+            document.getElementById('wcMean').textContent = w.mean;
+            document.getElementById('wcEx').textContent = w.ex;
+            const wc = document.getElementById('wordCard');
+            wc.classList.add('show');
+            setTimeout(() => wc.classList.remove('show'), 2000);
+        }
+
+        /* ═══════════ LEVELS ═══════════ */
+        function startLevel(lv) {
+            curLevel = lv;
+            const L = LEVELS[lv];
+            WORDS = L.words;
+            GRID_DATA = buildGridFromWords(WORDS, 7);
+            timeLeft = totalTime = L.time;
+            score = 0; hintsLeft = 3;
+            foundWords.clear(); foundPaths = {};
+            document.getElementById('scoreText').textContent = '0점';
+            document.getElementById('hintText').textContent = '힌트 3';
+            document.getElementById('levelLabel').textContent = L.emoji + ' ' + L.name + ' 단계';
+            document.getElementById('character').src = L.char;
+            document.getElementById('victoryChar').src = L.char;
+            document.getElementById('levelScreen').classList.add('hidden');
+            document.getElementById('gameScreen').style.display = '';
+            buildGrid(); buildWordList(); sizeSVG(); drawLines(); updateTimerUI(); updateProgress();
+            setTimeout(() => { startTimer(); setupEvents(); sizeSVG(); }, 300);
+        }
+        function goLevelSelect() {
+            clearInterval(timerInterval);
+            document.getElementById('gameScreen').style.display = 'none';
+            document.getElementById('levelScreen').classList.remove('hidden');
+            document.getElementById('victoryModal').classList.remove('show');
+        }
+        function nextOrReset() {
+            document.getElementById('victoryModal').classList.remove('show');
+            if (curLevel < 2 && foundWords.size === WORDS.length) { startLevel(curLevel + 1); }
+            else if (foundWords.size === WORDS.length) { goLevelSelect(); }
+            else { startLevel(curLevel); }
+        }
+
+        /* ═══════════ BUILD ═══════════ */
+        function buildGrid() {
+            const grid = document.getElementById('grid'); grid.innerHTML = ''; cells = [];
+            for (let r = 0; r < 7; r++) {
+                cells[r] = [];
+                for (let c = 0; c < 7; c++) {
+                    const el = document.createElement('div');
+                    el.className = 'cell'; el.dataset.r = r; el.dataset.c = c;
+                    el.innerHTML = '<div class="bg"></div><span>' + (GRID_DATA[r][c] || '') + '</span>';
+                    grid.appendChild(el); cells[r][c] = el;
+                }
+            }
+        }
+        function buildWordList() {
+            const list = document.getElementById('wordList'); list.innerHTML = '';
+            WORDS.forEach((w, i) => {
+                const f = foundWords.has(i);
+                const div = document.createElement('div');
+                div.className = 'word-item' + (f ? ' found' : '');
+                div.innerHTML = '<span class="dot" style="background:' + w.hex + '"></span><span class="wtext">' + w.word + '</span><span class="check">✓</span>';
+                list.appendChild(div);
+            });
+            updateProgress();
+        }
+        function sizeSVG() {
+            const gb = document.querySelector('.grid-border'), svg = document.getElementById('svgOverlay');
+            if (!gb) return;
+            svg.setAttribute('width', gb.offsetWidth - 28);
+            svg.setAttribute('height', gb.offsetHeight - 28);
+        }
+        window.addEventListener('resize', sizeSVG);
+
+        /* ═══════════ EVENTS ═══════════ */
+        function setupEvents() {
+            if (eventsSet) return; eventsSet = true;
+            const grid = document.getElementById('grid');
+            grid.addEventListener('mousedown', e => { const c = e.target.closest('.cell'); if (c) startSel(+c.dataset.r, +c.dataset.c); });
+            grid.addEventListener('mouseover', e => { if (!isSelecting) return; const c = e.target.closest('.cell'); if (c) continueSel(+c.dataset.r, +c.dataset.c); });
+            document.addEventListener('mouseup', () => { if (isSelecting) endSel(); });
+            grid.addEventListener('touchstart', e => { e.preventDefault(); const t = e.touches[0]; const c = document.elementFromPoint(t.clientX, t.clientY)?.closest('.cell'); if (c) startSel(+c.dataset.r, +c.dataset.c); }, { passive: false });
+            document.addEventListener('touchmove', e => { if (!isSelecting) return; e.preventDefault(); const t = e.touches[0]; const c = document.elementFromPoint(t.clientX, t.clientY)?.closest('.cell'); if (c) continueSel(+c.dataset.r, +c.dataset.c); }, { passive: false });
+            document.addEventListener('touchend', () => { if (isSelecting) endSel(); });
+        }
+
+        /* ═══════════ SELECTION ═══════════ */
+        function startSel(r, c) { isSelecting = true; selectedPath = [{ r, c }]; markSel(r, c); moveChar(r, c); showChar(); drawLines(); sndTap(); }
+        function continueSel(r, c) {
+            if (!isSelecting) return;
+            const last = selectedPath[selectedPath.length - 1];
+            if (last.r === r && last.c === c) return;
+            if (selectedPath.length >= 2) {
+                const prev = selectedPath[selectedPath.length - 2];
+                if (prev.r === r && prev.c === c) { unmarkSel(last.r, last.c); selectedPath.pop(); moveChar(r, c); drawLines(); sndTap(); return; }
+            }
+            if (selectedPath.some(p => p.r === r && p.c === c)) return;
+            const dr = Math.abs(last.r - r), dc = Math.abs(last.c - c);
+            if (!((dr === 1 && dc === 0) || (dr === 0 && dc === 1))) return;
+            selectedPath.push({ r, c }); markSel(r, c); moveChar(r, c); drawLines(); sndTap();
+        }
+        function endSel() {
+            isSelecting = false;
+            const word = selectedPath.map(p => GRID_DATA[p.r][p.c]).join('');
+            const rev = [...selectedPath].reverse().map(p => GRID_DATA[p.r][p.c]).join('');
+            let idx = WORDS.findIndex((w, i) => !foundWords.has(i) && w.word === word);
+            let usePath = [...selectedPath];
+            if (idx < 0) { idx = WORDS.findIndex((w, i) => !foundWords.has(i) && w.word === rev); if (idx >= 0) usePath = [...selectedPath].reverse(); }
+            if (idx >= 0) {
+                foundWords.add(idx); foundPaths[idx] = usePath;
+                markFound(usePath, WORDS[idx].hex);
+                buildWordList();
+                charHappy(); sndSuccess(); spawnConfetti(16);
+                addScore(100 + Math.floor(timeLeft / totalTime * 50));
+                showWordCard(WORDS[idx]);
+                if (foundWords.size === WORDS.length) { clearInterval(timerInterval); setTimeout(showVictory, 2200); }
+            } else {
+                charShake(); sndFail();
+            }
+            clearSel(); drawLines(); setTimeout(hideChar, 400);
+        }
+
+        /* ═══════════ CELL MARKING ═══════════ */
+        function markSel(r, c) {
+            cells[r][c].classList.add('selecting');
+            cells[r][c].querySelector('.bg').style.background = 'var(--primary)';
+        }
+        function unmarkSel(r, c) {
+            const el = cells[r][c];
+            el.classList.remove('selecting');
+            if (!el.classList.contains('found')) el.querySelector('.bg').style.background = '';
+        }
+        function clearSel() {
+            selectedPath.forEach(p => {
+                const el = cells[p.r][p.c];
+                el.classList.remove('selecting');
+                if (!el.classList.contains('found')) el.querySelector('.bg').style.background = '';
+            });
+            selectedPath = [];
+        }
+        function markFound(path, color) {
+            path.forEach(p => {
+                const el = cells[p.r][p.c];
+                el.classList.add('found');
+                el.querySelector('.bg').style.background = color;
+            });
+        }
+
+        /* ═══════════ SVG LINES ═══════════ */
+        function drawLines() {
+            const svg = document.getElementById('svgOverlay'); svg.innerHTML = '';
+            WORDS.forEach((w, i) => {
+                if (!foundWords.has(i) || !foundPaths[i]) return;
+                const path = foundPaths[i];
+                for (let j = 0; j < path.length - 1; j++)addLine(svg, path[j], path[j + 1], w.hex, .35);
+            });
+            for (let j = 0; j < selectedPath.length - 1; j++)addLine(svg, selectedPath[j], selectedPath[j + 1], '#6366f1', .4);
+        }
+        function addLine(svg, a, b, color, opacity) {
+            const pa = cellCenter(a.r, a.c), pb = cellCenter(b.r, b.c);
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', pa.x); line.setAttribute('y1', pa.y);
+            line.setAttribute('x2', pb.x); line.setAttribute('y2', pb.y);
+            line.style.stroke = color; line.style.opacity = opacity;
+            svg.appendChild(line);
+        }
+        function cellCenter(r, c) {
+            const el = cells[r][c], grid = document.getElementById('grid');
+            const gR = grid.getBoundingClientRect(), cR = el.getBoundingClientRect();
+            return { x: cR.left - gR.left + cR.width / 2, y: cR.top - gR.top + cR.height / 2 };
+        }
+
+        /* ═══════════ CHARACTER ═══════════ */
+        const charEl = document.getElementById('character');
+        function moveChar(r, c) {
+            const el = cells[r][c], area = document.getElementById('gridArea');
+            const aR = area.getBoundingClientRect(), cR = el.getBoundingClientRect();
+            charEl.style.left = (cR.left - aR.left + cR.width / 2 - 30) + 'px';
+            charEl.style.top = (cR.top - aR.top - 50) + 'px';
+        }
+        function showChar() { charEl.classList.add('visible'); }
+        function hideChar() { charEl.classList.remove('visible'); }
+        function charHappy() { charEl.classList.remove('happy', 'shake'); void charEl.offsetWidth; charEl.classList.add('happy'); }
+        function charShake() { charEl.classList.remove('happy', 'shake'); void charEl.offsetWidth; charEl.classList.add('shake'); }
+
+        /* ═══════════ CONFETTI ═══════════ */
+        function spawnConfetti(n) {
+            const colors = ['#6366f1', '#a5b4fc', '#fbcfe8', '#fde68a', '#a7f3d0', '#67e8f9', '#fdba74'];
+            for (let i = 0; i < n; i++) {
+                const el = document.createElement('div'); el.className = 'confetti-piece';
+                el.style.left = (Math.random() * 100) + 'vw';
+                el.style.background = colors[Math.floor(Math.random() * colors.length)];
+                el.style.animationDuration = (1.4 + Math.random() * 1.6) + 's';
+                el.style.animationDelay = (Math.random() * .3) + 's';
+                el.style.width = (6 + Math.random() * 8) + 'px';
+                el.style.height = (6 + Math.random() * 8) + 'px';
+                document.body.appendChild(el);
+                setTimeout(() => el.remove(), 3500);
+            }
+        }
+
+        /* ═══════════ VICTORY ═══════════ */
+        function showVictory() {
+            sndVictory(); spawnConfetti(60);
+            document.getElementById('victoryTitle').textContent = curLevel < 2 ? '🎊 클리어!' : '👑 마스터!';
+            document.getElementById('victoryMsg').textContent = curLevel < 2 ? '다음 단계로 도전해보세요' : '모든 단어를 찾았어요';
+            document.getElementById('victoryScore').textContent = score + '점';
+            document.getElementById('victoryBtn').textContent = curLevel < 2 ? '다음 단계 →' : '처음으로';
+            document.getElementById('victoryModal').classList.add('show');
+        }
+    </script>
+</body>
+
+</html>
