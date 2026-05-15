@@ -637,21 +637,21 @@
     function SelectScreen({ onSelect }) {
       const opts = [
         {
-          mode: 'grid',
-          icon: '🔍',
-          title: '글자 연결',
-          desc: '격자에서 숨어있는\n단어를 찾아봐!',
-          tag: '드래그로 연결',
-          reco: '1~3단계 추천!',
-          char: 'img/cha_02.png',
-          charStyle: { left: -40, bottom: -20, width: 120 }
-        },
-        {
           mode: 'cross',
           icon: '✏️',
           title: '빈칸 맞추기',
           desc: '빈칸에 맞는 음절을\n채워봐!',
           tag: '카드로 채우기',
+          reco: '1~3단계 추천!',
+          char: 'img/cha_02.png',
+          charStyle: { left: -40, bottom: -20, width: 120 }
+        },
+        {
+          mode: 'grid',
+          icon: '🔍',
+          title: '글자 연결',
+          desc: '격자에서 숨어있는\n단어를 찾아봐!',
+          tag: '드래그로 연결',
           reco: '4~6단계 추천!',
           char: 'img/cha_01.png',
           charStyle: { right: -40, bottom: -40, width: 120 }
