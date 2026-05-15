@@ -61,7 +61,6 @@
       overflow-x: hidden;
       -webkit-user-select: none;
       user-select: none;
-      touch-action: none;
     }
 
     body {
@@ -1141,9 +1140,9 @@
       };
 
       return (
-        <div style={{ maxWidth: 960, margin: '0 auto', padding: '40px 0', minHeight: 'calc(100vh - 70px)', touchAction: 'none' }}
+        <div style={{ maxWidth: 960, margin: '0 auto', padding: '40px 0', minHeight: 'calc(100vh - 70px)' }}
           onPointerMove={onMove} onPointerUp={onEnd}
-          onTouchMove={e => { e.preventDefault(); onMove(e); }} onTouchEnd={onEnd}>
+          onTouchMove={onMove} onTouchEnd={onEnd}>
 
           <h2 className="jua" style={{ fontSize: 36, color: 'var(--navy-dark)', textAlign: 'center', marginBottom: 12 }}>2단계 · 문장 플레이</h2>
           <p style={{ textAlign: 'center', color: 'var(--gray)', fontSize: 16, marginBottom: 40, fontWeight: 500 }}>단어 카드를 드래그해서 이야기 순서대로 배치해봐!</p>
