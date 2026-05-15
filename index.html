@@ -1029,6 +1029,8 @@
                   return (
                     <div key={i} className={wrong ? 'a-shake' : just ? 'a-pop' : ''}
                       onClick={() => !val && setActiveId(cell.id)}
+                      onMouseEnter={e => { if (!val && !active) e.currentTarget.style.borderColor = '#FB923C'; }}
+                      onMouseLeave={e => { if (!val && !active) e.currentTarget.style.borderColor = '#B0A595'; }}
                       style={{ ...baseStyle, background: cellBg, color: cellColor, border: cellBorder, cursor: val ? 'default' : 'pointer', position: 'relative', transform: active ? 'scale(1.15)' : 'scale(1)', zIndex: active ? 10 : 1, boxShadow: active ? '0 8px 24px rgba(249,115,22,0.4)' : val ? '0 4px 0 #CCC' : 'inset 0 4px 8px rgba(0,0,0,0.1)' }}>
                       {val && <div style={{ position: 'absolute', inset: 4, border: '2px dashed #E5E5E5', borderRadius: 8, pointerEvents: 'none' }} />}
                       <span style={{ position: 'relative', top: val ? 2 : 0 }}>{val || ''}</span>
@@ -1071,7 +1073,12 @@
                 const hintWords = ['호랑이', '창호지', '산골집', '부부', '오빠', '감자', '남매'];
                 const isActive = activeBlank && hintWords[i] === activeBlank.word;
                 return (
-                  <div key={i} className={isActive ? 'a-hint-blink' : ''} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 16px', borderRadius: 20, transition: 'all .3s ease', border: '2px solid transparent' }}>
+                  <div key={i} className={isActive ? 'a-hint-blink' : ''}
+                    onClick={() => {
+                      const b = blanks.find(x => x.word === hintWords[i]);
+                      if (b && !filled[b.id]) setActiveId(b.id);
+                    }}
+                    style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 16px', borderRadius: 20, transition: 'all .3s ease', border: '2px solid transparent', cursor: 'pointer' }}>
                     <div style={{ width: 28, height: 28, borderRadius: '50%', background: isActive ? 'var(--primary)' : 'linear-gradient(135deg, #FEF3C7, #FDE68A)', color: isActive ? '#fff' : '#92400E', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, flexShrink: 0, boxShadow: isActive ? '0 4px 12px rgba(79,70,229,0.3)' : 'none' }}>{i + 1}</div>
                     <p style={{ fontSize: 16, fontWeight: 700, color: isActive ? 'var(--primary)' : 'var(--navy-dark)', margin: 0, lineHeight: 1.6 }}>
                       {h}
