@@ -242,6 +242,37 @@
       animation: spinFade .5s cubic-bezier(0.16, 1, 0.3, 1) both
     }
 
+    .intro-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      text-align: center;
+      padding: 40px 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .intro-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    @media (min-width: 1024px) {
+      .intro-container {
+        flex-direction: row;
+        text-align: left;
+        gap: 160px;
+      }
+
+      .intro-content {
+        align-items: flex-start;
+        text-align: left;
+      }
+    }
+
     .btn-primary {
       font-family: var(--font-h);
       background: linear-gradient(135deg, var(--primary), var(--primary-deep));
@@ -582,18 +613,20 @@
     ══════════════════════════════════════════════ */
     function IntroScreen({ onStart }) {
       return (
-        <div className="a-fadeup" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', textAlign: 'center' }}>
-          <div style={{ position: 'relative', marginBottom: 36 }}>
-            <img src="img/cover.png" alt="방아 찧는 호랑이 책 표지" style={{ width: 240, height: 'auto', borderRadius: 20, boxShadow: '0 20px 48px rgba(0,0,0,.15)', display: 'block', objectFit: 'cover' }} />
-            <img src="img/cha_01.png" alt="" className="a-bounce" style={{ position: 'absolute', right: -62, bottom: -35, width: 110, height: 'auto', filter: 'drop-shadow(0 10px 24px rgba(0,0,0,.2))', zIndex: 5 }} />
+        <div className="a-fadeup intro-container">
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <img src="img/cover.png" alt="방아 찧는 호랑이 책 표지" style={{ width: 320, height: 'auto', borderRadius: 24, boxShadow: '0 30px 60px rgba(0,0,0,.18)', display: 'block', objectFit: 'cover' }} />
+            <img src="img/cha_01.png" alt="" className="a-bounce" style={{ position: 'absolute', right: -84, bottom: -44, width: 140, height: 'auto', filter: 'drop-shadow(0 15px 30px rgba(0,0,0,.25))', zIndex: 5 }} />
           </div>
-          <p style={{ fontSize: 15, fontWeight: 800, letterSpacing: 5, color: 'var(--blue)', marginBottom: 16, textTransform: 'uppercase' }}>오늘의 책</p>
-          <h1 className="jua" style={{ fontSize: 64, color: 'var(--navy-dark)', marginBottom: 24 }}>방아 찧는 호랑이</h1>
-          <p style={{ fontSize: 18, color: 'var(--gray)', lineHeight: 1.8, maxWidth: 640, marginBottom: 56, wordBreak: 'keep-all' }}>
-            옛날, 깊은 산골에 부모님과 사이좋은 오누이가 살았어요. 부모님이 나간 사이에 오누이는 하루 종일 집을 보다가 배가 고파서 감자를 구워 먹기로했어요. 감자냄새가 온 산으로 솔솔 퍼져나가자 무서운 호랑이가 코를 벌름거리며 오누이의 집에 나타났어요. 오누이는 호랑이를 물리치기 위해 여러 가지 꾀를 내며 도망다녔답니다. 과연, 오누이는 무사할 수 있을까요?
-          </p>
-          <button className="btn-primary" style={{ fontSize: 22, padding: '24px 72px' }} onClick={onStart}>독후 활동 시작하기</button>
-          <p style={{ marginTop: 24, fontSize: 14, color: '#94A3B8', fontWeight: 500 }}>단어 플레이 · 문장 플레이 · AI 피드백</p>
+          <div className="intro-content">
+            <p style={{ fontSize: 16, fontWeight: 800, letterSpacing: 5, color: 'var(--primary)', marginBottom: 16, textTransform: 'uppercase' }}>This week's book</p>
+            <h1 className="jua" style={{ fontSize: 62, color: 'var(--navy-dark)', marginBottom: 24, lineHeight: 1.2 }}>방아 찧는 호랑이</h1>
+            <p style={{ fontSize: 20, color: 'var(--gray)', lineHeight: 1.7, maxWidth: 560, marginBottom: 48, wordBreak: 'keep-all', fontWeight: 500 }}>
+              옛날, 깊은 산골에 부모님과 사이좋은 오누이가 살았어요.<br />부모님이 나간 사이에 오누이는 하루 종일 집을 보다가<br /> 배가 고파서 감자를 구워 먹기로 했어요. <br />감자 냄새가 온 산으로 솔솔 퍼져 나가자 무서운 호랑이가<br /> 코를 벌름거리며 오누이의 집에 나타났어요. <br />오누이는 호랑이를 물리치기 위해 여러 가지 꾀를 내며<br /> 도망다녔답니다. 과연, 오누이는 무사할 수 있을까요?
+            </p>
+            <button className="btn-primary" style={{ fontSize: 24, padding: '24px 80px', boxShadow: '0 20px 40px rgba(99,102,241,0.3)' }} onClick={onStart}>독후 활동 시작하기</button>
+
+          </div>
         </div>
       );
     }
