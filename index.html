@@ -263,12 +263,26 @@
       .intro-container {
         flex-direction: row;
         text-align: left;
-        gap: 120px;
+        gap: 80px;
       }
 
       .intro-content {
         align-items: flex-start;
         text-align: left;
+      }
+    }
+
+    /* Landscape Tablet Optimization (Short Height) */
+    @media (max-height: 800px) and (min-width: 1024px) {
+      .intro-container {
+        padding: 20px 20px;
+        gap: 60px;
+      }
+      .intro-content p {
+        margin-bottom: 24px !important;
+      }
+      header div {
+        height: 60px !important;
       }
     }
 
@@ -576,8 +590,8 @@
         <div style={{ minHeight: '100vh', background: 'linear-gradient(145deg,#EEF2FF 0%,#F8FAFC 45%,#FFF0F8 100%)' }}>
           {screen !== 'intro' && (
             <header style={{ background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(12px)', borderBottom: '1px solid var(--gray-light)', padding: '0 32px', position: 'sticky', top: 0, zIndex: 100 }}>
-              <div style={{ maxWidth: 1376, margin: '0 auto', height: 70, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span className="jua" style={{ color: 'var(--navy-dark)', fontSize: 20 }}>🐯 방아 찧는 호랑이</span>
+              <div style={{ maxWidth: 1376, margin: '0 auto', height: window.innerHeight < 800 ? 56 : 70, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span className="jua" style={{ color: 'var(--navy-dark)', fontSize: window.innerHeight < 800 ? 18 : 20 }}>🐯 방아 찧는 호랑이</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   {['단어 플레이', '문장 플레이', 'AI 피드백'].map((l, i) => (
                     <React.Fragment key={i}>
@@ -623,7 +637,7 @@
             <p style={{ fontSize: 20, color: 'var(--gray)', lineHeight: 1.7, maxWidth: 560, marginBottom: 48, wordBreak: 'keep-all', fontWeight: 500 }}>
               옛날, 깊은 산골에 부모님과 사이좋은 오누이가 살았어요.<br />부모님이 나간 사이에 오누이는 하루 종일 집을 보다가<br /> 배가 고파서 감자를 구워 먹기로 했어요. <br />감자 냄새가 온 산으로 솔솔 퍼져 나가자 무서운 호랑이가<br /> 코를 벌름거리며 오누이의 집에 나타났어요. <br />오누이는 호랑이를 물리치기 위해 여러 가지 꾀를 내며<br /> 도망다녔답니다. 과연, 오누이는 무사할 수 있을까요?
             </p>
-            <button className="btn-primary" style={{ fontSize: 24, padding: '24px 80px', boxShadow: '0 20px 40px rgba(99,102,241,0.3)' }} onClick={onStart}>독후 활동 시작하기</button>
+            <button className="btn-primary" style={{ fontSize: window.innerHeight < 800 ? 20 : 24, padding: window.innerHeight < 800 ? '16px 60px' : '24px 80px', boxShadow: '0 20px 40px rgba(99,102,241,0.3)' }} onClick={onStart}>독후 활동 시작하기</button>
 
           </div>
         </div>
@@ -817,7 +831,7 @@
       const linePoints = sel.map(([r, c]) => { const p = cellCenter(r, c); return `${p.x},${p.y}`; }).join(' ');
 
       return (
-        <div className="a-fadeup" style={{ display: 'flex', gap: 48, alignItems: 'flex-start', justifyContent: 'center', flexWrap: 'wrap', padding: '40px 0', minHeight: 'calc(100vh - 70px)' }}>
+        <div className="a-fadeup" style={{ display: 'flex', gap: window.innerHeight < 800 ? 24 : 48, alignItems: 'flex-start', justifyContent: 'center', flexWrap: 'wrap', padding: window.innerHeight < 800 ? '20px 0' : '40px 0', minHeight: 'calc(100vh - 70px)' }}>
           <div>
             <ProgressBar label="🔍 글자 연결" current={foundWords.length} total={GRID_DATA.targets.length} />
             <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--gray)', textAlign: 'center', marginBottom: 20 }}>드래그해서 이어진 단어를 찾아봐!</p>
@@ -953,7 +967,7 @@
       const CW_CELL = 64;
 
       return (
-        <div className="a-fadeup" style={{ display: 'flex', gap: 40, alignItems: 'flex-start', justifyContent: 'center', flexWrap: 'wrap', padding: '40px 0', minHeight: 'calc(100vh - 70px)' }}>
+        <div className="a-fadeup" style={{ display: 'flex', gap: window.innerHeight < 800 ? 24 : 40, alignItems: 'flex-start', justifyContent: 'center', flexWrap: 'wrap', padding: window.innerHeight < 800 ? '20px 0' : '40px 0', minHeight: 'calc(100vh - 70px)' }}>
           <div style={{ flex: 1, maxWidth: 640 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -1147,7 +1161,7 @@
           <h2 className="jua" style={{ fontSize: 36, color: 'var(--navy-dark)', textAlign: 'center', marginBottom: 12 }}>2단계 · 문장 플레이</h2>
           <p style={{ textAlign: 'center', color: 'var(--gray)', fontSize: 16, marginBottom: 40, fontWeight: 500 }}>단어 카드를 드래그해서 이야기 순서대로 배치해봐!</p>
 
-          <div style={{ background: 'var(--card)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.8)', borderRadius: 32, padding: '36px 40px', marginBottom: 48, textAlign: 'center', boxShadow: 'var(--shadow-md)', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ background: 'var(--card)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.8)', borderRadius: 32, padding: window.innerHeight < 800 ? '20px 30px' : '36px 40px', marginBottom: window.innerHeight < 800 ? 24 : 48, textAlign: 'center', boxShadow: 'var(--shadow-md)', position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', top: -20, left: -20, fontSize: 120, opacity: 0.05, transform: 'rotate(-10deg)', pointerEvents: 'none' }}>📖</div>
             <div style={{ display: 'inline-block', background: 'linear-gradient(135deg, #FEF3C7, #FDE68A)', padding: '6px 16px', borderRadius: 20, boxShadow: '0 4px 12px rgba(253,230,138,0.4)', marginBottom: 20 }}>
               <span style={{ fontSize: 14, fontWeight: 800, color: '#92400E', letterSpacing: 2 }}>📖 책 속 한 장면</span>
@@ -1202,7 +1216,7 @@
             </div>
           </div>
 
-          <button className="btn-primary" disabled={!canGo || loading} style={{ width: '100%', fontSize: 22, padding: '24px' }} onClick={go}>
+          <button className="btn-primary" disabled={!canGo || loading} style={{ width: '100%', fontSize: window.innerHeight < 800 ? 20 : 22, padding: window.innerHeight < 800 ? '16px' : '24px' }} onClick={go}>
             {loading ? '✨ 이야기를 만드는 중...' : canGo ? `✨ AI 이야기 만들기 (${placed.length}개 선택됨)` : '단어를 3개 이상 배치해줘'}
           </button>
 
