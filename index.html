@@ -956,11 +956,15 @@
     function CrossScreen({ filled, usedCards, setFilled, setUsedCards, onComplete }) {
       const [wrongId, setWrongId] = useState(null);
       const [justId, setJustId] = useState(null);
+      const [activeId, setActiveId] = useState(null);
 
       const blanks = CW.cells.filter(c => c?.kind === 'blank');
       const allFilled = Object.keys(filled).length === blanks.length;
-      // Auto-targeting: always point to first unfilled blank
-      const activeBlank = blanks.find(b => !filled[b.id]) || null;
+
+      // Priority: 1. Manual selection 2. First unfilled blank
+      const activeBlank = (activeId && !filled[activeId])
+        ? blanks.find(b => b.id === activeId)
+        : blanks.find(b => !filled[b.id]) || null;
 
       const clickCard = (card) => {
         if (usedCards.includes(card.id)) return;
@@ -969,6 +973,7 @@
           setFilled({ ...filled, [activeBlank.id]: card.syl });
           setUsedCards([...usedCards, card.id]);
           setJustId(activeBlank.id);
+          setActiveId(null); // Reset manual selection after fill to allow next auto-target
           setTimeout(() => setJustId(null), 700);
         } else {
           setWrongId(activeBlank.id);
@@ -1023,6 +1028,7 @@
 
                   return (
                     <div key={i} className={wrong ? 'a-shake' : just ? 'a-pop' : ''}
+                      onClick={() => !val && setActiveId(cell.id)}
                       style={{ ...baseStyle, background: cellBg, color: cellColor, border: cellBorder, cursor: val ? 'default' : 'pointer', position: 'relative', transform: active ? 'scale(1.15)' : 'scale(1)', zIndex: active ? 10 : 1, boxShadow: active ? '0 8px 24px rgba(249,115,22,0.4)' : val ? '0 4px 0 #CCC' : 'inset 0 4px 8px rgba(0,0,0,0.1)' }}>
                       {val && <div style={{ position: 'absolute', inset: 4, border: '2px dashed #E5E5E5', borderRadius: 8, pointerEvents: 'none' }} />}
                       <span style={{ position: 'relative', top: val ? 2 : 0 }}>{val || ''}</span>
