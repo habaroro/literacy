@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>퍼펙트 문해 · 방아 찧는 호랑이</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link rel="stylesheet" crossorigin
+        href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
+    <link rel="stylesheet" href="common.css" />
+</head>
+
+<body>
+    <div id="root"></div>
+    <script src="common.js"></script>
+    <script type="text/babel">
+        function IntroScreen() {
+            const onStart = () => {
+                window.AppState.reset();
+                location.href = 'step1.html';
+            };
+            return (
+                <div className="a-fadeup intro-container-v2">
+                    <div className="intro-grid-v2">
+                        <div className="intro-visual-v2">
+                            <div className="intro-book-wrap-v2">
+                                <img src="img/cover.png" alt="방아 찧는 호랑이 책 표지" className="intro-book-cover-v2" />
+                                <img src="img/character_04.png" alt="" className="intro-book-char-v2 a-bounce" />
+                            </div>
+                        </div>
+                        <div className="intro-content-v2">
+                            <div className="intro-eyebrow-v2">
+                                <span className="intro-eyebrow-dot-v2" />
+                                <span>WEEKLY BOOK · VOL.12</span>
+                            </div>
+                            <h1 className="font-h intro-title-v2">
+                                방아 찧는 <span className="intro-title-accent-v2">호랑이</span>
+                            </h1>
+                            <p className="intro-tagline-v2">
+                                오누이의 지혜와 용기, <br />
+                                그리고 따뜻한 가족 이야기
+                            </p>
+                            <div className="intro-desc-card-v2">
+                                <p className="intro-desc-v2">
+                                    깊은 산골에 사는 사이좋은 오누이. 부모님이 집을 비운 어느 날,
+                                    감자 굽는 냄새를 따라 <strong>무서운 호랑이</strong>가 찾아옵니다.
+                                    과연 오누이는 꾀를 내어 위기를 벗어날 수 있을까요?
+                                </p>
+                            </div>
+                            <div className="intro-meta-v2">
+                                <div className="intro-meta-item-v2">
+                                    <span className="intro-meta-num-v2">3</span>
+                                    <span className="intro-meta-label-v2">단계 활동</span>
+                                </div>
+                                <div className="intro-meta-divider-v2" />
+                                <div className="intro-meta-item-v2">
+                                    <span className="intro-meta-num-v2">7</span>
+                                    <span className="intro-meta-label-v2">핵심 단어</span>
+                                </div>
+                                <div className="intro-meta-divider-v2" />
+                                <div className="intro-meta-item-v2">
+                                    <span className="intro-meta-num-v2">15<span style={{ fontSize: 14 }}>min</span></span>
+                                    <span className="intro-meta-label-v2">예상 시간</span>
+                                </div>
+                            </div>
+                            <div className="intro-cta-wrap-v2">
+                                <button className="intro-cta-btn-v2" onClick={onStart}>
+                                    <span>독후 활동 시작하기</span>
+                                    <span className="intro-cta-arrow-v2">→</span>
+                                </button>
+                                <p className="intro-cta-hint-v2">✨ AI가 나만의 이야기를 만들어줘요~!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        ReactDOM.createRoot(document.getElementById('root')).render(<IntroScreen />);
+    </script>
+</body>
+
+</html>

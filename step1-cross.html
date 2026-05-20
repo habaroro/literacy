@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>빈칸 맞추기 · 방아 찧는 호랑이</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link rel="stylesheet" crossorigin
+        href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
+    <link rel="stylesheet" href="common.css" />
+    <style>
+        /* 오답 클릭 시 셀 흔들기 (강한 shake) */
+        @keyframes cellWrongShake {
+
+            0%,
+            100% {
+                transform: translateX(0) scale(1.15);
+            }
+
+            15% {
+                transform: translateX(-8px) scale(1.15);
+            }
+
+            30% {
+                transform: translateX(8px) scale(1.15);
+            }
+
+            45% {
+                transform: translateX(-6px) scale(1.15);
+            }
+
+            60% {
+                transform: translateX(6px) scale(1.15);
+            }
+
+            75% {
+                transform: translateX(-3px) scale(1.15);
+            }
+
+            90% {
+                transform: translateX(3px) scale(1.15);
+            }
+        }
+
+        .a-cell-wrong-shake {
+            animation: cellWrongShake 0.5s ease-in-out;
+        }
+
+        /* 오답 클릭 시 빨간 플래시 효과 */
+        @keyframes redFlash {
+
+            0%,
+            100% {
+                background: #C4B9A9;
+                border-color: #B0A595;
+            }
+
+            50% {
+                background: #FCA5A5;
+                border-color: #DC2626;
+                box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.2);
+            }
+        }
+
+        .a-red-flash {
+            animation: redFlash 0.5s ease-in-out;
+        }
+
+        /* X 표시 페이드 효과 */
+        @keyframes xMarkPop {
+            0% {
+                transform: translate(-50%, -50%) scale(0) rotate(-180deg);
+                opacity: 0;
+            }
+
+            40% {
+                transform: translate(-50%, -50%) scale(1.4) rotate(0deg);
+                opacity: 1;
+            }
+
+            70% {
+                transform: translate(-50%, -50%) scale(1) rotate(0deg);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate(-50%, -50%) scale(1.2) rotate(0deg);
+                opacity: 0;
+            }
+        }
+
+        .x-mark {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            color: #DC2626;
+            font-weight: 900;
+            pointer-events: none;
+            animation: xMarkPop 0.7s cubic-bezier(.36, .07, .19, .97) forwards;
+            z-index: 20;
+            text-shadow: 0 2px 8px rgba(220, 38, 38, 0.4);
+        }
+
+        /* 화면 살짝 진동 (오답 시) */
+        @keyframes screenShake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            20% {
+                transform: translateX(-4px);
+            }
+
+            40% {
+                transform: translateX(4px);
+            }
+
+            60% {
+                transform: translateX(-2px);
+            }
+
+            80% {
+                transform: translateX(2px);
+            }
+        }
+
+        .a-screen-shake {
+            animation: screenShake 0.3s ease-in-out;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+    <script src="common.js"></script>
+    <script type="text/babel">
+        const { useState, useRef } = React;
+
+        function AcquiredPopup({ words, onNext }) {
+            return (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200 }}>
+                    <div className="a-slideup" style={{ background: 'var(--card-solid)', borderRadius: 32, padding: '64px 48px', maxWidth: 560, width: '90%', textAlign: 'center', boxShadow: 'var(--shadow-lg)' }}>
+                        <div style={{ fontSize: 64, marginBottom: 20 }}>🎉</div>
+                        <h2 className="font-h" style={{ fontSize: 36, color: 'var(--navy-dark)', marginBottom: 12 }}>단어를 모두 모았어요!</h2>
+                        <p style={{ color: 'var(--gray)', fontSize: 16, marginBottom: 40, fontWeight: 500 }}>이 단어들로 다음 이야기를 만들어봐요</p>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center', marginBottom: 56 }}>
+                            {words.map((w, i) => (
+                                <span key={i} className="font-h a-pop" style={{ padding: '12px 28px', background: 'var(--primary-soft)', color: 'var(--primary)', borderRadius: 30, fontSize: 22, animationDelay: `${i * 80}ms` }}>{w}</span>
+                            ))}
+                        </div>
+                        <button className="btn-primary" style={{ width: '100%', fontSize: 20, padding: '20px' }} onClick={onNext}>문장 플레이 시작 →</button>
+                    </div>
+                </div>
+            );
+        }
+
+        function CrossScreen() {
+            const [filled, setFilled] = useState({});
+            const [usedCards, setUsedCards] = useState([]);
+            const [wrongId, setWrongId] = useState(null);
+            const [justId, setJustId] = useState(null);
+            const [activeId, setActiveId] = useState(null);
+            const [wrongKeyId, setWrongKeyId] = useState(null);
+            const [mascotMessage, setMascotMessage] = useState('빈 칸에 들어갈 단어를 눌러줘!');
+            const [mascotImg, setMascotImg] = useState('img/cha_02.png');
+            const [popup, setPopup] = useState(false);
+            const [showXMark, setShowXMark] = useState(null); // 셀 인덱스 (오답 X 표시용)
+            const [screenShake, setScreenShake] = useState(false);
+            const xMarkKeyRef = useRef(0);
+
+            const CW = window.CW;
+            const blanks = CW.cells.filter(c => c?.kind === 'blank');
+            const allFilled = Object.keys(filled).length === blanks.length;
+
+            // 초기 활성 셀: 첫 번째 빈칸 자동 선택
+            const activeBlank = (activeId && !filled[activeId])
+                ? blanks.find(b => b.id === activeId)
+                : blanks.find(b => !filled[b.id]) || null;
+
+            const clickCard = (card) => {
+                if (usedCards.includes(card.id)) return;
+                if (!activeBlank) return;
+
+                if (card.syl === activeBlank.expected) {
+                    // ✅ 정답
+                    const msgs = ['와! 맞았어! 👍', '정말 대단해! ✨', '정답이야! 🎈', '멋지다! 😍'];
+                    setMascotMessage(msgs[Math.floor(Math.random() * msgs.length)]);
+                    setMascotImg('img/cha_02.png');
+                    setFilled({ ...filled, [activeBlank.id]: card.syl });
+                    setUsedCards([...usedCards, card.id]);
+                    setJustId(activeBlank.id);
+                    setActiveId(null);
+                    setTimeout(() => setJustId(null), 700);
+                } else {
+                    // ❌ 오답 - 강화된 액션
+                    const msgs = [
+                        '앗! 다시 생각해볼까? 🧐',
+                        '음... 이건 아닌 것 같아! 😣',
+                        '아쉬워! 다른 글자를 골라봐 ✏️',
+                        '에구.. 한 번 더 도전! 💪',
+                        '저런! 힌트를 다시 읽어볼까? 📖'
+                    ];
+                    setMascotMessage(msgs[Math.floor(Math.random() * msgs.length)]);
+                    setMascotImg('img/cha_02_01.png');
+                    setWrongId(activeBlank.id);
+                    setWrongKeyId(card.id);
+
+                    // 셀 인덱스 찾아서 X 표시
+                    const cellIdx = CW.cells.findIndex(c => c?.id === activeBlank.id);
+                    xMarkKeyRef.current += 1;
+                    setShowXMark({ idx: cellIdx, key: xMarkKeyRef.current });
+
+                    // 화면 진동
+                    setScreenShake(true);
+
+                    setTimeout(() => {
+                        setWrongId(null);
+                        setWrongKeyId(null);
+                        setScreenShake(false);
+                        setMascotImg('img/cha_02.png');
+                    }, 500);
+                    setTimeout(() => setShowXMark(null), 700);
+                }
+            };
+
+            const CW_CELL = 64;
+            const handleComplete = () => {
+                window.AppState.set('acquired', Object.values(CW.wordMap));
+                setPopup(true);
+            };
+            const handleNext = () => {
+                location.href = 'step2.html';
+            };
+
+            return (
+                <>
+                    <div className={`a-fadeup ${screenShake ? 'a-screen-shake' : ''}`} style={{ padding: window.innerHeight < 800 ? '20px 0' : '30px 0' }}>
+
+                        {/* Header: Title + Progress + Mascot */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, gap: 24, flexWrap: 'wrap' }}>
+                            {/* LEFT: Title + Progress */}
+                            <div style={{ flex: '1 1 480px', maxWidth: 560 }}>
+                                <div style={{ display: 'flex', alignItems: 'baseline', gap: 16, marginBottom: 14 }}>
+                                    <h2 className="font-h" style={{ fontSize: 28, color: 'var(--navy-dark)', margin: 0 }}>빈칸 맞추기</h2>
+                                    <div className="font-h" style={{ fontSize: 18, color: 'var(--gray)' }}>
+                                        <span style={{ color: 'var(--primary)' }}>{Object.keys(filled).length}</span> / {blanks.length}
+                                    </div>
+                                </div>
+                                <div style={{ height: 10, background: 'var(--gray-light)', borderRadius: 5, overflow: 'hidden', maxWidth: 320 }}>
+                                    <div style={{ height: '100%', background: 'var(--primary)', borderRadius: 5, width: `${(Object.keys(filled).length / blanks.length) * 100}%`, transition: 'width .6s cubic-bezier(0.16,1,0.3,1)' }} />
+                                </div>
+                            </div>
+
+                            {/* RIGHT: Mascot with Speech Bubble */}
+                            <div style={{ position: 'relative', minHeight: 120, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', minWidth: 360 }}>
+                                <div className="a-pop" key={mascotMessage} style={{
+                                    background: '#FFF', padding: '12px 18px', borderRadius: '20px',
+                                    boxShadow: '0 8px 20px rgba(0,0,0,0.08)', border: '2px solid var(--primary-soft)',
+                                    fontSize: 14, fontWeight: 600, color: '#475569', whiteSpace: 'nowrap',
+                                    marginRight: 12, position: 'relative'
+                                }}>
+                                    {mascotMessage}
+                                    <div style={{
+                                        position: 'absolute', right: -8, top: '50%',
+                                        width: 14, height: 14, background: '#FFF',
+                                        borderRight: '2px solid var(--primary-soft)',
+                                        borderBottom: '2px solid var(--primary-soft)',
+                                        transform: 'translateY(-50%) rotate(-45deg)', zIndex: 1
+                                    }}></div>
+                                </div>
+                                <img src={mascotImg} alt="" style={{ width: 120, height: 120, objectFit: 'contain', filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.1))', flexShrink: 0 }} />
+                            </div>
+                        </div>
+
+                        {/* Main Layout: LEFT (Hints) + RIGHT (Puzzle + Cards) */}
+                        <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+
+                            {/* LEFT: Hint List (White Card) */}
+                            <div style={{ width: 320, flexShrink: 0, background: 'var(--card-solid)', borderRadius: 28, padding: '28px 24px', boxShadow: '0 10px 40px rgba(79,70,229,0.06)' }}>
+                                <div className="font-h" style={{ fontSize: 16, color: 'var(--navy-dark)', marginBottom: 16, paddingBottom: 12, borderBottom: '1px solid var(--gray-light)' }}>
+                                    책 속의 단어를 맞춰봐!
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                    {CW.hints.map((h, i) => {
+                                        const hintWords = ['호랑이', '창호지', '산골집', '부부', '오빠', '감자', '남매'];
+                                        const isActive = activeBlank && hintWords[i] === activeBlank.word;
+                                        const isSolved = Object.keys(CW.wordMap).some(k => CW.wordMap[k] === hintWords[i] && filled[k]);
+                                        return (
+                                            <div key={i}
+                                                onClick={() => {
+                                                    if (isSolved) return;
+                                                    const b = blanks.find(x => x.word === hintWords[i]);
+                                                    if (b && !filled[b.id]) setActiveId(b.id);
+                                                }}
+                                                style={{
+                                                    display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', borderRadius: 14,
+                                                    transition: 'all .25s ease',
+                                                    cursor: isSolved ? 'default' : 'pointer',
+                                                    opacity: isSolved ? 0.35 : 1,
+                                                    background: isActive ? 'var(--primary-soft)' : 'transparent',
+                                                    textDecoration: isSolved ? 'line-through' : 'none',
+                                                }}
+                                                onMouseEnter={e => { if (!isSolved && !isActive) e.currentTarget.style.background = '#F8FAFC'; }}
+                                                onMouseLeave={e => { if (!isSolved && !isActive) e.currentTarget.style.background = 'transparent'; }}>
+                                                <p style={{
+                                                    fontSize: 15, fontWeight: 600, margin: 0, lineHeight: 1.5,
+                                                    color: isSolved ? '#94A3B8' : (isActive ? 'var(--primary-deep)' : 'var(--navy)')
+                                                }}>
+                                                    {h}
+                                                </p>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                {allFilled && (
+                                    <button className="btn-primary a-pop" style={{ width: '100%', padding: '18px', fontSize: 18, borderRadius: 20, marginTop: 20 }} onClick={handleComplete}>
+                                        다음 단계로 →
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* RIGHT: Puzzle + Cards */}
+                            <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 18 }}>
+
+                                {/* Puzzle Board */}
+                                <div style={{ background: '#F5F0E6', border: '2px solid #EAE1D3', borderRadius: 32, padding: '32px', display: 'flex', justifyContent: 'center', position: 'relative' }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: `repeat(${CW.cols},${CW_CELL}px)`, gap: 8, position: 'relative', zIndex: 2 }}>
+                                        {CW.cells.map((cell, i) => {
+                                            if (!cell) return <div key={i} style={{ width: CW_CELL, height: CW_CELL }} />;
+                                            const baseStyle = { width: CW_CELL, height: CW_CELL, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 14, fontFamily: 'var(--font-h)', fontWeight: 700, fontSize: 34, transition: 'all .2s cubic-bezier(0.16,1,0.3,1)' };
+
+                                            if (cell.kind === 'fixed') return (
+                                                <div key={i} style={{ ...baseStyle, background: '#FFF', color: '#333', border: '1px solid #DDD', position: 'relative' }}>
+                                                    <div style={{ position: 'absolute', inset: 4, border: '2px dashed #E5E5E5', borderRadius: 8, pointerEvents: 'none' }} />
+                                                    <span style={{ position: 'relative' }}>{cell.syl}</span>
+                                                </div>
+                                            );
+
+                                            const val = filled[cell.id];
+                                            const wrong = wrongId === cell.id;
+                                            const just = justId === cell.id;
+                                            const active = activeBlank?.id === cell.id;
+                                            const showX = showXMark && showXMark.idx === i;
+
+                                            let cellBg = val ? '#FFF' : '#C4B9A9';
+                                            let cellColor = val ? '#333' : 'transparent';
+                                            let cellBorder = val ? '3px solid #CCC' : active ? '4px solid #F97316' : '3px solid #B0A595';
+
+                                            return (
+                                                <div key={i}
+                                                    className={`${just ? 'a-pop' : ''} ${wrong ? 'a-cell-wrong-shake a-red-flash' : ''} ${active && !wrong ? 'a-hint-blink' : ''}`}
+                                                    onClick={() => !val && setActiveId(cell.id)}
+                                                    style={{ ...baseStyle, background: cellBg, color: cellColor, border: cellBorder, cursor: val ? 'default' : 'pointer', position: 'relative', transform: active && !wrong ? 'scale(1.15)' : 'scale(1)', zIndex: active ? 10 : 1 }}>
+                                                    {val && <div style={{ position: 'absolute', inset: 4, border: '2px dashed #E5E5E5', borderRadius: 8, pointerEvents: 'none' }} />}
+                                                    <span style={{ position: 'relative' }}>{val || ''}</span>
+                                                    {showX && (
+                                                        <span key={showXMark.key} className="x-mark">✕</span>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                {/* Syllable Cards */}
+                                <div style={{ background: '#F5F0E6', borderRadius: 28, padding: '24px', display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'center', boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.03)' }}>
+                                    {CW.cards.map(card => {
+                                        const used = usedCards.includes(card.id);
+                                        const enabled = !used && !!activeBlank;
+                                        const isWrongKey = wrongKeyId === card.id;
+                                        return (
+                                            <button key={card.id} onClick={() => clickCard(card)} disabled={used}
+                                                className={isWrongKey ? 'a-shake' : ''}
+                                                style={{
+                                                    width: 72, height: 72, borderRadius: 16,
+                                                    border: isWrongKey ? '3px solid #DC2626' : '3px solid #CCC',
+                                                    cursor: enabled ? 'pointer' : 'default',
+                                                    fontFamily: 'var(--font-h)', fontWeight: 700, fontSize: 34,
+                                                    transition: 'all .2s cubic-bezier(0.16,1,0.3,1)',
+                                                    background: isWrongKey ? '#FEE2E2' : '#FFF',
+                                                    color: isWrongKey ? '#DC2626' : '#333',
+                                                    boxShadow: isWrongKey ? '0 6px 0 #DC2626' : (enabled ? '0 6px 0 #CCC' : '0 0 0 #CCC'),
+                                                    transform: enabled ? 'translateY(0)' : 'translateY(6px)',
+                                                    opacity: used ? 0.3 : 1,
+                                                    position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                                }}>
+                                                <div style={{ position: 'absolute', inset: 4, border: '2px dashed #E5E5E5', borderRadius: 8, pointerEvents: 'none' }} />
+                                                <span style={{ position: 'relative' }}>{card.syl}</span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+                    </div >
+                    {popup && <AcquiredPopup words={Object.values(CW.wordMap)} onNext={handleNext} />
+                    }
+                </>
+            );
+        }
+
+        function App() {
+            return (
+                <div style={{ minHeight: '100vh', background: 'linear-gradient(145deg,#EEF2FF 0%,#F8FAFC 45%,#FFF0F8 100%)' }}>
+                    <window.StepHeader stepIdx={0} />
+                    <div style={{ maxWidth: 1376, margin: '0 auto', padding: '0 32px' }}>
+                        <CrossScreen />
+                    </div>
+                </div>
+            );
+        }
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+
+</html>

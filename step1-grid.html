@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>글자 연결 · 방아 찧는 호랑이</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link rel="stylesheet" crossorigin
+        href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
+    <link rel="stylesheet" href="common.css" />
+    <style>
+        /* ── Fixed layout dimensions (Tablet landscape optimized) ── */
+        :root {
+            --col-left: 320px;
+            --col-gap: 28px;
+            --col-right: 488px;
+            /* 7 * 60 + 6 * 6 + 14 * 2 + 8 * 2 = 488 */
+            --layout-width: 836px;
+            /* col-left + col-gap + col-right */
+        }
+
+        .stage {
+            width: var(--layout-width);
+            margin: 0 auto;
+        }
+
+        .stage-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+            min-height: 90px;
+        }
+
+        .stage-header-left {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .stage-header-right {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .stage-body {
+            display: grid;
+            grid-template-columns: var(--col-left) var(--col-right);
+            gap: var(--col-gap);
+            align-items: start;
+        }
+
+        /* Timer */
+        @keyframes timerPulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                color: #DC2626;
+            }
+
+            50% {
+                transform: scale(1.1);
+                color: #EF4444;
+            }
+        }
+
+        .timer-warning {
+            animation: timerPulse 0.8s ease-in-out infinite;
+        }
+
+        @keyframes hintBlink {
+
+            0%,
+            100% {
+                transform: scale(1);
+                border-color: #F97316;
+                box-shadow: 0 0 0 0 rgba(249, 115, 22, 0);
+            }
+
+            50% {
+                transform: scale(1.12);
+                border-color: #FB923C;
+                box-shadow: 0 0 0 8px rgba(249, 115, 22, 0.2);
+            }
+        }
+
+        @keyframes rideLine {
+            0% {
+                transform: translate(0, 0) scale(.6);
+                opacity: 0;
+            }
+
+            15% {
+                transform: translate(calc(var(--tx)*.15), calc(var(--ty)*.15)) scale(1.1);
+                opacity: 1;
+            }
+
+            85% {
+                transform: translate(calc(var(--tx)*.95), calc(var(--ty)*.95)) scale(1.1);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate(var(--tx), var(--ty)) scale(1.3);
+                opacity: 0;
+            }
+        }
+
+        @keyframes confettiFall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        .confetti-piece {
+            position: fixed;
+            width: 12px;
+            height: 16px;
+            top: 0;
+            z-index: 999;
+            pointer-events: none;
+            animation: confettiFall linear forwards;
+        }
+
+        @keyframes defPopIn {
+            0% {
+                transform: scale(.5) translateY(40px);
+                opacity: 0;
+            }
+
+            60% {
+                transform: scale(1.05) translateY(-5px);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .def-pop-in {
+            animation: defPopIn 0.55s cubic-bezier(.34, 1.56, .64, 1) forwards;
+        }
+
+        @keyframes celebrateTitle {
+            0% {
+                transform: scale(0) rotate(-15deg);
+                opacity: 0;
+            }
+
+            60% {
+                transform: scale(1.15) rotate(3deg);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+
+        .celebrate-title {
+            animation: celebrateTitle 0.8s cubic-bezier(.34, 1.56, .64, 1) forwards;
+        }
+
+        @keyframes timeUpShake {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            25% {
+                transform: scale(1.05) rotate(-2deg);
+            }
+
+            75% {
+                transform: scale(1.05) rotate(2deg);
+            }
+        }
+
+        .time-up-icon {
+            animation: timeUpShake 0.6s ease-in-out infinite;
+        }
+
+        /* Stack on small screens (below tablet) */
+        @media (max-width: 900px) {
+            :root {
+                --layout-width: 100%;
+            }
+
+            .stage {
+                width: 100%;
+                padding: 0 16px;
+            }
+
+            .stage-body {
+                grid-template-columns: 1fr;
+            }
+
+            .stage-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+    <script src="common.js"></script>
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        /* Grid cell sizing — tuned to match 488px column width */
+        const CELL = 60, GAP = 6, PAD = 14;
+        const cellCenter = (r, c) => ({ x: PAD + c * (CELL + GAP) + CELL / 2, y: PAD + r * (CELL + GAP) + CELL / 2 });
+        const GRID_INNER = PAD * 2 + 7 * (CELL + GAP) - GAP; // 14*2 + 7*66 - 6 = 472
+
+        const WORD_DEFINITIONS = {
+            '호랑이': { emoji: '🐯', meaning: '깊은 산속에 사는 크고 무서운 동물이에요.', detail: '옛이야기에서 호랑이는 무섭기도 하지만 때로는 어리석거나 친근하게 등장해요. 우리 옛이야기의 단골 주인공이지요!', color: '#E11D48' },
+            '창호지': { emoji: '📜', meaning: '문에 바르는 얇고 하얀 종이예요.', detail: '옛날에는 문에 유리 대신 한지(창호지)를 발랐어요. 얇지만 바람을 막아주고, 햇빛이 은은하게 들어오게 해줘요.', color: '#7C3AED' },
+            '산골집': { emoji: '🏠', meaning: '깊은 산속 외딴 곳에 있는 집이에요.', detail: '마을에서 떨어진 산속에 지어진 작고 소박한 집을 말해요. 자연 속에서 조용하게 살아가는 보금자리지요.', color: '#4361EE' },
+            '감자': { emoji: '🥔', meaning: '땅속에서 자라는 둥글둥글한 먹거리예요.', detail: '추운 겨울이나 배고픈 시절에 든든하게 배를 채워주던 고마운 식량이에요. 화롯불에 구워 먹으면 정말 맛있답니다!', color: '#EA580C' },
+            '남매': { emoji: '👫', meaning: '오빠(또는 남동생)와 누나(또는 여동생)를 함께 이르는 말이에요.', detail: '한 부모님 아래 태어난 남자아이와 여자아이를 말해요. 서로 아껴주고 지켜주는 따뜻한 사이지요.', color: '#D97706' },
+            '부부': { emoji: '💑', meaning: '결혼한 남편과 아내를 함께 이르는 말이에요.', detail: '서로를 평생의 동반자로 약속한 두 사람을 말해요. 함께 가족을 이루고 서로 도우며 살아가지요.', color: '#DB2777' },
+            '오빠': { emoji: '👦', meaning: '여동생이 자기보다 나이 많은 남자 형제를 부르는 말이에요.', detail: '동생을 든든하게 지켜주고 챙겨주는 든든한 존재예요. 이야기 속 오빠처럼 용감하게 동생을 보호하기도 해요!', color: '#0284C7' },
+        };
+
+        function Timer({ seconds, isWarning }) {
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            return (
+                <div className={isWarning ? 'timer-warning' : ''} style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    padding: '6px 14px',
+                    background: isWarning ? '#FEE2E2' : 'rgba(255,255,255,0.75)',
+                    borderRadius: 20,
+                    fontFamily: 'var(--font-h)', fontWeight: 800, fontSize: 17,
+                    color: isWarning ? '#DC2626' : 'var(--navy-dark)',
+                    border: `2px solid ${isWarning ? '#FCA5A5' : 'var(--gray-light)'}`,
+                    transition: 'all 0.3s ease',
+                    whiteSpace: 'nowrap'
+                }}>
+                    <span style={{ fontSize: 16 }}>⏱</span>
+                    <span>{m}:{s.toString().padStart(2, '0')}</span>
+                </div>
+            );
+        }
+
+        function WordDefinitionPopup({ word, onClose }) {
+            const def = WORD_DEFINITIONS[word];
+            if (!def) return null;
+            return (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.55)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 300, padding: 20 }}
+                    onClick={onClose}>
+                    <div className="def-pop-in" onClick={e => e.stopPropagation()}
+                        style={{ background: '#fff', borderRadius: 28, padding: '36px 32px', maxWidth: 440, width: '100%', boxShadow: '0 30px 80px rgba(15,23,42,0.3)', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+                        <div style={{ position: 'absolute', top: -40, right: -40, width: 140, height: 140, borderRadius: '50%', background: `radial-gradient(circle, ${def.color}30, transparent 70%)`, pointerEvents: 'none' }} />
+                        <div style={{ display: 'inline-block', padding: '6px 16px', background: def.color + '15', color: def.color, borderRadius: 100, fontSize: 12, fontWeight: 800, letterSpacing: 1.5, marginBottom: 14 }}>
+                            새로운 단어를 배웠어요!
+                        </div>
+                        <div style={{ fontSize: 56, marginBottom: 6, lineHeight: 1 }}>{def.emoji}</div>
+                        <h2 className="font-h" style={{ fontSize: 34, color: def.color, marginBottom: 16, letterSpacing: -1 }}>{word}</h2>
+                        <p style={{ fontSize: 17, color: 'var(--navy-dark)', lineHeight: 1.6, fontWeight: 700, marginBottom: 14, wordBreak: 'keep-all' }}>
+                            {def.meaning}
+                        </p>
+                        <div style={{ background: '#F8FAFC', borderRadius: 16, padding: '16px 18px', marginBottom: 24, textAlign: 'left', borderLeft: `4px solid ${def.color}` }}>
+                            <p style={{ fontSize: 13.5, color: 'var(--gray)', lineHeight: 1.7, margin: 0, fontWeight: 500, wordBreak: 'keep-all' }}>
+                                {def.detail}
+                            </p>
+                        </div>
+                        <button onClick={onClose} className="btn-primary" style={{ width: '100%', padding: '14px', fontSize: 16, background: `linear-gradient(135deg, ${def.color}, ${def.color}DD)`, boxShadow: `0 8px 24px ${def.color}50` }}>
+                            좋아요! 계속하기 →
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        function AcquiredPopup({ words, onNext }) {
+            const confetti = Array.from({ length: 60 }, (_, i) => {
+                const colors = ['#F472B6', '#FBBF24', '#34D399', '#60A5FA', '#A78BFA', '#FB923C', '#EC4899', '#10B981'];
+                return {
+                    left: Math.random() * 100, color: colors[i % colors.length],
+                    delay: Math.random() * 0.5, duration: 2 + Math.random() * 2,
+                    rotate: Math.random() * 360,
+                };
+            });
+            return (
+                <>
+                    {confetti.map((c, i) => (
+                        <div key={i} className="confetti-piece" style={{
+                            left: `${c.left}%`, background: c.color,
+                            animationDelay: `${c.delay}s`, animationDuration: `${c.duration}s`,
+                            transform: `rotate(${c.rotate}deg)`,
+                            borderRadius: i % 3 === 0 ? '50%' : '2px'
+                        }} />
+                    ))}
+                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200 }}>
+                        <div className="a-slideup" style={{ background: 'var(--card-solid)', borderRadius: 32, padding: '52px 44px', maxWidth: 560, width: '90%', textAlign: 'center', boxShadow: 'var(--shadow-lg)' }}>
+                            <div className="celebrate-title" style={{ fontSize: 72, marginBottom: 12, lineHeight: 1 }}>🎊</div>
+                            <h2 className="font-h" style={{ fontSize: 34, color: 'var(--navy-dark)', marginBottom: 10 }}>완벽해요!</h2>
+                            <p style={{ color: 'var(--gray)', fontSize: 16, marginBottom: 32, fontWeight: 500 }}>7개의 단어를 모두 찾았어요! 이제 이야기를 만들어볼까요?</p>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', marginBottom: 40 }}>
+                                {words.map((w, i) => (
+                                    <span key={i} className="font-h a-pop" style={{ padding: '10px 22px', background: 'var(--primary-soft)', color: 'var(--primary)', borderRadius: 30, fontSize: 18, animationDelay: `${i * 80}ms` }}>{w}</span>
+                                ))}
+                            </div>
+                            <button className="btn-primary" style={{ width: '100%', fontSize: 18, padding: '18px' }} onClick={onNext}>문장 플레이 시작 →</button>
+                        </div>
+                    </div>
+                </>
+            );
+        }
+
+        function TimeUpPopup({ foundCount, onRetry, onContinue }) {
+            return (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.65)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 250 }}>
+                    <div className="a-slideup" style={{ background: '#fff', borderRadius: 28, padding: '44px 36px', maxWidth: 440, width: '90%', textAlign: 'center', boxShadow: 'var(--shadow-lg)' }}>
+                        <div className="time-up-icon" style={{ fontSize: 64, marginBottom: 14, lineHeight: 1, display: 'inline-block' }}>⏰</div>
+                        <h2 className="font-h" style={{ fontSize: 28, color: 'var(--navy-dark)', marginBottom: 10 }}>시간이 다 됐어요!</h2>
+                        <p style={{ color: 'var(--gray)', fontSize: 15, marginBottom: 10, fontWeight: 500 }}>
+                            지금까지 <strong style={{ color: 'var(--primary)' }}>{foundCount}개</strong>의 단어를 찾았어요
+                        </p>
+                        <p style={{ color: 'var(--gray)', fontSize: 13, marginBottom: 28, fontWeight: 500 }}>
+                            다시 도전하거나 지금까지 찾은 단어로 진행할 수 있어요
+                        </p>
+                        <div style={{ display: 'flex', gap: 10 }}>
+                            <button onClick={onRetry} className="btn-ghost" style={{ flex: 1, padding: '14px' }}>↺ 다시 도전</button>
+                            {foundCount > 0 && (
+                                <button onClick={onContinue} className="btn-primary" style={{ flex: 1, padding: '14px', fontSize: 15 }}>계속 진행 →</button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function GridScreen() {
+            const TOTAL_TIME = 180;
+            const [foundWords, setFoundWords] = useState([]);
+            const [sel, setSel] = useState([]);
+            const [anim, setAnim] = useState(null);
+            const [particles, setParticles] = useState([]);
+            const [hintCell, setHintCell] = useState(null);
+            const [mascotMessage, setMascotMessage] = useState('드래그해서 숨은 단어를 찾아봐!');
+            const [popup, setPopup] = useState(false);
+            const [definitionWord, setDefinitionWord] = useState(null);
+            const [timeLeft, setTimeLeft] = useState(TOTAL_TIME);
+            const [timerActive, setTimerActive] = useState(true);
+            const [timeUpOpen, setTimeUpOpen] = useState(false);
+
+            const gridRef = useRef(null);
+            const draggingRef = useRef(false);
+            const anchorRef = useRef(null);
+            const animActiveRef = useRef(false);
+            const selRef = useRef([]);
+            const foundWordsRef = useRef(foundWords);
+            useEffect(() => { foundWordsRef.current = foundWords; }, [foundWords]);
+
+            const allFound = foundWords.length === window.GRID_DATA.targets.length;
+            const isWarning = timeLeft <= 30 && timerActive;
+
+            useEffect(() => {
+                if (!timerActive || allFound) return;
+                if (timeLeft <= 0) {
+                    setTimerActive(false);
+                    setTimeUpOpen(true);
+                    return;
+                }
+                const id = setTimeout(() => setTimeLeft(t => t - 1), 1000);
+                return () => clearTimeout(id);
+            }, [timeLeft, timerActive, allFound]);
+
+            useEffect(() => {
+                if (allFound) setTimerActive(false);
+            }, [allFound]);
+
+            const foundMap = {};
+            window.GRID_DATA.targets.forEach(t => {
+                if (foundWords.includes(t.word)) t.cells.forEach(([r, c]) => { foundMap[`${r}-${c}`] = t; });
+            });
+
+            const inSel = (r, c) => sel.some(([sr, sc]) => sr === r && sc === c);
+
+            const getCellAt = (x, y) => {
+                if (!gridRef.current) return null;
+                for (const el of gridRef.current.querySelectorAll('[data-rc]')) {
+                    const rect = el.getBoundingClientRect();
+                    if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+                        return el.dataset.rc.split(',').map(Number);
+                    }
+                }
+                return null;
+            };
+
+            const triggerHit = (newSel, hit) => {
+                const startP = cellCenter(newSel[0][0], newSel[0][1]);
+                const endP = cellCenter(newSel[newSel.length - 1][0], newSel[newSel.length - 1][1]);
+                const key = Date.now();
+                setAnim({ start: startP, end: endP, color: hit.color, key });
+                animActiveRef.current = true;
+                const burst = [];
+                for (let i = 0; i < 14; i++) {
+                    const ang = Math.random() * Math.PI * 2;
+                    const dist = 30 + Math.random() * 45;
+                    burst.push({ id: key + '-' + i, x: endP.x, y: endP.y, dx: Math.cos(ang) * dist, dy: Math.sin(ang) * dist, color: hit.color });
+                }
+                setParticles(p => [...p, ...burst]);
+                setTimeout(() => setParticles(p => p.filter(pa => !pa.id.startsWith(key + '-'))), 900);
+                setFoundWords(p => [...p, hit.word]);
+                draggingRef.current = false;
+                anchorRef.current = null;
+                selRef.current = [];
+                const msgs = ['우와, 단어를 찾았어! 🎉', '정말 멋진 실력이야! 👍', '대단해! 맞았어! ✨', '찾았다! 잘했어! 😍'];
+                setMascotMessage(msgs[Math.floor(Math.random() * msgs.length)]);
+                setTimeout(() => {
+                    setSel([]); setAnim(null); animActiveRef.current = false;
+                    setDefinitionWord(hit.word);
+                }, 900);
+            };
+
+            const computeFreeLine = (ar, ac, r, c) => {
+                if (r === ar && c === ac) return [[ar, ac]];
+                const rawDr = r - ar, rawDc = c - ac;
+                const adDr = Math.abs(rawDr), adDc = Math.abs(rawDc);
+                let dr, dc, n;
+                if (adDr === 0) { dr = 0; dc = Math.sign(rawDc); n = adDc; }
+                else if (adDc === 0) { dr = Math.sign(rawDr); dc = 0; n = adDr; }
+                else if (adDr === adDc) { dr = Math.sign(rawDr); dc = Math.sign(rawDc); n = adDr; }
+                else {
+                    const ratio = adDr / adDc;
+                    if (ratio < 0.4142) { dr = 0; dc = Math.sign(rawDc); n = adDc; }
+                    else if (ratio > 2.414) { dr = Math.sign(rawDr); dc = 0; n = adDr; }
+                    else { dr = Math.sign(rawDr); dc = Math.sign(rawDc); n = Math.max(adDr, adDc); }
+                }
+                const cells = [];
+                for (let i = 0; i <= n && i < 7; i++) {
+                    const nr = ar + dr * i, nc = ac + dc * i;
+                    if (nr < 0 || nr >= 7 || nc < 0 || nc >= 7) break;
+                    cells.push([nr, nc]);
+                }
+                return cells;
+            };
+
+            const handleMove = (cx, cy) => {
+                if (!draggingRef.current || !anchorRef.current || animActiveRef.current) return;
+                const cell = getCellAt(cx, cy);
+                if (!cell) return;
+                const [r, c] = cell;
+                const [ar, ac] = anchorRef.current;
+                const newSel = computeFreeLine(ar, ac, r, c);
+                selRef.current = newSel;
+                setSel(newSel);
+            };
+
+            const endDrag = () => {
+                if (animActiveRef.current) return;
+                draggingRef.current = false;
+                const cur = selRef.current;
+                if (cur.length >= 2) {
+                    const word = cur.map(([sr, sc]) => window.GRID_DATA.cells[sr][sc]).join('');
+                    const hit = window.GRID_DATA.targets.find(t => t.word === word && !foundWordsRef.current.includes(t.word));
+                    if (hit) { triggerHit(cur, hit); return; }
+                }
+                anchorRef.current = null;
+                selRef.current = [];
+                setSel([]);
+            };
+
+            const startDrag = (r, c) => {
+                if (animActiveRef.current || !timerActive) return;
+                draggingRef.current = true;
+                anchorRef.current = [r, c];
+                const init = [[r, c]];
+                selRef.current = init;
+                setSel(init);
+            };
+
+            const showHint = (target) => {
+                if (foundWords.includes(target.word)) return;
+                setHintCell(target.cells[0]);
+                const msgs = ['여기 힌트를 보여줄게! 💡', '어디 숨었나 잘 봐봐! 👀', '이 글자부터 시작이야! 🌟'];
+                setMascotMessage(msgs[Math.floor(Math.random() * msgs.length)]);
+                setTimeout(() => setHintCell(null), 2000);
+            };
+
+            const linePoints = sel.map(([r, c]) => { const p = cellCenter(r, c); return `${p.x},${p.y}`; }).join(' ');
+
+            const handleDefClose = () => {
+                setDefinitionWord(null);
+                if (allFound) {
+                    setTimeout(() => {
+                        window.AppState.set('acquired', [...new Set(foundWordsRef.current)]);
+                        setPopup(true);
+                    }, 200);
+                }
+            };
+
+            const handleNext = () => { location.href = 'step2.html'; };
+            const handleRetry = () => { location.reload(); };
+            const handleContinueAnyway = () => {
+                setTimeUpOpen(false);
+                if (foundWords.length === 0) return;
+                window.AppState.set('acquired', [...new Set(foundWords)]);
+                setPopup(true);
+            };
+
+            const progressPct = (foundWords.length / window.GRID_DATA.targets.length) * 100;
+
+            return (
+                <>
+                    <div className="a-fadeup" style={{ padding: '24px 0' }}>
+                        <div className="stage">
+
+                            {/* HEADER — locked width matching body below */}
+                            <div className="stage-header">
+                                {/* LEFT side: Title + Counter + Timer + Progress bar */}
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                    <div className="stage-header-left">
+                                        <h2 className="font-h" style={{ fontSize: 30, color: 'var(--navy-dark)', margin: 0, letterSpacing: -0.5 }}>글자 연결</h2>
+                                        <div className="font-h" style={{ fontSize: 17, color: 'var(--gray)' }}>
+                                            <span style={{ color: 'var(--primary)' }}>{foundWords.length}</span> / {window.GRID_DATA.targets.length}
+                                        </div>
+                                        <Timer seconds={timeLeft} isWarning={isWarning} />
+                                    </div>
+                                    {/* Underline progress bar — visual divider under title */}
+                                    <div style={{ height: 4, background: 'var(--gray-light)', borderRadius: 4, width: 360, overflow: 'hidden' }}>
+                                        <div style={{ height: '100%', background: 'linear-gradient(90deg, var(--blue), #818CF8)', borderRadius: 4, width: `${progressPct}%`, transition: 'width .6s cubic-bezier(0.16,1,0.3,1)' }} />
+                                    </div>
+                                </div>
+
+                                {/* RIGHT side: Speech bubble + Mascot */}
+                                <div className="stage-header-right">
+                                    <div className="a-pop" key={mascotMessage} style={{
+                                        background: '#FFF', padding: '10px 16px', borderRadius: '18px',
+                                        boxShadow: '0 8px 20px rgba(0,0,0,0.06)', border: '2px solid var(--primary-soft)',
+                                        fontSize: 13, fontWeight: 600, color: '#475569', whiteSpace: 'nowrap',
+                                        marginTop: 22, position: 'relative'
+                                    }}>
+                                        {mascotMessage}
+                                        <div style={{
+                                            position: 'absolute', right: -7, top: '50%',
+                                            width: 12, height: 12, background: '#FFF',
+                                            borderRight: '2px solid var(--primary-soft)',
+                                            borderBottom: '2px solid var(--primary-soft)',
+                                            transform: 'translateY(-50%) rotate(-45deg)', zIndex: 1
+                                        }}></div>
+                                    </div>
+                                    <img src="img/cha_01.png" alt="" style={{ width: 80, height: 'auto', filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.1))', flexShrink: 0 }} />
+                                </div>
+                            </div>
+
+                            {/* BODY — 2 columns */}
+                            <div className="stage-body">
+
+                                {/* LEFT: Word List */}
+                                <div style={{ background: 'var(--card-solid)', borderRadius: 28, padding: '20px 18px', boxShadow: '0 10px 40px rgba(79,70,229,0.06)' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+                                        {window.GRID_DATA.targets.map(t => {
+                                            const found = foundWords.includes(t.word);
+                                            return (
+                                                <div key={t.word} className={found ? 'a-pop' : ''}
+                                                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', borderRadius: 14, background: found ? t.bg : '#F8FAFC', border: `2px solid ${found ? t.color + '40' : 'transparent'}`, transition: 'all .3s cubic-bezier(0.16,1,0.3,1)', boxShadow: found ? `0 4px 12px ${t.color}15` : 'none', height: 48, boxSizing: 'border-box' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                                                        <span style={{ fontSize: 11, color: '#94A3B8', marginRight: 10, fontWeight: 600 }}>{t.label}</span>
+                                                        <span className="font-h" style={{ fontSize: 16, color: found ? t.color : 'var(--navy-dark)' }}>{t.word}</span>
+                                                    </div>
+                                                    {found
+                                                        ? <span style={{ color: t.color, fontWeight: 800, fontSize: 17 }}>✓</span>
+                                                        : <button onClick={() => showHint(t)}
+                                                            style={{ fontSize: 11.5, fontWeight: 700, padding: '5px 11px', borderRadius: 10, border: 'none', background: '#FEF08A', color: 'var(--navy-dark)', cursor: 'pointer', fontFamily: 'var(--font-b)' }}
+                                                            onMouseEnter={e => { e.currentTarget.style.background = '#FDE047'; }}
+                                                            onMouseLeave={e => { e.currentTarget.style.background = '#FEF08A'; }}>
+                                                            💡 힌트
+                                                        </button>}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                {/* RIGHT: Grid (fixed 488px column) */}
+                                <div style={{ position: 'relative', background: '#fff', borderRadius: 28, padding: 8, boxShadow: '0 10px 40px rgba(79,70,229,0.08)', width: 'var(--col-right)', boxSizing: 'border-box' }}>
+                                    <div ref={gridRef}
+                                        onMouseMove={e => handleMove(e.clientX, e.clientY)}
+                                        onMouseUp={endDrag} onMouseLeave={endDrag}
+                                        onTouchMove={e => { e.preventDefault(); const t = e.touches[0]; handleMove(t.clientX, t.clientY); }}
+                                        onTouchEnd={endDrag}
+                                        style={{ display: 'grid', gridTemplateColumns: `repeat(7,${CELL}px)`, gap: GAP, padding: PAD, touchAction: 'none', position: 'relative', zIndex: 1, justifyContent: 'center' }}>
+                                        {window.GRID_DATA.cells.map((row, r) => row.map((ch, c) => {
+                                            const s = inSel(r, c), f = foundMap[`${r}-${c}`];
+                                            return (
+                                                <div key={`${r}-${c}`} data-rc={`${r},${c}`}
+                                                    onMouseDown={() => startDrag(r, c)}
+                                                    onTouchStart={e => { e.preventDefault(); startDrag(r, c); }}
+                                                    style={{
+                                                        width: CELL, height: CELL, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                        borderRadius: 14, cursor: timerActive ? 'pointer' : 'not-allowed',
+                                                        fontFamily: 'var(--font-h)', fontWeight: 700, fontSize: 22,
+                                                        transition: 'all .2s cubic-bezier(0.16,1,0.3,1)',
+                                                        background: s ? 'rgba(52,211,153,.15)' : f ? f.bg : '#F8FAFC',
+                                                        color: s ? 'var(--navy-dark)' : f ? f.color : 'var(--navy)',
+                                                        border: `2px solid ${s ? 'var(--green-line)' : f ? f.color + '60' : 'transparent'}`,
+                                                        transform: s ? 'scale(.92)' : 'scale(1)',
+                                                        boxShadow: f ? `0 4px 12px ${f.color}25` : 'none',
+                                                        opacity: !timerActive && !f ? 0.5 : 1,
+                                                        animation: (hintCell && hintCell[0] === r && hintCell[1] === c) ? 'hintBlink .6s ease-in-out 3' : 'none',
+                                                    }}>{ch}</div>
+                                            );
+                                        }))}
+                                    </div>
+
+                                    <svg width={GRID_INNER} height={GRID_INNER} style={{ position: 'absolute', top: 8, left: '50%', transform: 'translateX(-50%)', pointerEvents: 'none', zIndex: 3 }}>
+                                        {sel.length >= 2 && <polyline points={linePoints} fill="none" stroke="var(--green-line)" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" opacity="0.6" />}
+                                        {sel.map(([r, c], i) => { const p = cellCenter(r, c); return <circle key={i} cx={p.x} cy={p.y} r="7" fill="var(--green-line)" opacity="0.9" />; })}
+                                        {particles.map(p => (
+                                            <circle key={p.id} cx={p.x} cy={p.y} r="6" fill={p.color}
+                                                style={{ animation: `particle-${p.id} .85s cubic-bezier(0.16,1,0.3,1) forwards`, '--dx': p.dx + 'px', '--dy': p.dy + 'px' }} />
+                                        ))}
+                                    </svg>
+
+                                    {anim && (
+                                        <img src="img/character_02.png" alt="" key={anim.key}
+                                            style={{ position: 'absolute', left: `calc(50% - ${GRID_INNER / 2}px + ${anim.start.x - 30}px)`, top: 8 + anim.start.y - 30, width: 60, height: 60, pointerEvents: 'none', zIndex: 5, animation: 'rideLine .8s cubic-bezier(.34,1.56,.64,1) forwards', '--tx': (anim.end.x - anim.start.x) + 'px', '--ty': (anim.end.y - anim.start.y) + 'px' }} />
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <style>{`
+              ${particles.map(p => `@keyframes particle-${p.id}{0%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(0);opacity:0}}`).join('\n')}
+            `}</style>
+                    </div>
+
+                    {definitionWord && <WordDefinitionPopup word={definitionWord} onClose={handleDefClose} />}
+                    {popup && <AcquiredPopup words={[...new Set(foundWords)]} onNext={handleNext} />}
+                    {timeUpOpen && <TimeUpPopup foundCount={foundWords.length} onRetry={handleRetry} onContinue={handleContinueAnyway} />}
+                </>
+            );
+        }
+
+        function App() {
+            return (
+                <div style={{ minHeight: '100vh', background: 'linear-gradient(145deg,#EEF2FF 0%,#F8FAFC 45%,#FFF0F8 100%)' }}>
+                    <window.StepHeader stepIdx={0} />
+                    <div style={{ padding: '0 24px' }}>
+                        <GridScreen />
+                    </div>
+                </div>
+            );
+        }
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+
+</html>

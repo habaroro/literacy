@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 피드백 · 방아 찧는 호랑이</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link rel="stylesheet" crossorigin
+        href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
+    <link rel="stylesheet" href="common.css" />
+</head>
+
+<body>
+    <div id="root"></div>
+    <script src="common.js"></script>
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        function CommentRow({ char, text, delay, liked, onLike }) {
+            const [show, setShow] = useState(false);
+            useEffect(() => { const t = setTimeout(() => setShow(true), delay); return () => clearTimeout(t); }, [delay]);
+            if (!show) return <div style={{ height: 0 }} />;
+            return (
+                <div className="a-spinfade" style={{ padding: '20px 24px', display: 'flex', gap: 16 }}>
+                    <div style={{ width: 48, height: 48, borderRadius: '50%', overflow: 'hidden', background: 'var(--bg)', border: `2px solid ${char.ring}`, flexShrink: 0 }}>
+                        <img src={char.img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6 }}>
+                            <span className="font-h" style={{ fontSize: 16, color: 'var(--navy-dark)' }}>{char.name}</span>
+                            <span style={{ fontSize: 12, color: '#94A3B8', fontWeight: 600 }}>· {char.role}</span>
+                        </div>
+                        <p style={{ fontSize: 15, color: 'var(--navy)', lineHeight: 1.8, margin: 0, wordBreak: 'keep-all', fontWeight: 500 }}>{text}</p>
+                        <div style={{ marginTop: 12, display: 'flex', gap: 16, alignItems: 'center' }}>
+                            <button onClick={onLike}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, padding: 0, color: liked ? '#E11D48' : '#94A3B8', fontSize: 14, fontWeight: 700, transition: 'all .2s cubic-bezier(0.16,1,0.3,1)', transform: liked ? 'scale(1.05)' : 'scale(1)' }}>
+                                <span style={{ fontSize: 15 }}>{liked ? '❤️' : '🤍'}</span>
+                                <span>{liked ? '좋아요 1' : '좋아요'}</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function FeedbackScreen({ chosen, tone, onRegenerate }) {
+            const [showComments, setShowComments] = useState(false);
+            const [showPeek, setShowPeek] = useState(false);
+            const [showTonePopup, setShowTonePopup] = useState(false);
+            const [regenerating, setRegenerating] = useState(false);
+            const [likes, setLikes] = useState({});
+            const [storyKey, setStoryKey] = useState(0);
+            const [phase, setPhase] = useState('writing');
+            const isFirstMountRef = useRef(true);
+
+            useEffect(() => {
+                if (isFirstMountRef.current) {
+                    setPhase('writing');
+                    setShowComments(false);
+                    setShowPeek(false);
+                    setStoryKey(k => k + 1);
+                    const tw = setTimeout(() => setPhase('sliding'), 2600);
+                    const ts = setTimeout(() => setPhase('done'), 2600 + 1000);
+                    const t1 = setTimeout(() => setShowComments(true), 2600 + 1000 + 600);
+                    const t2 = setTimeout(() => setShowPeek(true), 2600 + 1000 + 600 + window.CHARACTERS.length * 500 + 800);
+                    isFirstMountRef.current = false;
+                    return () => { clearTimeout(tw); clearTimeout(ts); clearTimeout(t1); clearTimeout(t2); };
+                } else {
+                    setStoryKey(k => k + 1);
+                }
+            }, [tone]);
+
+            const handleToneSelect = (newTone) => {
+                setShowTonePopup(false);
+                setRegenerating(true);
+                setTimeout(() => {
+                    setRegenerating(false);
+                    onRegenerate(newTone);
+                }, 800);
+            };
+
+            const toggleLike = (charId) => setLikes(l => ({ ...l, [charId]: !l[charId] }));
+            const story = window.generateStory(chosen, tone);
+            const renderStory = (text) => {
+                if (!chosen || chosen.length === 0) return text;
+                const sorted = [...chosen].sort((a, b) => b.length - a.length);
+                const escaped = sorted.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+                const parts = text.split(new RegExp(`(${escaped.join('|')})`, 'g'));
+                return parts.map((p, i) =>
+                    chosen.includes(p)
+                        ? <span key={i} style={{ color: 'var(--blue)', fontWeight: 800, background: 'rgba(67,97,238,.1)', borderRadius: 4, padding: '1px 3px' }}>{p}</span>
+                        : p
+                );
+            };
+            const feedback = window.getDynamicComments(chosen, tone);
+
+            if (phase === 'writing') {
+                return (
+                    <div style={{ maxWidth: 1280, margin: '0 auto', padding: '20px 24px', minHeight: 'calc(100vh - 70px)', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
+                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <div style={{ width: '100%', maxWidth: 500 }}>
+                                <div style={{ background: 'var(--card)', backdropFilter: 'blur(24px)', border: '1px solid var(--stroke)', borderRadius: 28, boxShadow: 'var(--shadow-lg)', overflow: 'hidden', position: 'relative', width: '100%' }}>
+                                    <div style={{ position: 'absolute', inset: 0, padding: '100px 28px 28px', filter: 'blur(7px)', opacity: 0.28, pointerEvents: 'none', fontSize: 15, color: 'var(--navy)', lineHeight: 2.0, fontWeight: 500, animation: 'writingPulse 1.8s ease-in-out infinite', zIndex: 0 }}>
+                                        {story}
+                                    </div>
+                                    <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '44px 32px 40px', gap: 18 }}>
+                                        <img src="img/make.png" alt="" className="a-bounce" style={{ width: 125, height: 180, objectFit: 'contain', filter: 'drop-shadow(0 10px 24px rgba(99,102,241,.25))' }} />
+                                        <div style={{ textAlign: 'center' }}>
+                                            <div className="font-h" style={{ fontSize: 22, color: 'var(--navy-dark)', marginBottom: 8 }}>AI가 글을 쓰고 있어요! ✍️</div>
+                                            <div style={{ fontSize: 14, color: 'var(--gray)', fontWeight: 500, marginBottom: 16 }}>선택한 단어들로 이야기를 만드는 중...</div>
+                                            <div style={{ display: 'flex', justifyContent: 'center', gap: 6 }}>
+                                                <span className="dot" /><span className="dot" /><span className="dot" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div style={{ maxWidth: 1280, margin: '0 auto', padding: '20px 24px', boxSizing: 'border-box' }}>
+                    <div style={{ display: 'flex', gap: 32, alignItems: 'flex-start' }}>
+                        <div style={{ flex: '0 0 52%', minWidth: 0, display: 'flex', flexDirection: 'column', animation: phase === 'sliding' ? 'slideFromCenter 1s cubic-bezier(0.16,1,0.3,1) forwards' : 'none' }}>
+                            <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                                <div style={{ background: 'var(--card)', backdropFilter: 'blur(24px)', border: '1px solid var(--stroke)', borderRadius: 28, boxShadow: 'var(--shadow-md)', overflow: 'hidden', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                                    <div style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                                        <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg,#FFE4B5,#FCD34D)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, border: '2px solid #FCD34D' }}>✨</div>
+                                        <div style={{ flex: 1 }}>
+                                            <div className="font-h" style={{ fontSize: 15, color: 'var(--navy-dark)' }}>나의 이야기</div>
+                                            <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2, fontWeight: 500 }}>방금</div>
+                                        </div>
+                                        {showPeek && (
+                                            <div className="a-pop">
+                                                <div onClick={() => setShowTonePopup(true)} style={{
+                                                    display: 'flex', alignItems: 'center', gap: 8, padding: '6px 14px',
+                                                    background: 'linear-gradient(135deg, #FFE4E6, #FECDD3)',
+                                                    border: '1px solid #FDA4AF', borderRadius: 20, cursor: 'pointer',
+                                                    boxShadow: '0 4px 12px rgba(251,113,133,0.15)', position: 'relative', overflow: 'visible'
+                                                }}>
+                                                    <img src={window.IMG.feedback} alt="" style={{ width: 30, height: 30, objectFit: 'contain', marginTop: -16, marginBottom: -4, transform: 'scale(1.2)' }} />
+                                                    <span className="font-h" style={{ fontSize: 13, color: '#BE123C', whiteSpace: 'nowrap' }}>다르게도 써볼래?</span>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div style={{ padding: '20px 24px 0', animation: phase === 'sliding' ? 'storyContentReveal 0.6s 0.4s ease both' : 'none' }}>
+                                        <div style={{ width: '100%', height: 260, borderRadius: 18, overflow: 'hidden' }}>
+                                            <img src={window.IMG.story} alt="이야기 장면" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        </div>
+                                    </div>
+                                    <div key={storyKey} style={{ padding: '24px', position: 'relative', flex: 1, animation: phase === 'sliding' ? 'storyContentReveal 0.6s 0.5s ease both' : 'none' }}>
+                                        {regenerating && (
+                                            <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,.8)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 5, borderRadius: 28 }}>
+                                                <div style={{ textAlign: 'center' }}>
+                                                    <div className="a-bounce" style={{ fontSize: 34, marginBottom: 10 }}>✨</div>
+                                                    <div className="font-h" style={{ color: 'var(--blue)', fontSize: 15 }}>이야기를 다시 쓰고 있어요...</div>
+                                                </div>
+                                            </div>
+                                        )}
+                                        <p style={{ fontSize: 17, color: 'var(--navy)', lineHeight: 1.8, margin: 0, fontWeight: 500 }}>
+                                            <strong style={{ fontWeight: 800, display: 'block', marginBottom: 12, fontSize: 18, color: 'var(--navy-dark)' }}>📖 {window.BOOK_EXCERPT}</strong>
+                                            {renderStory(story)}
+                                        </p>
+                                    </div>
+                                    <div style={{ padding: '0 24px 16px 24px', display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', animation: phase === 'sliding' ? 'storyContentReveal 0.6s 0.6s ease both' : 'none' }}>
+                                        <span style={{
+                                            fontSize: 12, padding: '6px 14px',
+                                            background: tone === 'base' ? '#EEF2FF' : tone === 'fun' ? '#FEF3C7' : tone === 'tense' ? '#FEE2E2' : '#FCE7F3',
+                                            color: tone === 'base' ? '#4F46E5' : tone === 'fun' ? '#92400E' : tone === 'tense' ? '#991B1B' : '#9F1239',
+                                            borderRadius: 14, fontWeight: 800
+                                        }}>
+                                            #{tone === 'base' ? '기본' : tone === 'fun' ? '유쾌' : tone === 'tense' ? '긴장' : '따뜻'}
+                                        </span>
+                                        {chosen.map((w, i) => (
+                                            <span key={i} style={{ fontSize: 12, padding: '6px 14px', background: 'var(--bg)', color: 'var(--navy)', border: '1px solid var(--border-light)', borderRadius: 14, fontWeight: 700 }}>#{w}</span>
+                                        ))}
+                                    </div>
+                                    <div style={{ padding: '10px 24px 16px', display: 'flex', gap: 16, color: '#64748B', fontSize: 13, fontWeight: 600 }}>
+                                        <span>❤️ 좋아요 {Object.values(likes).filter(Boolean).length}</span>
+                                        <span>💬 댓글 {showComments ? window.CHARACTERS.length : 0}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', opacity: phase === 'writing' ? 0 : (phase === 'sliding' ? 0 : 1), animation: phase === 'done' || showComments ? 'commentsFadeIn 0.8s ease forwards' : 'none' }}>
+                            <div style={{ background: 'var(--card)', backdropFilter: 'blur(24px)', border: '1px solid var(--stroke)', borderRadius: 28, boxShadow: 'var(--shadow-md)', overflow: 'hidden' }}>
+                                <div style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <span style={{ fontSize: 18 }}>🔔</span>
+                                    <span className="font-h" style={{ fontSize: 16, color: 'var(--navy-dark)' }}>댓글</span>
+                                </div>
+                                <div style={{ position: 'relative', opacity: regenerating ? 0.6 : 1, transition: 'opacity 0.2s ease' }}>
+                                    {regenerating && (
+                                        <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
+                                            <div style={{ display: 'flex', gap: 6 }}>
+                                                <span className="dot" /><span className="dot" /><span className="dot" />
+                                            </div>
+                                        </div>
+                                    )}
+                                    {!showComments ? (
+                                        <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--gray)', fontSize: 14, fontWeight: 500 }}>
+                                            문해 프렌즈가 댓글을 달고 있어요
+                                            <span className="dot" /><span className="dot" /><span className="dot" />
+                                        </div>
+                                    ) : (
+                                        <div>
+                                            {window.CHARACTERS.map((char, i) => (
+                                                <CommentRow key={char.id + '-' + storyKey} char={char} text={feedback[char.id]} delay={i * 500}
+                                                    liked={!!likes[char.id]} onLike={() => toggleLike(char.id)} />
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {showTonePopup && (
+                        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 300, padding: 20 }}
+                            onClick={() => setShowTonePopup(false)}>
+                            <div className="a-slideup" onClick={e => e.stopPropagation()}
+                                style={{ background: 'var(--card-solid)', borderRadius: 32, padding: '40px 32px', maxWidth: 480, width: '100%', boxShadow: 'var(--shadow-lg)' }}>
+                                <h3 className="font-h" style={{ fontSize: 22, color: 'var(--navy-dark)', marginBottom: 6 }}>어떤 분위기로 바꿔볼까?</h3>
+                                <p style={{ fontSize: 14, color: 'var(--gray)', fontWeight: 500 }}>같은 단어로도 이렇게 다른 이야기가 나와요!</p>
+                                <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                                    {window.TONE_OPTIONS.map(opt => (
+                                        <button key={opt.id} onClick={() => handleToneSelect(opt.id)}
+                                            disabled={opt.id === tone}
+                                            style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '10px 20px', border: `2px solid ${opt.id === tone ? 'var(--blue)' : 'var(--gray-light)'}`, borderRadius: 20, background: opt.id === tone ? 'var(--blue-light)' : '#fff', cursor: opt.id === tone ? 'default' : 'pointer', transition: 'all .3s cubic-bezier(0.16,1,0.3,1)', textAlign: 'left', width: '100%' }}>
+                                            <img src={opt.icon} alt="" style={{ width: 70, height: 70, objectFit: 'contain', flexShrink: 0 }} />
+                                            <div style={{ flex: 1 }}>
+                                                <div className="font-h" style={{ fontSize: 18, color: 'var(--navy-dark)' }}>{opt.label}</div>
+                                                <div style={{ fontSize: 14, color: 'var(--gray)', marginTop: 4, fontWeight: 500 }}>{opt.desc}</div>
+                                            </div>
+                                            {opt.id === tone && <span style={{ fontSize: 12, color: 'var(--blue)', fontWeight: 800 }}>지금 분위기</span>}
+                                        </button>
+                                    ))}
+                                </div>
+                                <div style={{ marginTop: 24, padding: '16px 20px', background: 'linear-gradient(135deg, var(--blue-light), #EEF2FF)', border: '1.5px dashed var(--blue-mid)', borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, cursor: 'pointer', transition: 'all 0.2s ease' }}
+                                    onClick={() => { location.href = 'step2.html'; }}>
+                                    <div style={{ flex: 1 }}>
+                                        <div className="font-h" style={{ fontSize: 17, color: 'var(--blue)', marginBottom: 5 }}>다른 단어 골라보기</div>
+                                        <div style={{ fontSize: 13, color: '#64748B', fontWeight: 500 }}>처음 모은 단어로 새로운 조합을 만들어요</div>
+                                    </div>
+                                    <div style={{ fontSize: 20, color: 'var(--blue)', fontWeight: 800 }}>→</div>
+                                </div>
+                                <button onClick={() => setShowTonePopup(false)} className="btn-primary" style={{ width: '100%', marginTop: 24, padding: '16px' }}>닫기</button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        function App() {
+            const [tone, setTone] = useState(() => window.AppState.get('tone', 'base'));
+            const chosen = window.AppState.get('chosen', ['호랑이', '창호지', '산골집']);
+
+            const handleRegenerate = (newTone) => {
+                setTone(newTone);
+                window.AppState.set('tone', newTone);
+            };
+
+            return (
+                <div style={{ minHeight: '100vh', background: 'linear-gradient(145deg,#EEF2FF 0%,#F8FAFC 45%,#FFF0F8 100%)' }}>
+                    <window.StepHeader stepIdx={2} />
+                    <div style={{ maxWidth: 1376, margin: '0 auto', padding: '0 32px' }}>
+                        <FeedbackScreen chosen={chosen} tone={tone} onRegenerate={handleRegenerate} />
+                    </div>
+                </div>
+            );
+        }
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+
+</html>
