@@ -192,12 +192,15 @@
                     // ✅ 정답
                     const msgs = ['와! 맞았어! 👍', '정말 대단해! ✨', '정답이야! 🎈', '멋지다! 😍'];
                     setMascotMessage(msgs[Math.floor(Math.random() * msgs.length)]);
-                    setMascotImg('img/cha_02.png');
+                    setMascotImg('img/cha_02_02.png');
                     setFilled({ ...filled, [activeBlank.id]: card.syl });
                     setUsedCards([...usedCards, card.id]);
                     setJustId(activeBlank.id);
                     setActiveId(null);
-                    setTimeout(() => setJustId(null), 700);
+                    setTimeout(() => {
+                        setJustId(null);
+                        setMascotImg('img/cha_02.png');
+                    }, 1000);
                 } else {
                     // ❌ 오답 - 강화된 액션
                     const msgs = [
