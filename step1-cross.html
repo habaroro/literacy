@@ -8,6 +8,7 @@
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <link rel="stylesheet" crossorigin
         href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
     <link rel="stylesheet" href="common.css" />
@@ -141,7 +142,7 @@
     <div id="root"></div>
     <script src="common.js"></script>
     <script type="text/babel">
-        const { useState, useRef } = React;
+        const { useState, useRef, useEffect } = React;
 
         function AcquiredPopup({ words, onNext }) {
             return (
@@ -171,7 +172,7 @@
             const [mascotMessage, setMascotMessage] = useState('빈 칸에 들어갈 단어를 눌러줘!');
             const [mascotImg, setMascotImg] = useState('img/cha_02.png');
             const [popup, setPopup] = useState(false);
-            const [showXMark, setShowXMark] = useState(null); // 셀 인덱스 (오답 X 표시용)
+            const [showXMark, setShowXMark] = useState(null);
             const [screenShake, setScreenShake] = useState(false);
             const xMarkKeyRef = useRef(0);
 
@@ -179,7 +180,49 @@
             const blanks = CW.cells.filter(c => c?.kind === 'blank');
             const allFilled = Object.keys(filled).length === blanks.length;
 
-            // 초기 활성 셀: 첫 번째 빈칸 자동 선택
+            useEffect(() => {
+                if (allFilled) {
+                    window.AppState.set('acquired', Object.values(CW.wordMap));
+
+                    if (typeof confetti === 'function') {
+                        // 1. 화면 정중앙에서 축포가 크게 터지는 연출
+                        confetti({
+                            particleCount: 100,
+                            spread: 70,
+                            origin: { x: 0.5, y: 0.5 }
+                        });
+
+                        // 2. 상단 전체 영역에서 파티클이 천천히 비처럼 내려오는 연출 (3초 동안 반복)
+                        const duration = 3000;
+                        const end = Date.now() + duration;
+
+                        const frame = () => {
+                            // 상단 랜덤한 위치(x축 0.0 ~ 1.0)에서 아래 방향으로 가볍게 떨어지도록 속도 제어
+                            confetti({
+                                particleCount: 2,
+                                angle: 270, // 아래를 향해 발사
+                                spread: 360,
+                                ticks: 150, // 파티클이 화면에 머무는 시간 증가
+                                gravity: 0.4, // 중력을 낮춰 천천히 내려오게 설정
+                                scalar: 0.8, // 크기 살짝 축소
+                                startVelocity: 0, // 초기 발사 속도를 0으로 주어 부드럽게 낙하
+                                origin: { x: Math.random(), y: -0.1 } // 화면 위쪽 바깥 영역
+                            });
+
+                            if (Date.now() < end) {
+                                requestAnimationFrame(frame);
+                            }
+                        };
+                        frame();
+                    }
+
+                    const timer = setTimeout(() => {
+                        setPopup(true);
+                    }, 3000);
+                    return () => clearTimeout(timer);
+                }
+            }, [allFilled]);
+
             const activeBlank = (activeId && !filled[activeId])
                 ? blanks.find(b => b.id === activeId)
                 : blanks.find(b => !filled[b.id]) || null;
@@ -189,7 +232,6 @@
                 if (!activeBlank) return;
 
                 if (card.syl === activeBlank.expected) {
-                    // ✅ 정답
                     const msgs = ['와! 맞았어! 👍', '정말 대단해! ✨', '정답이야! 🎈', '멋지다! 😍'];
                     setMascotMessage(msgs[Math.floor(Math.random() * msgs.length)]);
                     setMascotImg('img/cha_02_02.png');
@@ -200,27 +242,24 @@
                     setTimeout(() => {
                         setJustId(null);
                         setMascotImg('img/cha_02.png');
-                    }, 1000);
+                    }, 700);
                 } else {
-                    // ❌ 오답 - 강화된 액션
                     const msgs = [
                         '앗! 다시 생각해볼까? 🧐',
                         '음... 이건 아닌 것 같아! 😣',
                         '아쉬워! 다른 글자를 골라봐 ✏️',
                         '에구.. 한 번 더 도전! 💪',
-                        '저런! 힌트를 다시 읽어볼까? 📖'
+                        '저런! 힌트를 다시 읽어볼까? 힌트를 다시 읽어볼까? 📖'
                     ];
                     setMascotMessage(msgs[Math.floor(Math.random() * msgs.length)]);
                     setMascotImg('img/cha_02_01.png');
                     setWrongId(activeBlank.id);
                     setWrongKeyId(card.id);
 
-                    // 셀 인덱스 찾아서 X 표시
                     const cellIdx = CW.cells.findIndex(c => c?.id === activeBlank.id);
                     xMarkKeyRef.current += 1;
                     setShowXMark({ idx: cellIdx, key: xMarkKeyRef.current });
 
-                    // 화면 진동
                     setScreenShake(true);
 
                     setTimeout(() => {
@@ -234,40 +273,37 @@
             };
 
             const CW_CELL = 64;
-            const handleComplete = () => {
-                window.AppState.set('acquired', Object.values(CW.wordMap));
-                setPopup(true);
-            };
             const handleNext = () => {
                 location.href = 'step2.html';
             };
 
             return (
                 <>
-                    <div className={`a-fadeup ${screenShake ? 'a-screen-shake' : ''}`} style={{ padding: window.innerHeight < 800 ? '20px 0' : '30px 0' }}>
+                    <div className={`a-fadeup ${screenShake ? 'a-screen-shake' : ''}`} style={{ padding: '10px 0' }}>
 
                         {/* Header: Title + Progress + Mascot */}
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, gap: 24, flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap' }}>
+
                             {/* LEFT: Title + Progress */}
-                            <div style={{ flex: '1 1 480px', maxWidth: 560 }}>
-                                <div style={{ display: 'flex', alignItems: 'baseline', gap: 16, marginBottom: 14 }}>
+                            <div style={{ width: 320, maxWidth: 320 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 14 }}>
                                     <h2 className="font-h" style={{ fontSize: 28, color: 'var(--navy-dark)', margin: 0 }}>빈칸 맞추기</h2>
-                                    <div className="font-h" style={{ fontSize: 18, color: 'var(--gray)' }}>
+                                    <div className="font-h" style={{ fontSize: 18, color: 'var(--gray)', flexGrow: 1, textAlign: 'right' }}>
                                         <span style={{ color: 'var(--primary)' }}>{Object.keys(filled).length}</span> / {blanks.length}
                                     </div>
                                 </div>
-                                <div style={{ height: 10, background: 'var(--gray-light)', borderRadius: 5, overflow: 'hidden', maxWidth: 320 }}>
+                                <div style={{ height: 10, background: 'var(--gray-light)', borderRadius: 5, overflow: 'hidden', width: '100%' }}>
                                     <div style={{ height: '100%', background: 'var(--primary)', borderRadius: 5, width: `${(Object.keys(filled).length / blanks.length) * 100}%`, transition: 'width .6s cubic-bezier(0.16,1,0.3,1)' }} />
                                 </div>
                             </div>
 
                             {/* RIGHT: Mascot with Speech Bubble */}
-                            <div style={{ position: 'relative', minHeight: 120, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', minWidth: 360 }}>
+                            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flexGrow: 1, height: 90 }}>
                                 <div className="a-pop" key={mascotMessage} style={{
                                     background: '#FFF', padding: '12px 18px', borderRadius: '20px',
                                     boxShadow: '0 8px 20px rgba(0,0,0,0.08)', border: '2px solid var(--primary-soft)',
                                     fontSize: 14, fontWeight: 600, color: '#475569', whiteSpace: 'nowrap',
-                                    marginRight: 12, position: 'relative'
+                                    marginRight: 12, position: 'relative', transform: 'translateY(-12px)'
                                 }}>
                                     {mascotMessage}
                                     <div style={{
@@ -278,19 +314,21 @@
                                         transform: 'translateY(-50%) rotate(-45deg)', zIndex: 1
                                     }}></div>
                                 </div>
-                                <img src={mascotImg} alt="" style={{ width: 120, height: 120, objectFit: 'contain', filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.1))', flexShrink: 0 }} />
+                                <div style={{ width: 90, height: 90, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', flexShrink: 0 }}>
+                                    <img src={mascotImg} alt="" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.1))' }} />
+                                </div>
                             </div>
                         </div>
 
                         {/* Main Layout: LEFT (Hints) + RIGHT (Puzzle + Cards) */}
-                        <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', gap: 24, alignItems: 'stretch', flexWrap: 'wrap', marginTop: 0 }}>
 
                             {/* LEFT: Hint List (White Card) */}
                             <div style={{ width: 320, flexShrink: 0, background: 'var(--card-solid)', borderRadius: 28, padding: '28px 24px', boxShadow: '0 10px 40px rgba(79,70,229,0.06)' }}>
-                                <div className="font-h" style={{ fontSize: 16, color: 'var(--navy-dark)', marginBottom: 16, paddingBottom: 12, borderBottom: '1px solid var(--gray-light)' }}>
+                                <div className="font-h" style={{ fontSize: 18, color: 'var(--navy-dark)', marginBottom: 16, paddingBottom: 12, borderBottom: '1px solid var(--gray-light)' }}>
                                     책 속의 단어를 맞춰봐!
                                 </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                                     {CW.hints.map((h, i) => {
                                         const hintWords = ['호랑이', '창호지', '산골집', '부부', '오빠', '감자', '남매'];
                                         const isActive = activeBlank && hintWords[i] === activeBlank.word;
@@ -303,17 +341,16 @@
                                                     if (b && !filled[b.id]) setActiveId(b.id);
                                                 }}
                                                 style={{
-                                                    display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', borderRadius: 14,
+                                                    display: 'flex', alignItems: 'center', gap: 8, padding: '16px 18px', borderRadius: 14,
                                                     transition: 'all .25s ease',
                                                     cursor: isSolved ? 'default' : 'pointer',
                                                     opacity: isSolved ? 0.35 : 1,
                                                     background: isActive ? 'var(--primary-soft)' : 'transparent',
-                                                    textDecoration: isSolved ? 'line-through' : 'none',
                                                 }}
                                                 onMouseEnter={e => { if (!isSolved && !isActive) e.currentTarget.style.background = '#F8FAFC'; }}
                                                 onMouseLeave={e => { if (!isSolved && !isActive) e.currentTarget.style.background = 'transparent'; }}>
                                                 <p style={{
-                                                    fontSize: 15, fontWeight: 600, margin: 0, lineHeight: 1.5,
+                                                    fontSize: 17, fontWeight: 600, margin: 0, lineHeight: 1.5,
                                                     color: isSolved ? '#94A3B8' : (isActive ? 'var(--primary-deep)' : 'var(--navy)')
                                                 }}>
                                                     {h}
@@ -322,12 +359,6 @@
                                         );
                                     })}
                                 </div>
-
-                                {allFilled && (
-                                    <button className="btn-primary a-pop" style={{ width: '100%', padding: '18px', fontSize: 18, borderRadius: 20, marginTop: 20 }} onClick={handleComplete}>
-                                        다음 단계로 →
-                                    </button>
-                                )}
                             </div>
 
                             {/* RIGHT: Puzzle + Cards */}
