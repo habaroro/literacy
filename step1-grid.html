@@ -358,6 +358,7 @@
             const [particles, setParticles] = useState([]);
             const [hintCell, setHintCell] = useState(null);
             const [mascotMessage, setMascotMessage] = useState('드래그해서 숨은 단어를 찾아봐!');
+            const [mascotImg, setMascotImg] = useState('img/cha_01.png');
             const [popup, setPopup] = useState(false);
             const [definitionWord, setDefinitionWord] = useState(null);
             const [timeLeft, setTimeLeft] = useState(TOTAL_TIME);
@@ -428,6 +429,8 @@
                 selRef.current = [];
                 const msgs = ['우와, 단어를 찾았어! 🎉', '정말 멋진 실력이야! 👍', '대단해! 맞았어! ✨', '찾았다! 잘했어! 😍'];
                 setMascotMessage(msgs[Math.floor(Math.random() * msgs.length)]);
+                setMascotImg('img/cha_01_01.png');
+                setTimeout(() => setMascotImg('img/cha_01.png'), 1000);
                 setTimeout(() => {
                     setSel([]); setAnim(null); animActiveRef.current = false;
                     setDefinitionWord(hit.word);
@@ -561,7 +564,7 @@
                                             transform: 'translateY(-50%) rotate(-45deg)', zIndex: 1
                                         }}></div>
                                     </div>
-                                    <img src="img/cha_01.png" alt="" style={{ width: 80, height: 'auto', filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.1))', flexShrink: 0 }} />
+                                    <img src={mascotImg} alt="" style={{ width: 80, height: 'auto', filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.1))', flexShrink: 0 }} />
                                 </div>
                             </div>
 
