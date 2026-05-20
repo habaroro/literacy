@@ -298,12 +298,12 @@
                             </div>
 
                             {/* RIGHT: Mascot with Speech Bubble */}
-                            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flexGrow: 1, height: 90 }}>
+                            <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', flexGrow: 1, height: 120, zIndex: 10, transform: 'translateY(24px)' }}>
                                 <div className="a-pop" key={mascotMessage} style={{
                                     background: '#FFF', padding: '12px 18px', borderRadius: '20px',
                                     boxShadow: '0 8px 20px rgba(0,0,0,0.08)', border: '2px solid var(--primary-soft)',
                                     fontSize: 14, fontWeight: 600, color: '#475569', whiteSpace: 'nowrap',
-                                    marginRight: 12, position: 'relative', transform: 'translateY(-12px)'
+                                    marginRight: 12, position: 'relative', marginBottom: 32
                                 }}>
                                     {mascotMessage}
                                     <div style={{
@@ -314,7 +314,7 @@
                                         transform: 'translateY(-50%) rotate(-45deg)', zIndex: 1
                                     }}></div>
                                 </div>
-                                <div style={{ width: 90, height: 90, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', flexShrink: 0 }}>
+                                <div style={{ width: 140, height: 140, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', flexShrink: 0, marginRight: 8 }}>
                                     <img src={mascotImg} alt="" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.1))' }} />
                                 </div>
                             </div>
