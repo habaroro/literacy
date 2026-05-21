@@ -263,3 +263,31 @@ window.StepHeader = function ({ stepIdx }) {
         )
     );
 };
+
+/* ── FULLSCREEN SUPPORT ── */
+window.requestAppFullscreen = function() {
+    const docEl = document.documentElement;
+    const doc = document;
+    
+    // 이미 전체화면 모드인지 검증 (표준 및 브라우저 엔진별 속성 대응)
+    if (!doc.fullscreenElement && !doc.webkitFullscreenElement && !doc.mozFullScreenElement && !doc.msFullscreenElement) {
+        if (docEl.requestFullscreen) {
+            docEl.requestFullscreen().catch(err => {});
+        } else if (docEl.webkitRequestFullscreen) {
+            docEl.webkitRequestFullscreen().catch(err => {});
+        } else if (docEl.mozRequestFullScreen) {
+            docEl.mozRequestFullScreen().catch(err => {});
+        } else if (docEl.msRequestFullscreen) {
+            docEl.msRequestFullscreen();
+        }
+    }
+};
+
+// 화면 전체 터치/클릭 시 주소창 없는 전체 화면 모드로 즉시 진입하도록 연동
+document.addEventListener('click', function() {
+    window.requestAppFullscreen();
+});
+
+
+
+
