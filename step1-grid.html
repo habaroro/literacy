@@ -3,59 +3,16 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=1280, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>글자 연결 · 방아 찧는 호랑이</title>
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <link rel="stylesheet" crossorigin
         href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
     <link rel="stylesheet" href="common.css" />
-    <link rel="shortcut icon" href="img/appicon.png" type="image/png" />
-    <link rel="apple-touch-icon" href="img/appicon.png" />
     <style>
-        /* ── Fixed layout dimensions (Tablet landscape optimized) ── */
-        :root {
-            --col-left: 320px;
-            --col-gap: 28px;
-            --col-right: 488px;
-            /* 7 * 60 + 6 * 6 + 14 * 2 + 8 * 2 = 488 */
-            --layout-width: 836px;
-            /* col-left + col-gap + col-right */
-        }
-
-        .stage {
-            width: var(--layout-width);
-            margin: 0 auto;
-        }
-
-        .stage-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 18px;
-            min-height: 90px;
-        }
-
-        .stage-header-left {
-            display: flex;
-            align-items: center;
-            gap: 18px;
-        }
-
-        .stage-header-right {
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-        }
-
-        .stage-body {
-            display: grid;
-            grid-template-columns: var(--col-left) var(--col-right);
-            gap: var(--col-gap);
-            align-items: start;
-        }
-
         /* Timer */
         @keyframes timerPulse {
 
@@ -66,6 +23,7 @@
             }
 
             50% {
+                /* 타이머 영역이 커지는 효과의 폭을 절반(1.2배 -> 1.1배)으로 줄입니다. */
                 transform: scale(1.1);
                 color: #EF4444;
             }
@@ -111,28 +69,6 @@
                 transform: translate(var(--tx), var(--ty)) scale(1.3);
                 opacity: 0;
             }
-        }
-
-        @keyframes confettiFall {
-            0% {
-                transform: translateY(-100vh) rotate(0deg);
-                opacity: 1;
-            }
-
-            100% {
-                transform: translateY(100vh) rotate(720deg);
-                opacity: 0;
-            }
-        }
-
-        .confetti-piece {
-            position: fixed;
-            width: 12px;
-            height: 16px;
-            top: 0;
-            z-index: 999;
-            pointer-events: none;
-            animation: confettiFall linear forwards;
         }
 
         @keyframes defPopIn {
@@ -196,28 +132,6 @@
         .time-up-icon {
             animation: timeUpShake 0.6s ease-in-out infinite;
         }
-
-        /* Stack on small screens (below tablet) */
-        @media (max-width: 900px) {
-            :root {
-                --layout-width: 100%;
-            }
-
-            .stage {
-                width: 100%;
-                padding: 0 16px;
-            }
-
-            .stage-body {
-                grid-template-columns: 1fr;
-            }
-
-            .stage-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 16px;
-            }
-        }
     </style>
 </head>
 
@@ -228,7 +142,7 @@
         const { useState, useEffect, useRef } = React;
 
         /* Grid cell sizing — tuned to match 488px column width */
-        const CELL = 60, GAP = 6, PAD = 14;
+        const CELL = 66, GAP = 6, PAD = 14;
         const cellCenter = (r, c) => ({ x: PAD + c * (CELL + GAP) + CELL / 2, y: PAD + r * (CELL + GAP) + CELL / 2 });
         const GRID_INNER = PAD * 2 + 7 * (CELL + GAP) - GAP; // 14*2 + 7*66 - 6 = 472
 
@@ -247,18 +161,15 @@
             const s = seconds % 60;
             return (
                 <div className={isWarning ? 'timer-warning' : ''} style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 6,
-                    padding: '6px 14px',
-                    background: isWarning ? '#FEE2E2' : 'rgba(255,255,255,0.75)',
-                    borderRadius: 20,
-                    fontFamily: 'var(--font-h)', fontWeight: 800, fontSize: 17,
-                    color: isWarning ? '#DC2626' : 'var(--navy-dark)',
-                    border: `2px solid ${isWarning ? '#FCA5A5' : 'var(--gray-light)'}`,
-                    transition: 'all 0.3s ease',
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    background: '#FFF', padding: '10px 16px', borderRadius: '18px',
+                    fontFamily: 'var(--font-h)', fontSize: 15, fontWeight: 700,
+                    color: isWarning ? '#EF4444' : 'var(--navy-dark)',
+                    transition: 'color 0.3s ease',
                     whiteSpace: 'nowrap'
                 }}>
-                    <span style={{ fontSize: 16 }}>⏱</span>
-                    <span>{m}:{s.toString().padStart(2, '0')}</span>
+                    <span style={{ fontSize: 16, lineHeight: 1 }}>⏱️</span>
+                    <span>{m.toString().padStart(2, '0')}:{s.toString().padStart(2, '0')}</span>
                 </div>
             );
         }
@@ -293,58 +204,46 @@
             );
         }
 
-        function AcquiredPopup({ words, onNext }) {
-            const confetti = Array.from({ length: 60 }, (_, i) => {
-                const colors = ['#F472B6', '#FBBF24', '#34D399', '#60A5FA', '#A78BFA', '#FB923C', '#EC4899', '#10B981'];
-                return {
-                    left: Math.random() * 100, color: colors[i % colors.length],
-                    delay: Math.random() * 0.5, duration: 2 + Math.random() * 2,
-                    rotate: Math.random() * 360,
-                };
-            });
+        // 획득한 단어를 보여주는 팝업 컴포넌트입니다.
+        function AcquiredPopup({ words, onNext, isAll }) {
             return (
-                <>
-                    {confetti.map((c, i) => (
-                        <div key={i} className="confetti-piece" style={{
-                            left: `${c.left}%`, background: c.color,
-                            animationDelay: `${c.delay}s`, animationDuration: `${c.duration}s`,
-                            transform: `rotate(${c.rotate}deg)`,
-                            borderRadius: i % 3 === 0 ? '50%' : '2px'
-                        }} />
-                    ))}
-                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200 }}>
-                        <div className="a-slideup" style={{ background: 'var(--card-solid)', borderRadius: 32, padding: '52px 44px', maxWidth: 560, width: '90%', textAlign: 'center', boxShadow: 'var(--shadow-lg)' }}>
-                            <div className="celebrate-title" style={{ fontSize: 72, marginBottom: 12, lineHeight: 1 }}>🎊</div>
-                            <h2 className="font-h" style={{ fontSize: 34, color: 'var(--navy-dark)', marginBottom: 10 }}>완벽해요!</h2>
-                            <p style={{ color: 'var(--gray)', fontSize: 16, marginBottom: 32, fontWeight: 500 }}>7개의 단어를 모두 찾았어요! 이제 이야기를 만들어볼까요?</p>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', marginBottom: 40 }}>
-                                {words.map((w, i) => (
-                                    <span key={i} className="font-h a-pop" style={{ padding: '10px 22px', background: 'var(--primary-soft)', color: 'var(--primary)', borderRadius: 30, fontSize: 18, animationDelay: `${i * 80}ms` }}>{w}</span>
-                                ))}
-                            </div>
-                            <button className="btn-primary" style={{ width: '100%', fontSize: 18, padding: '18px' }} onClick={onNext}>문장 플레이 시작 →</button>
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200 }}>
+                    <div className="a-slideup" style={{ background: 'var(--card-solid)', borderRadius: 32, padding: '64px 48px', maxWidth: 560, width: '90%', textAlign: 'center', boxShadow: 'var(--shadow-lg)' }}>
+                        <div style={{ fontSize: 64, marginBottom: 20 }}>🎉</div>
+                        <h2 className="font-h" style={{ fontSize: 36, color: 'var(--navy-dark)', marginBottom: 12 }}>
+                            {/* 단어를 전부 다 모으지 못한 경우, 찾은 단어의 개수를 포함하여 동적으로 문구를 출력합니다. */}
+                            {isAll ? '단어를 모두 모았어요!' : `단어를 ${words.length}개 모았어요!`}
+                        </h2>
+                        <p style={{ color: 'var(--gray)', fontSize: 16, marginBottom: 40, fontWeight: 500 }}>이 단어들로 다음 이야기를 만들어봐요</p>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center', marginBottom: 56 }}>
+                            {words.map((w, i) => (
+                                <span key={i} className="font-h a-pop" style={{ padding: '12px 28px', background: 'var(--primary-soft)', color: 'var(--primary)', borderRadius: 30, fontSize: 22, animationDelay: `${i * 80}ms` }}>{w}</span>
+                            ))}
                         </div>
+                        <button className="btn-primary" style={{ width: '100%', fontSize: 20, padding: '20px' }} onClick={onNext}>문장 플레이 시작 →</button>
                     </div>
-                </>
+                </div>
             );
         }
 
         function TimeUpPopup({ foundCount, onRetry, onContinue }) {
             return (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.65)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 250 }}>
-                    <div className="a-slideup" style={{ background: '#fff', borderRadius: 28, padding: '44px 36px', maxWidth: 440, width: '90%', textAlign: 'center', boxShadow: 'var(--shadow-lg)' }}>
-                        <div className="time-up-icon" style={{ fontSize: 64, marginBottom: 14, lineHeight: 1, display: 'inline-block' }}>⏰</div>
-                        <h2 className="font-h" style={{ fontSize: 28, color: 'var(--navy-dark)', marginBottom: 10 }}>시간이 다 됐어요!</h2>
-                        <p style={{ color: 'var(--gray)', fontSize: 15, marginBottom: 10, fontWeight: 500 }}>
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 250 }}>
+                    <div className="a-slideup" style={{ background: 'var(--card-solid)', borderRadius: 32, padding: '48px 40px', maxWidth: 480, width: '90%', textAlign: 'center', boxShadow: 'var(--shadow-lg)' }}>
+                        <div style={{ width: 120, height: 120, margin: '0 auto 24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <img src="img/cha_01_02.png" alt="아쉬워하는 호랑이" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                        </div>
+                        <h2 className="font-h" style={{ fontSize: 32, color: 'var(--navy-dark)', marginBottom: 14 }}>시간이 다 되었어요!</h2>
+                        <p style={{ color: 'var(--gray)', fontSize: 16, marginBottom: 10, fontWeight: 500 }}>
                             지금까지 <strong style={{ color: 'var(--primary)' }}>{foundCount}개</strong>의 단어를 찾았어요
                         </p>
-                        <p style={{ color: 'var(--gray)', fontSize: 13, marginBottom: 28, fontWeight: 500 }}>
-                            다시 도전하거나 지금까지 찾은 단어로 진행할 수 있어요
+                        <p style={{ color: 'var(--gray)', fontSize: 16, marginBottom: 36, fontWeight: 500, lineHeight: 1.5 }}>
+                            찾은 단어가 최소 3개 이상일 때만 이야기 만들기를 계속할 수 있어요.
                         </p>
-                        <div style={{ display: 'flex', gap: 10 }}>
-                            <button onClick={onRetry} className="btn-ghost" style={{ flex: 1, padding: '14px' }}>↺ 다시 도전</button>
-                            {foundCount > 0 && (
-                                <button onClick={onContinue} className="btn-primary" style={{ flex: 1, padding: '14px', fontSize: 15 }}>계속 진행 →</button>
+                        <div style={{ display: 'flex', gap: 12 }}>
+                            <button onClick={onRetry} className="btn-primary" style={{ flex: 1, padding: '18px', fontSize: 16, fontWeight: 700 }}>↺ 다시 도전</button>
+                            {foundCount >= 3 && (
+                                <button onClick={onContinue} className="btn-primary" style={{ flex: 1, padding: '18px', fontSize: 16, fontWeight: 700 }}>계속 진행 →</button>
                             )}
                         </div>
                     </div>
@@ -353,7 +252,8 @@
         }
 
         function GridScreen() {
-            const TOTAL_TIME = 180;
+            // 제한 시간을 기존 90초에서 1분(60초)으로 줄여서 설정합니다.
+            const TOTAL_TIME = 60;
             const [foundWords, setFoundWords] = useState([]);
             const [sel, setSel] = useState([]);
             const [anim, setAnim] = useState(null);
@@ -362,6 +262,7 @@
             const [mascotMessage, setMascotMessage] = useState('드래그해서 숨은 단어를 찾아봐!');
             const [mascotImg, setMascotImg] = useState('img/cha_01.png');
             const [popup, setPopup] = useState(false);
+            const [celebrating, setCelebrating] = useState(false);
             const [definitionWord, setDefinitionWord] = useState(null);
             const [timeLeft, setTimeLeft] = useState(TOTAL_TIME);
             const [timerActive, setTimerActive] = useState(true);
@@ -376,7 +277,8 @@
             useEffect(() => { foundWordsRef.current = foundWords; }, [foundWords]);
 
             const allFound = foundWords.length === window.GRID_DATA.targets.length;
-            const isWarning = timeLeft <= 30 && timerActive;
+            // 10초 이하로 남았을 때 빨간 글씨 경고와 펄스 애니메이션이 활성화되도록 기준을 10초로 수정합니다.
+            const isWarning = timeLeft <= 10 && timerActive;
 
             useEffect(() => {
                 if (!timerActive || allFound) return;
@@ -392,6 +294,86 @@
             useEffect(() => {
                 if (allFound) setTimerActive(false);
             }, [allFound]);
+
+            useEffect(() => {
+                if (celebrating) {
+                    window.AppState.set('acquired', [...new Set(foundWords)]);
+
+                    if (typeof confetti === 'function') {
+                        const festiveColors = [
+                            '#FF2E93', // 선명한 핫핑크
+                            '#FF70A6', // 밝은 네온 핑크
+                            '#A255FF', // 쨍한 바이올렛 보라
+                            '#00F5FF', // 형광 스카이 시안
+                            '#38EF7D', // 쨍한 네온 연두
+                            '#A6FF96', // 밝은 형광 연두
+                            '#FFE600', // 쨍한 형광 옐로우
+                            '#FFFB73', // 밝은 레몬 옐로우
+                            '#FF9F29', // 포인트 오렌지
+                            '#4D96FF'  // 비비드 블루
+                        ];
+
+                        // 1. 중앙 폭죽
+                        confetti({
+                            particleCount: 60,
+                            spread: 100,
+                            origin: { x: 0.5, y: 0.4 },
+                            zIndex: 9999,
+                            colors: festiveColors
+                        });
+
+                        // 2. 좌측 하단 폭죽
+                        confetti({
+                            particleCount: 40,
+                            angle: 60,
+                            spread: 70,
+                            origin: { x: 0.05, y: 0.8 },
+                            zIndex: 9999,
+                            colors: festiveColors
+                        });
+
+                        // 3. 우측 하단 폭죽
+                        confetti({
+                            particleCount: 40,
+                            angle: 120,
+                            spread: 70,
+                            origin: { x: 0.95, y: 0.8 },
+                            zIndex: 9999,
+                            colors: festiveColors
+                        });
+
+                        const duration = 3000;
+                        const end = Date.now() + duration;
+
+                        // 4. 화면 가득 흩날림 효과 (모든 컬러 골고루)
+                        const frame = () => {
+                            const randomColor = festiveColors[Math.floor(Math.random() * festiveColors.length)];
+                            confetti({
+                                particleCount: 2,
+                                angle: 270,
+                                spread: 360,
+                                ticks: 200,
+                                gravity: 0.55,
+                                scalar: 0.8,
+                                startVelocity: 0,
+                                origin: { x: Math.random(), y: Math.random() - 0.2 },
+                                zIndex: 9999,
+                                colors: [randomColor]
+                            });
+
+                            if (Date.now() < end) {
+                                requestAnimationFrame(frame);
+                            }
+                        };
+                        frame();
+                    }
+
+                    const timer = setTimeout(() => {
+                        setPopup(true);
+                    }, 3000);
+                    return () => clearTimeout(timer);
+                }
+            }, [celebrating]);
 
             const foundMap = {};
             window.GRID_DATA.targets.forEach(t => {
@@ -431,11 +413,11 @@
                 selRef.current = [];
                 const msgs = ['우와, 단어를 찾았어! 🎉', '정말 멋진 실력이야! 👍', '대단해! 맞았어! ✨', '찾았다! 잘했어! 😍'];
                 setMascotMessage(msgs[Math.floor(Math.random() * msgs.length)]);
-                setMascotImg('img/cha_01_01.png');
-                setTimeout(() => setMascotImg('img/cha_01.png'), 1000);
+                setMascotImg('img/cha_01_01.png'); // 긍정 피드백 이미지 교체
                 setTimeout(() => {
                     setSel([]); setAnim(null); animActiveRef.current = false;
                     setDefinitionWord(hit.word);
+                    setMascotImg('img/cha_01.png'); // 팝업 열릴 때 캐릭터 원상복구
                 }, 900);
             };
 
@@ -509,10 +491,7 @@
             const handleDefClose = () => {
                 setDefinitionWord(null);
                 if (allFound) {
-                    setTimeout(() => {
-                        window.AppState.set('acquired', [...new Set(foundWordsRef.current)]);
-                        setPopup(true);
-                    }, 200);
+                    setCelebrating(true);
                 }
             };
 
@@ -529,120 +508,138 @@
 
             return (
                 <>
-                    <div className="a-fadeup" style={{ padding: '24px 0' }}>
-                        <div className="stage">
+                    <div className="a-fadeup" style={{ padding: '0px', paddingTop: 20, position: 'relative' }}>
 
-                            {/* HEADER — locked width matching body below */}
-                            <div className="stage-header">
-                                {/* LEFT side: Title + Counter + Timer + Progress bar */}
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                                    <div className="stage-header-left">
-                                        <h2 className="font-h" style={{ fontSize: 30, color: 'var(--navy-dark)', margin: 0, letterSpacing: -0.5 }}>글자 연결</h2>
-                                        <div className="font-h" style={{ fontSize: 17, color: 'var(--gray)' }}>
-                                            <span style={{ color: 'var(--primary)' }}>{foundWords.length}</span> / {window.GRID_DATA.targets.length}
-                                        </div>
-                                        <Timer seconds={timeLeft} isWarning={isWarning} />
-                                    </div>
-                                    {/* Underline progress bar — visual divider under title */}
-                                    <div style={{ height: 4, background: 'var(--gray-light)', borderRadius: 4, width: 360, overflow: 'hidden' }}>
-                                        <div style={{ height: '100%', background: 'linear-gradient(90deg, var(--blue), #818CF8)', borderRadius: 4, width: `${progressPct}%`, transition: 'width .6s cubic-bezier(0.16,1,0.3,1)' }} />
+                        {/* Header: Title + Progress */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap' }}>
+                            <div style={{ width: 320, maxWidth: 320, padding: '0 10px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 4 }}>
+                                    <h2 className="font-h" style={{ fontSize: 24, color: 'var(--navy-dark)', margin: 0 }}>글자 연결</h2>
+                                    <div className="font-h" style={{ fontSize: 15, color: 'var(--gray)', flexGrow: 1, textAlign: 'right' }}>
+                                        <span style={{ color: 'var(--primary)' }}>{foundWords.length}</span> / {window.GRID_DATA.targets.length}
                                     </div>
                                 </div>
+                                <div style={{ height: 6, background: 'var(--gray-light)', borderRadius: 3, overflow: 'hidden', width: '100%' }}>
+                                    <div style={{ height: '100%', background: 'var(--primary)', borderRadius: 3, width: `${progressPct}%`, transition: 'width .6s cubic-bezier(0.16,1,0.3,1)' }} />
+                                </div>
+                            </div>
+                        </div>
 
-                                {/* RIGHT side: Speech bubble + Mascot */}
-                                <div className="stage-header-right">
-                                    <div className="a-pop" key={mascotMessage} style={{
-                                        background: '#FFF', padding: '10px 16px', borderRadius: '18px',
-                                        boxShadow: '0 8px 20px rgba(0,0,0,0.06)', border: '2px solid var(--primary-soft)',
-                                        fontSize: 13, fontWeight: 600, color: '#475569', whiteSpace: 'nowrap',
-                                        marginTop: 22, position: 'relative'
-                                    }}>
-                                        {mascotMessage}
-                                        <div style={{
-                                            position: 'absolute', right: -7, top: '50%',
-                                            width: 12, height: 12, background: '#FFF',
-                                            borderRight: '2px solid var(--primary-soft)',
-                                            borderBottom: '2px solid var(--primary-soft)',
-                                            transform: 'translateY(-50%) rotate(-45deg)', zIndex: 1
-                                        }}></div>
-                                    </div>
-                                    <img src={mascotImg} alt="" style={{ width: 80, height: 'auto', filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.1))', flexShrink: 0 }} />
+                        {/* TIMER Box */}
+                        <div style={{
+                            position: 'absolute', left: 344, top: 15, display: 'flex', alignItems: 'center', gap: 6,
+                            zIndex: 50
+                        }}>
+                            <Timer seconds={timeLeft} isWarning={isWarning} />
+                        </div>
+
+                        {/* RIGHT: Mascot with Speech Bubble */}
+                        <div style={{ position: 'absolute', right: 0, top: 10, display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', gap: 0, zIndex: 50 }}>
+                            <div className="a-pop" key={mascotMessage} style={{
+                                background: '#FFF', padding: '10px 14px', borderRadius: '18px',
+                                boxShadow: '0 6px 16px rgba(0,0,0,0.06)', border: '2px solid var(--primary-soft)',
+                                fontSize: 15, fontWeight: 600, color: '#475569', whiteSpace: 'nowrap',
+                                position: 'relative', marginTop: 5, display: 'flex', alignItems: 'center', gap: 6
+                            }}>
+                                <span>{mascotMessage}</span>
+                                <div style={{
+                                    position: 'absolute', right: -6, top: '50%',
+                                    width: 10, height: 10, background: '#FFF',
+                                    borderRight: '2px solid var(--primary-soft)',
+                                    borderTop: '2px solid var(--primary-soft)',
+                                    transform: 'translateY(-50%) rotate(45deg)', zIndex: 1
+                                }}></div>
+                            </div>
+                            <div style={{ width: 120, height: 140, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', flexShrink: 0, marginRight: 0 }}>
+                                <img src={mascotImg} alt="" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.1))' }} />
+                            </div>
+                        </div>
+
+                        {/* Main Layout: LEFT (Hints) + RIGHT (Puzzle Grid) */}
+                        <div style={{ display: 'flex', gap: 24, alignItems: 'stretch', flexWrap: 'wrap', marginTop: 10, position: 'relative', zIndex: 1 }}>
+
+                            {/* LEFT: Word List (White Card) */}
+                            <div style={{ width: 320, flexShrink: 0, background: 'var(--card-solid)', borderRadius: 28, padding: '28px 24px', boxShadow: '0 10px 40px rgba(79,70,229,0.06)' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                    {window.GRID_DATA.targets.map(t => {
+                                        const found = foundWords.includes(t.word);
+                                        return (
+                                            <div key={t.word} className={found ? 'a-pop' : ''}
+                                                style={{
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 18px', borderRadius: 14,
+                                                    background: found ? t.bg : '#F8FAFC',
+                                                    border: `2px solid ${found ? t.color + '40' : 'transparent'}`,
+                                                    transition: 'all .25s ease',
+                                                    boxShadow: found ? `0 4px 12px ${t.color}15` : 'none',
+                                                    opacity: found ? 0.35 : 1,
+                                                }}
+                                                onMouseEnter={e => { if (!found) e.currentTarget.style.background = '#F1F5F9'; }}
+                                                onMouseLeave={e => { if (!found) e.currentTarget.style.background = '#F8FAFC'; }}>
+                                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                                    <span style={{ fontSize: 13, color: '#94A3B8', marginRight: 10, fontWeight: 600 }}>{t.label}</span>
+                                                    <span className="font-h" style={{ fontSize: 18, color: found ? t.color : 'var(--navy-dark)' }}>{t.word}</span>
+                                                </div>
+                                                {found
+                                                    ? <span style={{ color: t.color, fontWeight: 800, fontSize: 18 }}>✓</span>
+                                                    : <button onClick={() => showHint(t)}
+                                                        style={{ fontSize: 12, fontWeight: 700, padding: '6px 12px', borderRadius: 10, border: 'none', background: '#FEF08A', color: 'var(--navy-dark)', cursor: 'pointer', fontFamily: 'var(--font-b)' }}
+                                                        onMouseEnter={e => { e.currentTarget.style.background = '#FDE047'; }}
+                                                        onMouseLeave={e => { e.currentTarget.style.background = '#FEF08A'; }}>
+                                                        💡 힌트
+                                                    </button>}
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
 
-                            {/* BODY — 2 columns */}
-                            <div className="stage-body">
+                            {/* RIGHT: Grid Board */}
+                            <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 18 }}>
+                                <div style={{ background: 'var(--card-solid)', borderRadius: 28, padding: '32px', display: 'flex', justifyContent: 'center', position: 'relative', boxShadow: '0 10px 40px rgba(79,70,229,0.06)' }}>
+                                    <div style={{ position: 'relative', width: 488, boxSizing: 'border-box' }}>
+                                        <div ref={gridRef}
+                                            onMouseMove={e => handleMove(e.clientX, e.clientY)}
+                                            onMouseUp={endDrag} onMouseLeave={endDrag}
+                                            onTouchMove={e => { e.preventDefault(); const t = e.touches[0]; handleMove(t.clientX, t.clientY); }}
+                                            onTouchEnd={endDrag}
+                                            style={{ display: 'grid', gridTemplateColumns: `repeat(7,${CELL}px)`, gap: GAP, padding: PAD, touchAction: 'none', position: 'relative', zIndex: 1, justifyContent: 'center' }}>
+                                            {window.GRID_DATA.cells.map((row, r) => row.map((ch, c) => {
+                                                const s = inSel(r, c), f = foundMap[`${r}-${c}`];
+                                                return (
+                                                    <div key={`${r}-${c}`} data-rc={`${r},${c}`}
+                                                        onMouseDown={() => startDrag(r, c)}
+                                                        onTouchStart={e => { e.preventDefault(); startDrag(r, c); }}
+                                                        style={{
+                                                            width: CELL, height: CELL, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                            borderRadius: 14, cursor: timerActive ? 'pointer' : 'not-allowed',
+                                                            fontFamily: 'var(--font-h)', fontWeight: 700, fontSize: 22,
+                                                            transition: 'all .2s cubic-bezier(0.16,1,0.3,1)',
+                                                            background: s ? 'rgba(52,211,153,.15)' : f ? f.bg : '#F8FAFC',
+                                                            color: s ? 'var(--navy-dark)' : f ? f.color : 'var(--navy)',
+                                                            border: `2px solid ${s ? 'var(--green-line)' : f ? f.color + '60' : 'transparent'}`,
+                                                            transform: s ? 'scale(.92)' : 'scale(1)',
+                                                            boxShadow: f ? `0 4px 12px ${f.color}25` : 'none',
+                                                            opacity: !timerActive && !f ? 0.5 : 1,
+                                                            animation: (hintCell && hintCell[0] === r && hintCell[1] === c) ? 'hintBlink .6s ease-in-out 3' : 'none',
+                                                        }}>{ch}</div>
+                                                );
+                                            }))}
+                                        </div>
 
-                                {/* LEFT: Word List */}
-                                <div style={{ background: 'var(--card-solid)', borderRadius: 28, padding: '20px 18px', boxShadow: '0 10px 40px rgba(79,70,229,0.06)' }}>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-                                        {window.GRID_DATA.targets.map(t => {
-                                            const found = foundWords.includes(t.word);
-                                            return (
-                                                <div key={t.word} className={found ? 'a-pop' : ''}
-                                                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', borderRadius: 14, background: found ? t.bg : '#F8FAFC', border: `2px solid ${found ? t.color + '40' : 'transparent'}`, transition: 'all .3s cubic-bezier(0.16,1,0.3,1)', boxShadow: found ? `0 4px 12px ${t.color}15` : 'none', height: 48, boxSizing: 'border-box' }}>
-                                                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                                                        <span style={{ fontSize: 11, color: '#94A3B8', marginRight: 10, fontWeight: 600 }}>{t.label}</span>
-                                                        <span className="font-h" style={{ fontSize: 16, color: found ? t.color : 'var(--navy-dark)' }}>{t.word}</span>
-                                                    </div>
-                                                    {found
-                                                        ? <span style={{ color: t.color, fontWeight: 800, fontSize: 17 }}>✓</span>
-                                                        : <button onClick={() => showHint(t)}
-                                                            style={{ fontSize: 11.5, fontWeight: 700, padding: '5px 11px', borderRadius: 10, border: 'none', background: '#FEF08A', color: 'var(--navy-dark)', cursor: 'pointer', fontFamily: 'var(--font-b)' }}
-                                                            onMouseEnter={e => { e.currentTarget.style.background = '#FDE047'; }}
-                                                            onMouseLeave={e => { e.currentTarget.style.background = '#FEF08A'; }}>
-                                                            💡 힌트
-                                                        </button>}
-                                                </div>
-                                            );
-                                        })}
+                                        <svg width={GRID_INNER} height={GRID_INNER} style={{ position: 'absolute', top: 8, left: '50%', transform: 'translateX(-50%)', pointerEvents: 'none', zIndex: 3 }}>
+                                            {sel.length >= 2 && <polyline points={linePoints} fill="none" stroke="var(--green-line)" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" opacity="0.6" />}
+                                            {sel.map(([r, c], i) => { const p = cellCenter(r, c); return <circle key={i} cx={p.x} cy={p.y} r="7" fill="var(--green-line)" opacity="0.9" />; })}
+                                            {particles.map(p => (
+                                                <circle key={p.id} cx={p.x} cy={p.y} r="6" fill={p.color}
+                                                    style={{ animation: `particle-${p.id} .85s cubic-bezier(0.16,1,0.3,1) forwards`, '--dx': p.dx + 'px', '--dy': p.dy + 'px' }} />
+                                            ))}
+                                        </svg>
+
+                                        {anim && (
+                                            <img src="img/character_02.png" alt="" key={anim.key}
+                                                style={{ position: 'absolute', left: `calc(50% - ${GRID_INNER / 2}px + ${anim.start.x - 30}px)`, top: 8 + anim.start.y - 30, width: 60, height: 60, pointerEvents: 'none', zIndex: 5, animation: 'rideLine .8s cubic-bezier(.34,1.56,.64,1) forwards', '--tx': (anim.end.x - anim.start.x) + 'px', '--ty': (anim.end.y - anim.start.y) + 'px' }} />
+                                        )}
                                     </div>
-                                </div>
-
-                                {/* RIGHT: Grid (fixed 488px column) */}
-                                <div style={{ position: 'relative', background: '#fff', borderRadius: 28, padding: 8, boxShadow: '0 10px 40px rgba(79,70,229,0.08)', width: 'var(--col-right)', boxSizing: 'border-box' }}>
-                                    <div ref={gridRef}
-                                        onMouseMove={e => handleMove(e.clientX, e.clientY)}
-                                        onMouseUp={endDrag} onMouseLeave={endDrag}
-                                        onTouchMove={e => { e.preventDefault(); const t = e.touches[0]; handleMove(t.clientX, t.clientY); }}
-                                        onTouchEnd={endDrag}
-                                        style={{ display: 'grid', gridTemplateColumns: `repeat(7,${CELL}px)`, gap: GAP, padding: PAD, touchAction: 'none', position: 'relative', zIndex: 1, justifyContent: 'center' }}>
-                                        {window.GRID_DATA.cells.map((row, r) => row.map((ch, c) => {
-                                            const s = inSel(r, c), f = foundMap[`${r}-${c}`];
-                                            return (
-                                                <div key={`${r}-${c}`} data-rc={`${r},${c}`}
-                                                    onMouseDown={() => startDrag(r, c)}
-                                                    onTouchStart={e => { e.preventDefault(); startDrag(r, c); }}
-                                                    style={{
-                                                        width: CELL, height: CELL, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                        borderRadius: 14, cursor: timerActive ? 'pointer' : 'not-allowed',
-                                                        fontFamily: 'var(--font-h)', fontWeight: 700, fontSize: 22,
-                                                        transition: 'all .2s cubic-bezier(0.16,1,0.3,1)',
-                                                        background: s ? 'rgba(52,211,153,.15)' : f ? f.bg : '#F8FAFC',
-                                                        color: s ? 'var(--navy-dark)' : f ? f.color : 'var(--navy)',
-                                                        border: `2px solid ${s ? 'var(--green-line)' : f ? f.color + '60' : 'transparent'}`,
-                                                        transform: s ? 'scale(.92)' : 'scale(1)',
-                                                        boxShadow: f ? `0 4px 12px ${f.color}25` : 'none',
-                                                        opacity: !timerActive && !f ? 0.5 : 1,
-                                                        animation: (hintCell && hintCell[0] === r && hintCell[1] === c) ? 'hintBlink .6s ease-in-out 3' : 'none',
-                                                    }}>{ch}</div>
-                                            );
-                                        }))}
-                                    </div>
-
-                                    <svg width={GRID_INNER} height={GRID_INNER} style={{ position: 'absolute', top: 8, left: '50%', transform: 'translateX(-50%)', pointerEvents: 'none', zIndex: 3 }}>
-                                        {sel.length >= 2 && <polyline points={linePoints} fill="none" stroke="var(--green-line)" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" opacity="0.6" />}
-                                        {sel.map(([r, c], i) => { const p = cellCenter(r, c); return <circle key={i} cx={p.x} cy={p.y} r="7" fill="var(--green-line)" opacity="0.9" />; })}
-                                        {particles.map(p => (
-                                            <circle key={p.id} cx={p.x} cy={p.y} r="6" fill={p.color}
-                                                style={{ animation: `particle-${p.id} .85s cubic-bezier(0.16,1,0.3,1) forwards`, '--dx': p.dx + 'px', '--dy': p.dy + 'px' }} />
-                                        ))}
-                                    </svg>
-
-                                    {anim && (
-                                        <img src="img/character_02.png" alt="" key={anim.key}
-                                            style={{ position: 'absolute', left: `calc(50% - ${GRID_INNER / 2}px + ${anim.start.x - 30}px)`, top: 8 + anim.start.y - 30, width: 60, height: 60, pointerEvents: 'none', zIndex: 5, animation: 'rideLine .8s cubic-bezier(.34,1.56,.64,1) forwards', '--tx': (anim.end.x - anim.start.x) + 'px', '--ty': (anim.end.y - anim.start.y) + 'px' }} />
-                                    )}
                                 </div>
                             </div>
                         </div>
@@ -653,7 +650,7 @@
                     </div>
 
                     {definitionWord && <WordDefinitionPopup word={definitionWord} onClose={handleDefClose} />}
-                    {popup && <AcquiredPopup words={[...new Set(foundWords)]} onNext={handleNext} />}
+                    {popup && <AcquiredPopup words={[...new Set(foundWords)]} onNext={handleNext} isAll={[...new Set(foundWords)].length === window.GRID_DATA.targets.length} />}
                     {timeUpOpen && <TimeUpPopup foundCount={foundWords.length} onRetry={handleRetry} onContinue={handleContinueAnyway} />}
                 </>
             );
@@ -663,7 +660,7 @@
             return (
                 <div style={{ minHeight: '100vh', background: 'linear-gradient(145deg,#EEF2FF 0%,#F8FAFC 45%,#FFF0F8 100%)' }}>
                     <window.StepHeader stepIdx={0} />
-                    <div style={{ padding: '0 24px' }}>
+                    <div style={{ maxWidth: 1376, margin: '0 auto', padding: '0 32px' }}>
                         <GridScreen />
                     </div>
                 </div>

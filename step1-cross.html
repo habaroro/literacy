@@ -93,6 +93,30 @@
             }
         }
 
+        .a-x-mark-pop {
+            animation: xMarkPop 0.6s ease-out forwards;
+        }
+
+        /* 타이머 경고 애니메이션 */
+        @keyframes timerPulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                color: #DC2626;
+            }
+
+            50% {
+                /* 타이머 영역이 커지는 효과의 폭을 절반(1.2배 -> 1.1배)으로 줄입니다. */
+                transform: scale(1.1);
+                color: #EF4444;
+            }
+        }
+
+        .timer-warning {
+            animation: timerPulse 0.8s ease-in-out infinite;
+        }
+
         .x-mark {
             position: absolute;
             left: 50%;
@@ -161,12 +185,35 @@
     <script type="text/babel">
         const { useState, useRef, useEffect } = React;
 
-        function AcquiredPopup({ words, onNext }) {
+        // 타이머의 시각적 형태와 애니메이션을 처리하는 컴포넌트입니다.
+        function Timer({ seconds, isWarning }) {
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            return (
+                <div className={isWarning ? 'timer-warning' : ''} style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    background: '#FFF', padding: '10px 16px', borderRadius: '18px',
+                    fontFamily: 'var(--font-h)', fontSize: 15, fontWeight: 700,
+                    color: isWarning ? '#EF4444' : 'var(--navy-dark)',
+                    transition: 'color 0.3s ease',
+                    whiteSpace: 'nowrap'
+                }}>
+                    <span style={{ fontSize: 16, lineHeight: 1 }}>⏱️</span>
+                    <span>{m.toString().padStart(2, '0')}:{s.toString().padStart(2, '0')}</span>
+                </div>
+            );
+        }
+
+        // 획득한 단어를 보여주는 팝업 컴포넌트입니다.
+        function AcquiredPopup({ words, onNext, isAll }) {
             return (
                 <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200 }}>
                     <div className="a-slideup" style={{ background: 'var(--card-solid)', borderRadius: 32, padding: '64px 48px', maxWidth: 560, width: '90%', textAlign: 'center', boxShadow: 'var(--shadow-lg)' }}>
                         <div style={{ fontSize: 64, marginBottom: 20 }}>🎉</div>
-                        <h2 className="font-h" style={{ fontSize: 36, color: 'var(--navy-dark)', marginBottom: 12 }}>단어를 모두 모았어요!</h2>
+                        <h2 className="font-h" style={{ fontSize: 36, color: 'var(--navy-dark)', marginBottom: 12 }}>
+                            {/* 단어를 전부 다 모으지 못한 경우, 찾은 단어의 개수를 포함하여 동적으로 문구를 출력합니다. */}
+                            {isAll ? '단어를 모두 모았어요!' : `단어를 ${words.length}개 모았어요!`}
+                        </h2>
                         <p style={{ color: 'var(--gray)', fontSize: 16, marginBottom: 40, fontWeight: 500 }}>이 단어들로 다음 이야기를 만들어봐요</p>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center', marginBottom: 56 }}>
                             {words.map((w, i) => (
@@ -179,24 +226,35 @@
             );
         }
 
-        function TimeoutPopup({ onRetry }) {
+        // 시간 만료 시 나타나는 팝업 컴포넌트입니다.
+        function TimeUpPopup({ foundCount, onRetry, onContinue }) {
             return (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200 }}>
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 250 }}>
                     <div className="a-slideup" style={{ background: 'var(--card-solid)', borderRadius: 32, padding: '48px 40px', maxWidth: 480, width: '90%', textAlign: 'center', boxShadow: 'var(--shadow-lg)' }}>
                         <div style={{ width: 120, height: 120, margin: '0 auto 24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <img src="img/cha_02_01.png" alt="아쉬워하는 호랑이" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                            <img src="img/cha_01_02.png" alt="아쉬워하는 호랑이" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
                         </div>
                         <h2 className="font-h" style={{ fontSize: 32, color: 'var(--navy-dark)', marginBottom: 14 }}>시간이 다 되었어요!</h2>
-                        <p style={{ color: 'var(--gray)', fontSize: 17, marginBottom: 40, fontWeight: 500, lineHeight: 1.6 }}>
-                            아쉬워요! 조금만 더 생각하면<br />모든 빈칸을 맞출 수 있었을 텐데요.<br />우리 다시 한번 도전해 볼까요?
+                        <p style={{ color: 'var(--gray)', fontSize: 16, marginBottom: 10, fontWeight: 500 }}>
+                            지금까지 <strong style={{ color: 'var(--primary)' }}>{foundCount}개</strong>의 단어를 찾았어요
                         </p>
-                        <button className="btn-primary" style={{ width: '100%', fontSize: 20, padding: '20px' }} onClick={onRetry}>다시 도전하기 🔄</button>
+                        <p style={{ color: 'var(--gray)', fontSize: 16, marginBottom: 36, fontWeight: 500, lineHeight: 1.5 }}>
+                            찾은 단어가 최소 3개 이상일 때만 이야기 만들기를 계속할 수 있어요.
+                        </p>
+                        <div style={{ display: 'flex', gap: 12 }}>
+                            <button onClick={onRetry} className="btn-primary" style={{ flex: 1, padding: '18px', fontSize: 16, fontWeight: 700 }}>↺ 다시 도전</button>
+                            {foundCount >= 3 && (
+                                <button onClick={onContinue} className="btn-primary" style={{ flex: 1, padding: '18px', fontSize: 16, fontWeight: 700 }}>계속 진행 →</button>
+                            )}
+                        </div>
                     </div>
                 </div>
             );
         }
 
         function CrossScreen() {
+            // 제한 시간을 기존 90초에서 1분(60초)으로 줄여서 설정합니다.
+            const TOTAL_TIME = 60;
             const [filled, setFilled] = useState({});
             const [usedCards, setUsedCards] = useState([]);
             const [wrongId, setWrongId] = useState(null);
@@ -206,10 +264,12 @@
             const [mascotMessage, setMascotMessage] = useState('빈칸에 들어갈 단어를 눌러줘!');
             const [mascotImg, setMascotImg] = useState('img/cha_02.png');
             const [popup, setPopup] = useState(false);
-            const [timeoutPopup, setTimeoutPopup] = useState(false);
+            // step1-grid와 플로우를 일치시키기 위해 timeUpOpen 상태 변수를 사용합니다.
+            const [timeLeft, setTimeLeft] = useState(TOTAL_TIME);
+            const [timerActive, setTimerActive] = useState(true);
+            const [timeUpOpen, setTimeUpOpen] = useState(false);
             const [showXMark, setShowXMark] = useState(null);
             const [gridShake, setGridShake] = useState(false);
-            const [timeLeft, setTimeLeft] = useState(60);
             const [idleSeconds, setIdleSeconds] = useState(0);
             const [showCardHint, setShowCardHint] = useState(false);
             const xMarkKeyRef = useRef(0);
@@ -217,24 +277,27 @@
             const CW = window.CW;
             const blanks = CW.cells.filter(c => c?.kind === 'blank');
             const allFilled = Object.keys(filled).length === blanks.length;
+            // 10초 이하로 남았을 때 빨간 글씨 경고와 펄스 애니메이션이 활성화되도록 기준을 10초로 수정합니다.
+            const isWarning = timeLeft <= 10 && timerActive;
 
+            // step1-grid와 동일한 setTimeout 기반의 1초 주기 타이머 루프를 동작시킵니다.
             useEffect(() => {
-                if (allFilled || timeoutPopup) return;
-
-                const timerId = setInterval(() => {
-                    setTimeLeft(prev => {
-                        if (prev <= 1) {
-                            clearInterval(timerId);
-                            setTimeoutPopup(true);
-                            return 0;
-                        }
-                        return prev - 1;
-                    });
+                if (!timerActive || allFilled) return;
+                if (timeLeft <= 0) {
+                    setTimerActive(false);
+                    setTimeUpOpen(true);
+                    return;
+                }
+                const id = setTimeout(() => {
+                    setTimeLeft(t => t - 1);
                     setIdleSeconds(prev => prev + 1);
                 }, 1000);
+                return () => clearTimeout(id);
+            }, [timeLeft, timerActive, allFilled]);
 
-                return () => clearInterval(timerId);
-            }, [allFilled, timeoutPopup]);
+            useEffect(() => {
+                if (allFilled) setTimerActive(false);
+            }, [allFilled]);
 
             useEffect(() => {
                 if (idleSeconds >= 10) {
@@ -328,12 +391,7 @@
                 }
             }, [allFilled]);
 
-            const formatTime = (seconds) => {
-                const mins = Math.floor(seconds / 60);
-                const secs = seconds % 60;
-                return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-            };
-
+            // 게임 재도전 시 모든 상태를 초기 상태로 깨끗하게 리셋합니다.
             const handleRetry = () => {
                 setFilled({});
                 setUsedCards([]);
@@ -344,10 +402,11 @@
                 setMascotMessage('빈칸에 들어갈 단어를 눌러줘!');
                 setMascotImg('img/cha_02.png');
                 setPopup(false);
-                setTimeoutPopup(false);
+                setTimeUpOpen(false);
                 setShowXMark(null);
                 setGridShake(false);
-                setTimeLeft(90);
+                setTimeLeft(TOTAL_TIME);
+                setTimerActive(true);
                 setIdleSeconds(0);
                 setShowCardHint(false);
             };
@@ -412,6 +471,14 @@
             const handleNext = () => {
                 location.href = 'step2.html';
             };
+            // 시간초과 후 3개 이상 단어를 맞추었을 때 계속하기를 누르면 호출되어 결과 팝업을 띄워줍니다.
+            const handleContinueAnyway = () => {
+                setTimeUpOpen(false);
+                const foundWords = Object.keys(filled).map(id => CW.wordMap[id]);
+                if (foundWords.length === 0) return;
+                window.AppState.set('acquired', foundWords);
+                setPopup(true);
+            };
 
             return (
                 <>
@@ -433,16 +500,12 @@
                             </div>
                         </div>
 
-                        {/* TIMER Box */}
+                        {/* TIMER Box - step1-grid와 동일한 Timer 컴포넌트 형식으로 교체합니다. */}
                         <div style={{
                             position: 'absolute', left: 344, top: 15, display: 'flex', alignItems: 'center', gap: 6,
-                            background: '#FFF', padding: '10px 16px', borderRadius: '18px', zIndex: 50,
-                            fontFamily: 'var(--font-h)', fontSize: 15, fontWeight: 700,
-                            color: timeLeft <= 15 ? '#EF4444' : 'var(--navy-dark)',
-                            transition: 'color 0.3s ease'
+                            zIndex: 50
                         }}>
-                            <span style={{ fontSize: 16, lineHeight: 1 }}>⏱️</span>
-                            <span>{formatTime(timeLeft)}</span>
+                            <Timer seconds={timeLeft} isWarning={isWarning} />
                         </div>
 
                         {/* RIGHT: Mascot with Speech Bubble */}
@@ -591,8 +654,8 @@
                             </div>
                         </div>
                     </div >
-                    {popup && <AcquiredPopup words={Object.values(CW.wordMap)} onNext={handleNext} />}
-                    {timeoutPopup && <TimeoutPopup onRetry={handleRetry} />}
+                    {popup && <AcquiredPopup words={Object.keys(filled).map(id => CW.wordMap[id])} onNext={handleNext} isAll={Object.keys(filled).length === blanks.length} />}
+                    {timeUpOpen && <TimeUpPopup foundCount={Object.keys(filled).length} onRetry={handleRetry} onContinue={handleContinueAnyway} />}
                 </>
             );
         }
