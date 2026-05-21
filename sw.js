@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tiger-literacy-v4';
+const CACHE_NAME = 'tiger-literacy-v5';
 const BASE = '/literacy/';
 const ASSETS = [
     BASE,
@@ -13,6 +13,7 @@ const ASSETS = [
     BASE + 'manifest.json',
     BASE + 'img/cover.png',
     BASE + 'img/character_04.png',
+    BASE + 'img/appicon.png',
     BASE + 'img/tig.png',
     BASE + 'img/cha_01.png',
     BASE + 'img/cha_02.png',

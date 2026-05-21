@@ -10,13 +10,13 @@
   "orientation": "landscape",
   "icons": [
     {
-      "src": "/literacy/img/character_04.png",
+      "src": "/literacy/img/appicon.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/literacy/img/cover.png",
+      "src": "/literacy/img/appicon.png",
       "sizes": "512x512",
       "type": "image/png"
     }
