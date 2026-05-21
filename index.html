@@ -40,12 +40,15 @@
                     <div className="a-fadeup intro-container-v2">
                         <div className="intro-grid-v2">
                             <div className="intro-visual-v2">
-                                <div className="book-glow-frame">
-                                    <img src="img/cover.png" alt="방아 찧는 호랑이 책 표지" className="intro-book-cover-v2" style={{ width: 340, height: 'auto', display: 'block', borderRadius: 16 }} />
-                                    <img src="img/character_04.png" alt="" className="intro-book-char-v2 a-bounce" style={{ position: 'absolute', left: -90, bottom: -30, width: 170, filter: 'drop-shadow(0 15px 25px rgba(0,0,0,0.15))', zIndex: 10 }} />
+                                <div className="intro-book-wrap-v2" style={{ position: 'relative' }}>
+                                    <div className="book-glow-frame">
+                                        <div className="spine-shadow" />
+                                        <img src="img/cover.png" alt="방아 찧는 호랑이 책 표지" className="intro-book-cover-v2" style={{ width: 340, height: 'auto', display: 'block', borderRadius: 16 }} />
+                                    </div>
+                                    <img src="img/character_04.png" alt="" className="intro-book-char-v2 a-bounce" style={{ position: 'absolute', left: -139, bottom: -36, width: 206, filter: 'drop-shadow(0 15px 25px rgba(0,0,0,0.15))', zIndex: 10 }} />
                                 </div>
                             </div>
-                            <div className="intro-content-v2" style={{ paddingLeft: 40 }}>
+                            <div className="intro-content-v2" style={{ paddingLeft: 16 }}>
                                 <div className="intro-eyebrow-v2">
                                     <span className="intro-eyebrow-dot-v2" />
                                     <span>WEEKLY BOOK · VOL.12</span>
@@ -63,7 +66,7 @@
                                         과연 오누이는 꾀를 내어 위기를 벗어날 수 있을까요?
                                     </p>
                                 </div>
-                                
+
                                 {/* Premium Gadget Badges */}
                                 <div className="premium-gadget-wrap" style={{ marginBottom: 36 }}>
                                     <div className="gadget-meta-item">
@@ -81,7 +84,7 @@
                                         <span className="gadget-meta-lbl">예상 시간</span>
                                     </div>
                                 </div>
-                                
+
                                 <div className="intro-cta-wrap-v2">
                                     <button className="btn-premium-shine" onClick={onStart}>
                                         <span>독후 활동 시작하기</span>
