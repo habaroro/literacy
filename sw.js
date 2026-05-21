@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tiger-literacy-v13';
+const CACHE_NAME = 'tiger-literacy-v14';
 const BASE = '/literacy/';
 const ASSETS = [
     BASE,
@@ -19,6 +19,8 @@ const ASSETS = [
     BASE + 'img/cha_01.png',
     BASE + 'img/cha_01_02.png',
     BASE + 'img/cha_02.png',
+    BASE + 'img/chat_loading.mp4',
+    BASE + 'img/friends.png',
     BASE + 'img/chaek.png',
     BASE + 'img/momo.png',
     BASE + 'img/meora.png',
