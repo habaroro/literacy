@@ -123,19 +123,19 @@
             justify-content: center;
             gap: 10px;
             padding: 16px 24px;
-            background: linear-gradient(135deg, #FFE4E6, #FECDD3);
-            border: 1.5px solid #FDA4AF;
+            background: linear-gradient(135deg, #EEF2FF, #E0E7FF);
+            border: 1.5px solid #C7D2FE;
             border-radius: 20px;
             cursor: pointer;
-            box-shadow: 0 4px 16px rgba(251, 113, 133, 0.2);
+            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.15);
             transition: all .25s cubic-bezier(0.16, 1, 0.3, 1);
             font-family: var(--font-h);
         }
 
         .rewrite-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(251, 113, 133, 0.3);
-            background: linear-gradient(135deg, #FECDD3, #FCA5A5);
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.25);
+            background: linear-gradient(135deg, #E0E7FF, #C7D2FE);
         }
 
         .rewrite-btn:active {
@@ -166,6 +166,7 @@
 <body>
     <div id="root"></div>
     <script src="common.js"></script>
+    <script src="step3.js"></script>
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
@@ -668,8 +669,8 @@
                                 <div className="a-pop" style={{ flexShrink: 0 }}>
                                     <button className="rewrite-btn" onClick={() => setShowTonePopup(true)}>
                                         <img src={window.IMG.feedback} alt="" style={{ width: 36, height: 36, objectFit: 'contain' }} />
-                                        <span className="font-h" style={{ fontSize: 17, color: '#BE123C' }}>다르게도 써볼래?</span>
-                                        <span style={{ fontSize: 13, color: '#F43F5E', fontWeight: 600, marginLeft: 4 }}>분위기 바꾸기 →</span>
+                                        <span className="font-h" style={{ fontSize: 17, color: 'var(--primary-deep)' }}>다르게도 써볼래?</span>
+                                        <span style={{ fontSize: 13, color: 'var(--primary)', fontWeight: 600, marginLeft: 4 }}>분위기 바꾸기 →</span>
                                     </button>
                                 </div>
                             )}
