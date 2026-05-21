@@ -25,7 +25,7 @@
                     mode: 'cross',
                     title: '빈칸 맞추기',
                     desc: '빈칸에 맞는 음절을\n채워봐!',
-                    tag: '카드로 채우기',
+                    tag: '글자 찾기',
                     reco: '1~3단계 추천',
                     char: 'img/cha_02.png',
                     charStyle: { left: -32, bottom: -24, width: 130 },
@@ -52,7 +52,7 @@
                 <div className="a-fadeup" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 120px)', position: 'relative', zIndex: 10 }}>
                     <h2 className="font-h" style={{ fontSize: 44, color: 'var(--navy-dark)', marginBottom: 12, letterSpacing: '-0.02em' }}>단어 플레이</h2>
                     <p style={{ color: 'var(--text-sub)', marginBottom: 68, fontSize: 18, fontWeight: 600 }}>어떤 방식으로 재미있게 단어를 찾아볼까요?</p>
-                    
+
                     <div className="premium-select-grid">
                         {opts.map(o => (
                             <div key={o.mode} className="mode-select-card-premium-wrap" style={{ position: 'relative' }}>
