@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=1280, initial-scale=1.0">
     <title>퍼펙트 문해 · 방아 찧는 호랑이</title>
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -31,30 +31,7 @@
         function IntroScreen() {
             const onStart = () => {
                 window.AppState.reset();
-                
-                // 이미 독립형 팝업 창 내부이거나 명명된 창 내부인지 검사
-                const isPopup = window.opener || (window.name === 'ReadingActivity');
-                
-                if (isPopup) {
-                    location.href = 'step1.html';
-                } else {
-                    // 모니터의 전체 가용 해상도 가져오기 (가득 찬 창 크기 적용)
-                    const w = window.screen.availWidth || 1400;
-                    const h = window.screen.availHeight || 900;
-                    
-                    // 주소창, 도구창, 메뉴가 없는 독립적 모던 앱 창(Chromeless Popup) 설정
-                    const features = `popup=yes,width=${w},height=${h},top=0,left=0,toolbar=no,menubar=no,location=no,status=no,scrollbars=yes,resizable=yes`;
-                    
-                    const popup = window.open('step1.html', 'ReadingActivity', features);
-                    
-                    if (popup) {
-                        // 팝업 창 포커싱
-                        popup.focus();
-                    } else {
-                        // 팝업이 차단된 경우 현재 탭에서 즉시 실행 (안전망 제공)
-                        location.href = 'step1.html';
-                    }
-                }
+                location.href = 'step1.html';
             };
             return (
                 <div className="a-fadeup intro-container-v2">

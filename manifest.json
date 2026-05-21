@@ -7,7 +7,7 @@
   "display": "standalone",
   "background_color": "#EEF2FF",
   "theme_color": "#6366F1",
-  "orientation": "portrait-primary",
+  "orientation": "landscape",
   "icons": [
     {
       "src": "/literacy/img/character_04.png",
