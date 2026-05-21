@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tiger-literacy-v3';
+const CACHE_NAME = 'tiger-literacy-v4';
 const BASE = '/literacy/';
 const ASSETS = [
     BASE,

@@ -283,10 +283,7 @@ window.requestAppFullscreen = function() {
     }
 };
 
-// 화면 전체 터치/클릭 시 주소창 없는 전체 화면 모드로 즉시 진입하도록 연동
-document.addEventListener('click', function() {
-    window.requestAppFullscreen();
-});
+
 
 
 
