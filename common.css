@@ -1049,3 +1049,9 @@ body::after {
     border-color: rgba(99, 102, 241, 0.25);
     box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08);
 }
+
+/* ── 겹침 방지: 동적 오로라 배경 활성화 시 투박한 고정 body blur 서클을 숨김 ── */
+body:has(.premium-aurora-bg)::before,
+body:has(.premium-aurora-bg)::after {
+    display: none !important;
+}
