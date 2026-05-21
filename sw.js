@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tiger-literacy-v8';
+const CACHE_NAME = 'tiger-literacy-v9';
 const BASE = '/literacy/';
 const ASSETS = [
     BASE,
@@ -20,7 +20,19 @@ const ASSETS = [
     BASE + 'img/chaek.png',
     BASE + 'img/momo.png',
     BASE + 'img/meora.png',
-    BASE + 'img/moon.png'
+    BASE + 'img/moon.png',
+    BASE + 'img/story.default.png',
+    BASE + 'img/story.fun.png',
+    BASE + 'img/story.tensity.png',
+    BASE + 'img/story.warm.png',
+    BASE + 'img/emoti.momo.default.png',
+    BASE + 'img/emoti.momo.fun.png',
+    BASE + 'img/emoti.momo.tensity.png',
+    BASE + 'img/emoti.momo.warm.png',
+    BASE + 'img/emoti.meora.default.png',
+    BASE + 'img/emoti.meora.fun.png',
+    BASE + 'img/emoti.meora.tensity.png',
+    BASE + 'img/emoti.meora.warm.png'
 ];
 
 // 서비스 워커 설치 시 자원 캐싱
