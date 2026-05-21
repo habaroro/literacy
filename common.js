@@ -6,7 +6,14 @@ window.IMG = {
     moon: "img/moon.png",
     feedback: "img/feedback.png",
     line: "img/line.png",
-    story: "img/story.png"
+    story: "img/story.png",
+    /* ── step3: 분위기별 이야기 이미지 ── */
+    storyByTone: {
+        base:  "img/story.default.png",
+        fun:   "img/story.fun.png",
+        tense: "img/story.tensity.png",
+        warm:  "img/story.warm.png"
+    }
 };
 
 /* ── CHARACTERS ── */
@@ -161,9 +168,25 @@ window.CW = {
 };
 
 /* ── FEEDBACK COMMENTS ── */
-window.getDynamicComments = function (chosen, tone) {
+// seed: storyKey 번호 — step3에서 모모 이모티콘 홀짝 교대에 사용
+window.getDynamicComments = function (chosen, tone, seed) {
     const words = chosen && chosen.length > 0 ? chosen : ['호랑이', '창호지', '산골집'];
     const t = tone || 'base';
+    const s = seed || 1;
+
+    /* ── step3 전용: momo/meora 분위기별 이미지 이모티콘 ── */
+    const MOMO_EMOTI = {
+        base:  { src: 'img/emoti.momo.default.png', isImg: true },
+        fun:   { src: 'img/emoti.momo.fun.png',     isImg: true },
+        tense: { src: 'img/emoti.momo.tensity.png', isImg: true },
+        warm:  { src: 'img/emoti.momo.warm.png',    isImg: true },
+    };
+    const MEORA_EMOTI = {
+        base:  { src: 'img/emoti.meora.default.png', isImg: true },
+        fun:   { src: 'img/emoti.meora.fun.png',     isImg: true },
+        tense: { src: 'img/emoti.meora.tensity.png', isImg: true },
+        warm:  { src: 'img/emoti.meora.warm.png',    isImg: true },
+    };
     let chaekText = "";
     if (words.includes('호랑이')) {
         chaekText = `이야기 속에 '호랑이'가 나오는 걸 보니 우리 옛이야기 '팥죽 할멈과 호랑이'가 떠올라! 거기서도 약한 친구들이 힘을 합쳐 무서운 호랑이를 물리쳤거든 📚`;
@@ -201,7 +224,12 @@ window.getDynamicComments = function (chosen, tone) {
     else if (t === 'tense') moonText = `'${word1}'와(과) '${word2}' 사이에서 예상치 못한 반전이나 또 다른 인물이 숨어있었다면 긴장감이 어떻게 바뀌었을까? 심장이 졸깃해지는 순간을 그려봐! 🔍`;
     else if (t === 'warm') moonText = `이야기가 끝난 후, 아이들이 '${word1}'를(을) 품에 안고 활짝 웃었을 때 부모님은 어떤 표정이셨을까? 가장 사랑스러운 가족의 얼굴을 상상해보자! 🔍`;
     else moonText = `만약 이야기 속에 나온 '${word1}'가(이) 말을 하거나 특별한 요술을 부릴 수 있었다면 어떤 대화가 오갔을까? 주인공들의 입장이 되어서 창의적인 생각을 펼쳐봐! 🔍`;
-    return { chaekchaekie: chaekText, momo: momoText, meora: meoraText, moonbaksa: moonText };
+    return {
+        chaekchaekie: { content: chaekText, emoji: '📚✨' },
+        momo:         { content: momoText,  emoji: MOMO_EMOTI[t] || MOMO_EMOTI.base },
+        meora:        { content: meoraText, emoji: MEORA_EMOTI[t] || MEORA_EMOTI.base },
+        moonbaksa:    { content: moonText,  emoji: '🔍💭' }
+    };
 };
 
 /* ── STATE HELPERS (sessionStorage) ── */

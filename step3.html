@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=1280, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI 피드백 · 방아 찧는 호랑이</title>
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -11,8 +11,156 @@
     <link rel="stylesheet" crossorigin
         href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
     <link rel="stylesheet" href="common.css" />
-    <link rel="shortcut icon" href="img/appicon.png" type="image/png" />
-    <link rel="apple-touch-icon" href="img/appicon.png" />
+    <style>
+        /* Chat bubble styles */
+        .chat-area {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            padding: 16px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .chat-area::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .chat-area::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-area::-webkit-scrollbar-thumb {
+            background: #e2e8f0;
+            border-radius: 4px;
+        }
+
+        .chat-bubble-wrap {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            animation: chatSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        @keyframes chatSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chat-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            overflow: hidden;
+            flex-shrink: 0;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+        }
+
+        .chat-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .chat-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .chat-name {
+            font-size: 11px;
+            font-weight: 700;
+            color: #94A3B8;
+            margin-bottom: 4px;
+            padding-left: 2px;
+        }
+
+        .chat-bubble {
+            background: #fff;
+            border-radius: 18px 18px 18px 4px;
+            padding: 12px 16px;
+            font-size: 13.5px;
+            color: var(--navy);
+            line-height: 1.75;
+            font-weight: 500;
+            word-break: keep-all;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            max-width: 100%;
+        }
+
+        .chat-like-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 8px 0 2px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #94A3B8;
+            transition: all .2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .chat-like-btn.liked {
+            color: #E11D48;
+        }
+
+        /* Rewrite bottom button */
+        .rewrite-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 16px 24px;
+            background: linear-gradient(135deg, #FFE4E6, #FECDD3);
+            border: 1.5px solid #FDA4AF;
+            border-radius: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(251, 113, 133, 0.2);
+            transition: all .25s cubic-bezier(0.16, 1, 0.3, 1);
+            font-family: var(--font-h);
+        }
+
+        .rewrite-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(251, 113, 133, 0.3);
+            background: linear-gradient(135deg, #FECDD3, #FCA5A5);
+        }
+
+        .rewrite-btn:active {
+            transform: scale(0.97);
+        }
+
+        /* Reading loading swipe animation */
+        @keyframes loadingSwipe {
+            0% {
+                transform: translateX(-100%);
+            }
+
+            50% {
+                transform: translateX(100%);
+            }
+
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
+        .loading-bar-inner {
+            animation: loadingSwipe 2s infinite ease-in-out;
+        }
+    </style>
 </head>
 
 <body>
@@ -21,28 +169,127 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        function CommentRow({ char, text, delay, liked, onLike }) {
-            const [show, setShow] = useState(false);
-            useEffect(() => { const t = setTimeout(() => setShow(true), delay); return () => clearTimeout(t); }, [delay]);
-            if (!show) return <div style={{ height: 0 }} />;
-            return (
-                <div className="a-spinfade" style={{ padding: '20px 24px', display: 'flex', gap: 16 }}>
-                    <div style={{ width: 48, height: 48, borderRadius: '50%', overflow: 'hidden', background: 'var(--bg)', border: `2px solid ${char.ring}`, flexShrink: 0 }}>
-                        <img src={char.img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6 }}>
-                            <span className="font-h" style={{ fontSize: 16, color: 'var(--navy-dark)' }}>{char.name}</span>
-                            <span style={{ fontSize: 12, color: '#94A3B8', fontWeight: 600 }}>· {char.role}</span>
+        // Vibrantly contrasted color system for roles (Vivid Pastels)
+        const TAG_THEME = {
+            chaekchaekie: { text: '#10B981', bg: 'rgba(16, 185, 129, 0.08)', border: 'rgba(16, 185, 129, 0.2)' }, // Vibrant Green
+            momo: { text: '#EC4899', bg: 'rgba(236, 72, 153, 0.08)', border: 'rgba(236, 72, 153, 0.2)' }, // Vibrant Pink
+            meora: { text: '#F59E0B', bg: 'rgba(245, 158, 11, 0.08)', border: 'rgba(245, 158, 11, 0.2)' }, // Vibrant Amber Orange
+            moonbaksa: { text: '#3B82F6', bg: 'rgba(59, 130, 246, 0.08)', border: 'rgba(59, 130, 246, 0.2)' }, // Vibrant Blue
+        };
+
+        function ChatBubble({ msg, liked, onLike, chosen }) {
+            const isLearner = msg.isLearner;
+
+            // Highlight chosen words inside chat bubble text
+            const renderChatText = (text) => {
+                if (!chosen || chosen.length === 0 || typeof text !== 'string') return text;
+                const sorted = [...chosen].sort((a, b) => b.length - a.length);
+                const escaped = sorted.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+                const parts = text.split(new RegExp(`(${escaped.join('|')})`, 'g'));
+                return parts.map((p, i) =>
+                    chosen.includes(p)
+                        ? <span key={i} style={{ color: 'var(--blue)', fontWeight: 800, background: 'rgba(67,97,238,.1)', borderRadius: 4, padding: '1px 3px' }}>{p}</span>
+                        : p
+                );
+            };
+
+            if (isLearner) {
+                return (
+                    <div className="chat-bubble-wrap" style={{ flexDirection: 'row-reverse', alignSelf: 'flex-end', width: '100%', display: 'flex', gap: 12, boxSizing: 'border-box', paddingLeft: 50 }}>
+                        <div className="chat-content" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: 0 }}>
+                            <div className="chat-name" style={{ paddingRight: 2, fontSize: 13, color: '#64748B', fontWeight: 600, marginBottom: 4 }}>{msg.name}</div>
+                            <div className="chat-bubble" style={{
+                                background: 'linear-gradient(135deg, #818CF8, #6366F1)',
+                                color: '#fff',
+                                borderRadius: '18px 18px 4px 18px',
+                                border: 'none',
+                                boxShadow: '0 4px 12px rgba(99,102,241,0.25)',
+                                padding: '10px 16px',
+                                fontSize: 14,
+                                fontWeight: 500,
+                                lineHeight: 1.5,
+                                wordBreak: 'break-word',
+                                width: 'fit-content',
+                                maxWidth: '100%'
+                            }}>
+                                {renderChatText(msg.text)}
+                            </div>
                         </div>
-                        <p style={{ fontSize: 15, color: 'var(--navy)', lineHeight: 1.8, margin: 0, wordBreak: 'keep-all', fontWeight: 500 }}>{text}</p>
-                        <div style={{ marginTop: 12, display: 'flex', gap: 16, alignItems: 'center' }}>
-                            <button onClick={onLike}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, padding: 0, color: liked ? '#E11D48' : '#94A3B8', fontSize: 14, fontWeight: 700, transition: 'all .2s cubic-bezier(0.16,1,0.3,1)', transform: liked ? 'scale(1.05)' : 'scale(1)' }}>
-                                <span style={{ fontSize: 15 }}>{liked ? '❤️' : '🤍'}</span>
+                    </div>
+                );
+            }
+
+            const isEmojiOnly = msg.isEmojiOnly;
+            const content = msg.text;
+            // 이미지 이모티콘 판별: { src, isImg } 객체인 경우
+            const isImgEmoji = isEmojiOnly && content && typeof content === 'object' && content.isImg;
+
+            // Resolve tag theme for visual contrast
+            const theme = TAG_THEME[msg.id] || { text: msg.ring, bg: `${msg.ring}10`, border: `${msg.ring}30` };
+
+            return (
+                <div className="chat-bubble-wrap" style={{ alignSelf: 'flex-start', width: '100%', display: 'flex', gap: 12, boxSizing: 'border-box' }}>
+                    {/* Collapsing consecutive avatars: If same speaker consecutive bubble, hide avatar but keep width spacer */}
+                    {msg.isSubsequent ? (
+                        <div style={{ width: 44, flexShrink: 0 }} />
+                    ) : (
+                        <div className="chat-avatar" style={{ border: `2px solid ${msg.ring}`, flexShrink: 0 }}>
+                            <img src={msg.img} alt="" />
+                        </div>
+                    )}
+                    <div className="chat-content" style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                        {!msg.isSubsequent && (
+                            <div className="chat-name" style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                                <span style={{
+                                    padding: '2px 8px',
+                                    borderRadius: 8,
+                                    fontSize: 10,
+                                    fontWeight: 800,
+                                    background: theme.bg,
+                                    color: theme.text,
+                                    border: `1px solid ${theme.border}`,
+                                    whiteSpace: 'nowrap'
+                                }}>
+                                    {msg.role}
+                                </span>
+                                <span style={{ color: 'var(--navy-dark)', fontWeight: 700, fontSize: 13 }}>{msg.name}</span>
+                            </div>
+                        )}
+
+                        {isImgEmoji ? (
+                            // 이미지 이모티콘 렌더링
+                            <div style={{ padding: '4px 8px', display: 'inline-block', lineHeight: 1, animation: 'bounce 2.5s ease-in-out infinite' }}>
+                                <img src={content.src} alt="이모티콘" style={{ width: 140, height: 140, objectFit: 'contain', display: 'block' }} />
+                            </div>
+                        ) : isEmojiOnly ? (
+                            <div style={{ fontSize: 36, padding: '4px 8px', display: 'inline-block', animation: 'bounce 2.5s ease-in-out infinite', lineHeight: 1 }}>
+                                {content}
+                            </div>
+                        ) : (
+                            <div className="chat-bubble" style={{
+                                background: '#FFF',
+                                border: '1px solid var(--border-light)',
+                                borderRadius: msg.isSubsequent ? '4px 18px 18px 18px' : '18px 18px 18px 4px',
+                                padding: '12px 16px',
+                                fontSize: 14,
+                                color: 'var(--navy-dark)',
+                                fontWeight: 500,
+                                lineHeight: 1.65,
+                                wordBreak: 'break-word',
+                                width: 'fit-content',
+                                maxWidth: '90%',
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+                            }}>
+                                {renderChatText(content)}
+                            </div>
+                        )}
+
+                        {!isEmojiOnly && (
+                            <button className={`chat-like-btn${liked ? ' liked' : ''}`} onClick={onLike} style={{ marginTop: 4 }}>
+                                <span>{liked ? '❤️' : '🤍'}</span>
                                 <span>{liked ? '좋아요 1' : '좋아요'}</span>
                             </button>
-                        </div>
+                        )}
                     </div>
                 </div>
             );
@@ -54,38 +301,269 @@
             const [showTonePopup, setShowTonePopup] = useState(false);
             const [regenerating, setRegenerating] = useState(false);
             const [likes, setLikes] = useState({});
+            const [likeKey, setLikeKey] = useState(0); // bumped on regen to reset all likes
             const [storyKey, setStoryKey] = useState(0);
             const [phase, setPhase] = useState('writing');
+            const [chatMessages, setChatMessages] = useState([]);
+            const [oldChatMessages, setOldChatMessages] = useState([]); // Keep only one level back
+            const [typedText, setTypedText] = useState("");
+            const [storyFinished, setStoryFinished] = useState(false); // True when sentence typewriter fully ends
             const isFirstMountRef = useRef(true);
+            const chatEndRef = useRef(null);
+
+            const story = window.generateStory(chosen, tone);
+
+            // Progressive sentence-by-sentence typewriter reveal with pause timeouts
+            useEffect(() => {
+                if (phase === 'writing') return;
+                setTypedText("");
+                setStoryFinished(false);
+
+                // Split story strictly by sentence-ending marks (. ! ?)
+                const sentences = story.split(/(?<=[.!?])\s+/).filter(Boolean);
+                let currentSentenceIdx = 0;
+                let currentCharIdx = 0;
+                let activeText = "";
+                let isPaused = false;
+                let timer = null;
+
+                function typeNextChar() {
+                    if (currentSentenceIdx >= sentences.length) {
+                        setStoryFinished(true); // Complete story text typewriter!
+                        return;
+                    }
+                    if (isPaused) return;
+
+                    const sentence = sentences[currentSentenceIdx];
+                    if (currentCharIdx < sentence.length) {
+                        const nextChar = sentence[currentCharIdx];
+                        if (nextChar !== undefined) {
+                            activeText += nextChar;
+                            setTypedText(activeText);
+                        }
+                        currentCharIdx++;
+                        timer = setTimeout(typeNextChar, 30); // Speed of character typing
+                    } else {
+                        // Sentence finished! Trigger a slight breathing pause
+                        isPaused = true;
+                        currentSentenceIdx++;
+                        currentCharIdx = 0;
+                        activeText += " "; // space divider
+
+                        timer = setTimeout(() => {
+                            isPaused = false;
+                            typeNextChar();
+                        }, 750); // Pause duration between sentences (750ms)
+                    }
+                }
+
+                typeNextChar();
+
+                return () => clearTimeout(timer);
+            }, [story, phase]);
 
             useEffect(() => {
                 if (isFirstMountRef.current) {
                     setPhase('writing');
                     setShowComments(false);
                     setShowPeek(false);
-                    setStoryKey(k => k + 1);
+                    setStoryKey(1);
                     const tw = setTimeout(() => setPhase('sliding'), 2600);
                     const ts = setTimeout(() => setPhase('done'), 2600 + 1000);
-                    const t1 = setTimeout(() => setShowComments(true), 2600 + 1000 + 600);
-                    const t2 = setTimeout(() => setShowPeek(true), 2600 + 1000 + 600 + window.CHARACTERS.length * 500 + 800);
                     isFirstMountRef.current = false;
-                    return () => { clearTimeout(tw); clearTimeout(ts); clearTimeout(t1); clearTimeout(t2); };
-                } else {
-                    setStoryKey(k => k + 1);
+                    return () => { clearTimeout(tw); clearTimeout(ts); };
                 }
-            }, [tone]);
+            }, []);
+
+            // Handle bottom peek rewrite show after story finishes typing on first load
+            useEffect(() => {
+                if (storyFinished && phase === 'done') {
+                    setShowComments(true);
+                    const peekDelay = setTimeout(() => setShowPeek(true), 4000);
+                    return () => clearTimeout(peekDelay);
+                }
+            }, [storyFinished, phase]);
+
+            // Scroll chat to bottom on new message
+            useEffect(() => {
+                if (chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+            }, [chatMessages, regenerating]);
+
+            // Dialog generation logic - TRIGGERS ONLY AFTER STORY FINISHED TYPING
+            useEffect(() => {
+                if (phase === 'writing' || !storyFinished) return;
+
+                const isRegenerated = storyKey > 1;
+
+                // BUG FIX: Only move to oldChatMessages if it's a true regeneration session
+                if (isRegenerated && chatMessages.length > 0) {
+                    setOldChatMessages(chatMessages);
+                } else if (!isRegenerated) {
+                    setOldChatMessages([]); // Absolutely empty history on first run
+                }
+
+                setChatMessages([]);
+
+                const feedback = window.getDynamicComments(chosen, tone, storyKey);
+                const messages = [];
+
+                // 1. Learner bubble - ONLY on subsequent regenerations
+                if (isRegenerated) {
+                    const learnerText = tone === 'base'
+                        ? "처음의 기본 이야기 분위기로 다시 돌려봤어! 어때? 📖"
+                        : `이번에는 더 ${tone === 'fun' ? '재미있고 유쾌한' : tone === 'tense' ? '두근두근 긴장감 넘치는' : '따뜻하고 감동적인'} 분위기로 다르게 써봤어! 어때? ${tone === 'fun' ? '😂' : tone === 'tense' ? '😱' : '💕'}`;
+
+                    messages.push({
+                        id: 'learner',
+                        keyId: 'learner-' + storyKey + '-text',
+                        name: '나 (학습자)',
+                        isLearner: true,
+                        img: 'img/make.png',
+                        ring: '#6366F1',
+                        text: learnerText,
+                        delay: 600
+                    });
+                }
+
+                // 2. Friends feedback bubbles - highly individualized message types (Double, single, emoji)
+                let cumulativeDelay = isRegenerated ? 1800 : 600;
+
+                window.CHARACTERS.forEach((char) => {
+                    const commentData = feedback[char.id];
+
+                    if (char.id === 'chaekchaekie') {
+                        // 책책이 (연결자): Single bubble containing text merged with small emoji at the end
+                        messages.push({
+                            id: char.id,
+                            keyId: char.id + '-' + storyKey + '-merged',
+                            name: char.name,
+                            role: char.role,
+                            img: char.img,
+                            ring: char.ring,
+                            isLearner: false,
+                            isEmojiOnly: false,
+                            text: `${commentData.content} ${commentData.emoji}`,
+                            isSubsequent: false,
+                            delay: cumulativeDelay
+                        });
+                        cumulativeDelay += 1800; // time spacing for next user
+                    }
+                    else if (char.id === 'momo') {
+                        // 모모 (응원단): storyKey 홀짝에 따라 이모티콘 단독 / 이모티콘+텍스트 교대
+                        const momoShowText = storyKey % 2 === 0; // 짝수 키일 때 텍스트 추가
+                        messages.push({
+                            id: char.id,
+                            keyId: char.id + '-' + storyKey + '-emoji',
+                            name: char.name,
+                            role: char.role,
+                            img: char.img,
+                            ring: char.ring,
+                            isLearner: false,
+                            isEmojiOnly: true,
+                            text: commentData.emoji,
+                            isSubsequent: false,
+                            delay: cumulativeDelay
+                        });
+                        if (momoShowText) {
+                            // 이모티콘 버블 이후 텍스트 버블 추가 (머라카노처럼 consecutive)
+                            messages.push({
+                                id: char.id,
+                                keyId: char.id + '-' + storyKey + '-text',
+                                name: char.name,
+                                role: char.role,
+                                img: char.img,
+                                ring: char.ring,
+                                isLearner: false,
+                                isEmojiOnly: false,
+                                text: commentData.content,
+                                isSubsequent: true, // 연속 버블 - 아바타 숨김
+                                delay: cumulativeDelay + 700
+                            });
+                            cumulativeDelay += 2200;
+                        } else {
+                            cumulativeDelay += 1500;
+                        }
+                    }
+                    else if (char.id === 'meora') {
+                        // 머라카노사우르스 (단어 박사): Double consecutive bubbles (Large Emoji bubble followed by text bubble)
+                        messages.push({
+                            id: char.id,
+                            keyId: char.id + '-' + storyKey + '-emoji',
+                            name: char.name,
+                            role: char.role,
+                            img: char.img,
+                            ring: char.ring,
+                            isLearner: false,
+                            isEmojiOnly: true,
+                            text: commentData.emoji,
+                            isSubsequent: false,
+                            delay: cumulativeDelay
+                        });
+
+                        messages.push({
+                            id: char.id,
+                            keyId: char.id + '-' + storyKey + '-text',
+                            name: char.name,
+                            role: char.role,
+                            img: char.img,
+                            ring: char.ring,
+                            isLearner: false,
+                            isEmojiOnly: false,
+                            text: commentData.content,
+                            isSubsequent: true, // Collapses consecutive avatar box nicely!
+                            delay: cumulativeDelay + 650 // 650ms after the first emoji bubble
+                        });
+                        cumulativeDelay += 2400;
+                    }
+                    else if (char.id === 'moonbaksa') {
+                        // 문박사 (질문자): Single bubble containing text merged with small emoji at the end
+                        messages.push({
+                            id: char.id,
+                            keyId: char.id + '-' + storyKey + '-merged',
+                            name: char.name,
+                            role: char.role,
+                            img: char.img,
+                            ring: char.ring,
+                            isLearner: false,
+                            isEmojiOnly: false,
+                            text: `${commentData.content} ${commentData.emoji}`,
+                            isSubsequent: false,
+                            delay: cumulativeDelay
+                        });
+                        cumulativeDelay += 1800;
+                    }
+                });
+
+                const timers = [];
+                messages.forEach(msg => {
+                    const t = setTimeout(() => {
+                        setChatMessages(prev => {
+                            if (prev.find(m => m.keyId === msg.keyId)) return prev;
+                            return [...prev, msg];
+                        });
+                    }, msg.delay);
+                    timers.push(t);
+                });
+
+                return () => timers.forEach(clearTimeout);
+            }, [tone, phase, storyKey, storyFinished]);
 
             const handleToneSelect = (newTone) => {
                 setShowTonePopup(false);
                 setRegenerating(true);
+                setStoryFinished(false); // Reset to allow 'reading' animation
+                setShowComments(false);
+                setLikes({}); // Reset all likes on new story generation
+                setLikeKey(k => k + 1);
                 setTimeout(() => {
                     setRegenerating(false);
+                    setStoryKey(prev => prev + 1);
                     onRegenerate(newTone);
                 }, 800);
             };
 
             const toggleLike = (charId) => setLikes(l => ({ ...l, [charId]: !l[charId] }));
-            const story = window.generateStory(chosen, tone);
+
             const renderStory = (text) => {
                 if (!chosen || chosen.length === 0) return text;
                 const sorted = [...chosen].sort((a, b) => b.length - a.length);
@@ -97,25 +575,20 @@
                         : p
                 );
             };
-            const feedback = window.getDynamicComments(chosen, tone);
 
             if (phase === 'writing') {
                 return (
-                    <div style={{ maxWidth: 1280, margin: '0 auto', padding: '20px 24px', minHeight: 'calc(100vh - 70px)', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
-                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <div style={{ width: '100%', maxWidth: 500 }}>
-                                <div style={{ background: 'var(--card)', backdropFilter: 'blur(24px)', border: '1px solid var(--stroke)', borderRadius: 28, boxShadow: 'var(--shadow-lg)', overflow: 'hidden', position: 'relative', width: '100%' }}>
-                                    <div style={{ position: 'absolute', inset: 0, padding: '100px 28px 28px', filter: 'blur(7px)', opacity: 0.28, pointerEvents: 'none', fontSize: 15, color: 'var(--navy)', lineHeight: 2.0, fontWeight: 500, animation: 'writingPulse 1.8s ease-in-out infinite', zIndex: 0 }}>
-                                        {story}
-                                    </div>
-                                    <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '44px 32px 40px', gap: 18 }}>
-                                        <img src="img/make.png" alt="" className="a-bounce" style={{ width: 125, height: 180, objectFit: 'contain', filter: 'drop-shadow(0 10px 24px rgba(99,102,241,.25))' }} />
-                                        <div style={{ textAlign: 'center' }}>
-                                            <div className="font-h" style={{ fontSize: 22, color: 'var(--navy-dark)', marginBottom: 8 }}>AI가 글을 쓰고 있어요! ✍️</div>
-                                            <div style={{ fontSize: 14, color: 'var(--gray)', fontWeight: 500, marginBottom: 16 }}>선택한 단어들로 이야기를 만드는 중...</div>
-                                            <div style={{ display: 'flex', justifyContent: 'center', gap: 6 }}>
-                                                <span className="dot" /><span className="dot" /><span className="dot" />
-                                            </div>
+                    <div style={{ height: 'calc(100vh - 70px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div style={{ width: '100%', maxWidth: 500 }}>
+                            <div style={{ background: 'var(--card)', backdropFilter: 'blur(24px)', border: '1px solid var(--stroke)', borderRadius: 28, boxShadow: 'var(--shadow-lg)', overflow: 'hidden', position: 'relative' }}>
+                                <div style={{ position: 'absolute', inset: 0, padding: '100px 28px 28px', filter: 'blur(7px)', opacity: 0.28, pointerEvents: 'none', fontSize: 15, color: 'var(--navy)', lineHeight: 2.0, fontWeight: 500, animation: 'writingPulse 1.8s ease-in-out infinite', zIndex: 0 }}>{story}</div>
+                                <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '44px 32px 40px', gap: 18 }}>
+                                    <img src="img/make.png" alt="" className="a-bounce" style={{ width: 125, height: 180, objectFit: 'contain', filter: 'drop-shadow(0 10px 24px rgba(99,102,241,.25))' }} />
+                                    <div style={{ textAlign: 'center' }}>
+                                        <div className="font-h" style={{ fontSize: 22, color: 'var(--navy-dark)', marginBottom: 8 }}>AI가 글을 쓰고 있어요! ✍️</div>
+                                        <div style={{ fontSize: 14, color: 'var(--gray)', fontWeight: 500, marginBottom: 16 }}>선택한 단어들로 이야기를 만드는 중...</div>
+                                        <div style={{ display: 'flex', justifyContent: 'center', gap: 6 }}>
+                                            <span className="dot" /><span className="dot" /><span className="dot" />
                                         </div>
                                     </div>
                                 </div>
@@ -125,97 +598,146 @@
                 );
             }
 
-            return (
-                <div style={{ maxWidth: 1280, margin: '0 auto', padding: '20px 24px', boxSizing: 'border-box' }}>
-                    <div style={{ display: 'flex', gap: 32, alignItems: 'flex-start' }}>
-                        <div style={{ flex: '0 0 52%', minWidth: 0, display: 'flex', flexDirection: 'column', animation: phase === 'sliding' ? 'slideFromCenter 1s cubic-bezier(0.16,1,0.3,1) forwards' : 'none' }}>
-                            <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                                <div style={{ background: 'var(--card)', backdropFilter: 'blur(24px)', border: '1px solid var(--stroke)', borderRadius: 28, boxShadow: 'var(--shadow-md)', overflow: 'hidden', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                                    <div style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', gap: 12 }}>
-                                        <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg,#FFE4B5,#FCD34D)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, border: '2px solid #FCD34D' }}>✨</div>
-                                        <div style={{ flex: 1 }}>
-                                            <div className="font-h" style={{ fontSize: 15, color: 'var(--navy-dark)' }}>나의 이야기</div>
-                                            <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2, fontWeight: 500 }}>방금</div>
-                                        </div>
-                                        {showPeek && (
-                                            <div className="a-pop">
-                                                <div onClick={() => setShowTonePopup(true)} style={{
-                                                    display: 'flex', alignItems: 'center', gap: 8, padding: '6px 14px',
-                                                    background: 'linear-gradient(135deg, #FFE4E6, #FECDD3)',
-                                                    border: '1px solid #FDA4AF', borderRadius: 20, cursor: 'pointer',
-                                                    boxShadow: '0 4px 12px rgba(251,113,133,0.15)', position: 'relative', overflow: 'visible'
-                                                }}>
-                                                    <img src={window.IMG.feedback} alt="" style={{ width: 30, height: 30, objectFit: 'contain', marginTop: -16, marginBottom: -4, transform: 'scale(1.2)' }} />
-                                                    <span className="font-h" style={{ fontSize: 13, color: '#BE123C', whiteSpace: 'nowrap' }}>다르게도 써볼래?</span>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div style={{ padding: '20px 24px 0', animation: phase === 'sliding' ? 'storyContentReveal 0.6s 0.4s ease both' : 'none' }}>
-                                        <div style={{ width: '100%', height: 260, borderRadius: 18, overflow: 'hidden' }}>
-                                            <img src={window.IMG.story} alt="이야기 장면" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                        </div>
-                                    </div>
-                                    <div key={storyKey} style={{ padding: '24px', position: 'relative', flex: 1, animation: phase === 'sliding' ? 'storyContentReveal 0.6s 0.5s ease both' : 'none' }}>
-                                        {regenerating && (
-                                            <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,.8)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 5, borderRadius: 28 }}>
-                                                <div style={{ textAlign: 'center' }}>
-                                                    <div className="a-bounce" style={{ fontSize: 34, marginBottom: 10 }}>✨</div>
-                                                    <div className="font-h" style={{ color: 'var(--blue)', fontSize: 15 }}>이야기를 다시 쓰고 있어요...</div>
-                                                </div>
-                                            </div>
-                                        )}
-                                        <p style={{ fontSize: 17, color: 'var(--navy)', lineHeight: 1.8, margin: 0, fontWeight: 500 }}>
-                                            <strong style={{ fontWeight: 800, display: 'block', marginBottom: 12, fontSize: 18, color: 'var(--navy-dark)' }}>📖 {window.BOOK_EXCERPT}</strong>
-                                            {renderStory(story)}
-                                        </p>
-                                    </div>
-                                    <div style={{ padding: '0 24px 16px 24px', display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', animation: phase === 'sliding' ? 'storyContentReveal 0.6s 0.6s ease both' : 'none' }}>
-                                        <span style={{
-                                            fontSize: 12, padding: '6px 14px',
-                                            background: tone === 'base' ? '#EEF2FF' : tone === 'fun' ? '#FEF3C7' : tone === 'tense' ? '#FEE2E2' : '#FCE7F3',
-                                            color: tone === 'base' ? '#4F46E5' : tone === 'fun' ? '#92400E' : tone === 'tense' ? '#991B1B' : '#9F1239',
-                                            borderRadius: 14, fontWeight: 800
-                                        }}>
-                                            #{tone === 'base' ? '기본' : tone === 'fun' ? '유쾌' : tone === 'tense' ? '긴장' : '따뜻'}
-                                        </span>
-                                        {chosen.map((w, i) => (
-                                            <span key={i} style={{ fontSize: 12, padding: '6px 14px', background: 'var(--bg)', color: 'var(--navy)', border: '1px solid var(--border-light)', borderRadius: 14, fontWeight: 700 }}>#{w}</span>
-                                        ))}
-                                    </div>
-                                    <div style={{ padding: '10px 24px 16px', display: 'flex', gap: 16, color: '#64748B', fontSize: 13, fontWeight: 600 }}>
-                                        <span>❤️ 좋아요 {Object.values(likes).filter(Boolean).length}</span>
-                                        <span>💬 댓글 {showComments ? window.CHARACTERS.length : 0}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+            const CONTENT_H = 'calc(100vh - 70px)';
 
-                        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', opacity: phase === 'writing' ? 0 : (phase === 'sliding' ? 0 : 1), animation: phase === 'done' || showComments ? 'commentsFadeIn 0.8s ease forwards' : 'none' }}>
-                            <div style={{ background: 'var(--card)', backdropFilter: 'blur(24px)', border: '1px solid var(--stroke)', borderRadius: 28, boxShadow: 'var(--shadow-md)', overflow: 'hidden' }}>
-                                <div style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', gap: 8 }}>
-                                    <span style={{ fontSize: 18 }}>🔔</span>
-                                    <span className="font-h" style={{ fontSize: 16, color: 'var(--navy-dark)' }}>댓글</span>
+            return (
+                <div style={{ height: CONTENT_H, display: 'flex', flexDirection: 'column', padding: '16px 0', boxSizing: 'border-box' }}>
+                    {/* Two column layout: Left expanded, Right compact 380px fixed width */}
+                    <div style={{ flex: 1, display: 'flex', gap: 24, minHeight: 0 }}>
+
+                        {/* LEFT: Expanded Story card */}
+                        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 12, animation: phase === 'sliding' ? 'slideFromCenter 1s cubic-bezier(0.16,1,0.3,1) forwards' : 'none' }}>
+                            <div style={{ background: 'var(--card)', backdropFilter: 'blur(24px)', border: '1px solid var(--stroke)', borderRadius: 24, boxShadow: 'var(--shadow-md)', overflow: 'hidden', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                                {/* Card header */}
+                                <div style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+                                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg,#FFE4B5,#FCD34D)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, border: '2px solid #FCD34D' }}>✨</div>
+                                    <div style={{ flex: 1 }}>
+                                        <div className="font-h" style={{ fontSize: 15, color: 'var(--navy-dark)' }}>나의 이야기</div>
+                                        <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 1, fontWeight: 500 }}>방금</div>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: 16, color: '#64748B', fontSize: 12, fontWeight: 600 }}>
+                                        <span>❤️ {Object.values(likes).filter(Boolean).length}</span>
+                                        <span>💬 {chatMessages.filter(m => !m.isEmojiOnly && !m.isLearner).length}</span>
+                                    </div>
                                 </div>
-                                <div style={{ position: 'relative', opacity: regenerating ? 0.6 : 1, transition: 'opacity 0.2s ease' }}>
+
+                                {/* Story image + story text: wrapped together for unified loading overlay */}
+                                <div key={`story-wrap-${storyKey}`} style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, position: 'relative' }}>
                                     {regenerating && (
-                                        <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
-                                            <div style={{ display: 'flex', gap: 6 }}>
-                                                <span className="dot" /><span className="dot" /><span className="dot" />
+                                        <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,.85)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 5, borderRadius: 20 }}>
+                                            <div style={{ textAlign: 'center' }}>
+                                                <div className="a-bounce" style={{ fontSize: 30, marginBottom: 8 }}>✨</div>
+                                                <div className="font-h" style={{ color: 'var(--blue)', fontSize: 14 }}>이야기를 다시 쓰고 있어요...</div>
                                             </div>
                                         </div>
                                     )}
-                                    {!showComments ? (
-                                        <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--gray)', fontSize: 14, fontWeight: 500 }}>
-                                            문해 프렌즈가 댓글을 달고 있어요
-                                            <span className="dot" /><span className="dot" /><span className="dot" />
+
+                                    {/* Story image */}
+                                    <div style={{ padding: '0 20px', flexShrink: 0, animation: phase === 'sliding' ? 'storyContentReveal 0.6s 0.4s ease both' : 'none' }}>
+                                        <div style={{ width: '100%', height: 320, borderRadius: 16, overflow: 'hidden' }}>
+                                            <img
+                                                src={window.IMG.storyByTone[tone] || window.IMG.story}
+                                                alt="이야기 장면"
+                                                style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'opacity 0.5s ease' }}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Story text with 17px font-size and sentence pauses */}
+                                    <div key={storyKey} style={{ padding: '16px 20px', flex: 1, overflow: 'auto', animation: phase === 'sliding' ? 'storyContentReveal 0.6s 0.5s ease both' : 'none' }}>
+                                        <p style={{ fontSize: 18, color: 'var(--navy)', lineHeight: 1.9, margin: 0, fontWeight: 500 }}>
+                                            <strong style={{ fontWeight: 800, display: 'block', marginBottom: 12, fontSize: 18, color: 'var(--navy-dark)' }}>📖 {window.BOOK_EXCERPT}</strong>
+                                            {renderStory(typedText)}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Tags */}
+                                <div style={{ padding: '0 20px 16px', display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', flexShrink: 0, animation: phase === 'sliding' ? 'storyContentReveal 0.6s 0.6s ease both' : 'none' }}>
+                                    <span style={{ fontSize: 14, padding: '7px 16px', background: tone === 'base' ? '#EEF2FF' : tone === 'fun' ? '#FEF3C7' : tone === 'tense' ? '#FEE2E2' : '#FCE7F3', color: tone === 'base' ? '#4F46E5' : tone === 'fun' ? '#92400E' : tone === 'tense' ? '#991B1B' : '#9F1239', borderRadius: 14, fontWeight: 800 }}>
+                                        #{tone === 'base' ? '기본' : tone === 'fun' ? '유쾌' : tone === 'tense' ? '긴장' : '따뜻'}
+                                    </span>
+                                    {chosen.map((w, i) => (
+                                        <span key={i} style={{ fontSize: 14, padding: '7px 16px', background: 'var(--bg)', color: 'var(--navy)', border: '1px solid var(--border-light)', borderRadius: 14, fontWeight: 700 }}>#{w}</span>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Rewrite button - bottom */}
+                            {showPeek && (
+                                <div className="a-pop" style={{ flexShrink: 0 }}>
+                                    <button className="rewrite-btn" onClick={() => setShowTonePopup(true)}>
+                                        <img src={window.IMG.feedback} alt="" style={{ width: 36, height: 36, objectFit: 'contain' }} />
+                                        <span className="font-h" style={{ fontSize: 17, color: '#BE123C' }}>다르게도 써볼래?</span>
+                                        <span style={{ fontSize: 13, color: '#F43F5E', fontWeight: 600, marginLeft: 4 }}>분위기 바꾸기 →</span>
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* RIGHT: Compact fixed 380px width Chat comments panel */}
+                        <div style={{ flex: '0 0 380px', width: 380, display: 'flex', flexDirection: 'column', opacity: phase === 'writing' ? 0 : (phase === 'sliding' ? 0 : 1), animation: phase === 'done' ? 'commentsFadeIn 0.8s ease forwards' : 'none' }}>
+                            <div style={{ background: 'var(--card)', backdropFilter: 'blur(24px)', border: '1px solid var(--stroke)', borderRadius: 24, boxShadow: 'var(--shadow-md)', overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%' }}>
+                                {/* Chat header */}
+                                <div style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid var(--border-light)', background: 'rgba(255,255,255,0.6)', flexShrink: 0 }}>
+                                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: storyFinished ? '#22C55E' : '#F59E0B', boxShadow: `0 0 0 3px ${storyFinished ? 'rgba(34,197,94,0.2)' : 'rgba(245,158,11,0.2)'}`, animation: 'bounce 2s ease-in-out infinite' }} />
+                                    <span className="font-h" style={{ fontSize: 15, color: 'var(--navy-dark)' }}>문해 프렌즈 채팅</span>
+                                    <span style={{ fontSize: 12, color: '#94A3B8', fontWeight: 600, marginLeft: 4 }}>
+                                        {storyFinished ? `${window.CHARACTERS.length}명 감상 중` : '읽는 중...'}
+                                    </span>
+                                </div>
+
+                                {/* Chat messages area with History log support */}
+                                <div className="chat-area" style={{ background: 'linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                                    {!storyFinished ? (
+                                        /* 📖 AI Reading/Analyzing dynamic animation cards before chat feedback starts */
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 16, padding: '24px 28px', textAlign: 'center', boxSizing: 'border-box' }}>
+                                            <div className="a-bounce" style={{ fontSize: 44, animation: 'bounce 1.5s infinite', lineHeight: 1 }}>📖</div>
+                                            <div className="font-h" style={{ fontSize: 16, color: 'var(--navy-dark)' }}>프렌즈들이 글을 읽고 있어요</div>
+                                            <p style={{ fontSize: 13, color: 'var(--gray)', margin: 0, lineHeight: 1.5, fontWeight: 500, wordBreak: 'keep-all' }}>
+                                                학습자님이 쓴 전래동화 문장들을<br />문해 프렌즈가 열심히 감상하며 리액션을 준비하고 있어요!
+                                            </p>
+
+                                            {/* Beautiful animated loading bar indicator */}
+                                            <div style={{ width: 140, height: 5, background: '#E2E8F0', borderRadius: 3, overflow: 'hidden', marginTop: 10, position: 'relative' }}>
+                                                <div className="loading-bar-inner" style={{ position: 'absolute', height: '100%', width: '50%', background: 'linear-gradient(90deg, #4F46E5, #3B82F6)', borderRadius: 3 }} />
+                                            </div>
                                         </div>
                                     ) : (
-                                        <div>
-                                            {window.CHARACTERS.map((char, i) => (
-                                                <CommentRow key={char.id + '-' + storyKey} char={char} text={feedback[char.id]} delay={i * 500}
-                                                    liked={!!likes[char.id]} onLike={() => toggleLike(char.id)} />
+                                        <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 20, padding: '16px 16px', overflowY: 'auto' }}>
+                                            {/* Render Old Messages if any (Ensure only active for true regeneration key) */}
+                                            {oldChatMessages.length > 0 && storyKey > 1 && (
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: 14, opacity: 0.6 }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '14px 0 6px' }}>
+                                                        <div style={{ flex: 1, height: 1, background: '#CBD5E1' }} />
+                                                        <span className="font-h" style={{ fontSize: 11, color: '#94A3B8', background: '#F1F5F9', padding: '2px 10px', borderRadius: 10 }}>이전 이야기 대화 💬</span>
+                                                        <div style={{ flex: 1, height: 1, background: '#CBD5E1' }} />
+                                                    </div>
+                                                    {oldChatMessages.map((msg) => (
+                                                        <ChatBubble key={'old-' + msg.keyId} msg={msg} chosen={chosen}
+                                                            liked={!!likes[msg.id]} onLike={() => toggleLike(msg.id)} />
+                                                    ))}
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '6px 0 14px' }}>
+                                                        <div style={{ flex: 1, height: 1, background: '#CBD5E1' }} />
+                                                        <span className="font-h" style={{ fontSize: 11, color: 'var(--blue)', background: '#F1F5F9', padding: '2px 10px', borderRadius: 10 }}>새롭게 바꾼 분위기 대화 ✨</span>
+                                                        <div style={{ flex: 1, height: 1, background: '#CBD5E1' }} />
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Render Current Active Messages */}
+                                            {chatMessages.map((msg) => (
+                                                <ChatBubble key={msg.keyId + '-' + likeKey} msg={msg} chosen={chosen}
+                                                    liked={!!likes[msg.id]} onLike={() => toggleLike(msg.id)} />
                                             ))}
+                                            <div ref={chatEndRef} />
+                                        </div>
+                                    )}
+                                    {regenerating && (
+                                        <div style={{ display: 'flex', justifyContent: 'center', padding: '8px 0' }}>
+                                            <div style={{ display: 'flex', gap: 6, background: '#fff', padding: '8px 16px', borderRadius: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+                                                <span className="dot" /><span className="dot" /><span className="dot" />
+                                            </div>
                                         </div>
                                     )}
                                 </div>
@@ -223,6 +745,7 @@
                         </div>
                     </div>
 
+                    {/* Tone popup */}
                     {showTonePopup && (
                         <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 300, padding: 20 }}
                             onClick={() => setShowTonePopup(false)}>
@@ -235,7 +758,11 @@
                                         <button key={opt.id} onClick={() => handleToneSelect(opt.id)}
                                             disabled={opt.id === tone}
                                             style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '10px 20px', border: `2px solid ${opt.id === tone ? 'var(--blue)' : 'var(--gray-light)'}`, borderRadius: 20, background: opt.id === tone ? 'var(--blue-light)' : '#fff', cursor: opt.id === tone ? 'default' : 'pointer', transition: 'all .3s cubic-bezier(0.16,1,0.3,1)', textAlign: 'left', width: '100%' }}>
-                                            <img src={opt.icon} alt="" style={{ width: 70, height: 70, objectFit: 'contain', flexShrink: 0 }} />
+                                            {opt.icon ? (
+                                                <img src={opt.icon} alt="" style={{ width: 70, height: 70, objectFit: 'contain', flexShrink: 0 }} />
+                                            ) : (
+                                                <span style={{ fontSize: 40, width: 70, height: 70, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{opt.emoji}</span>
+                                            )}
                                             <div style={{ flex: 1 }}>
                                                 <div className="font-h" style={{ fontSize: 18, color: 'var(--navy-dark)' }}>{opt.label}</div>
                                                 <div style={{ fontSize: 14, color: 'var(--gray)', marginTop: 4, fontWeight: 500 }}>{opt.desc}</div>
@@ -270,9 +797,9 @@
             };
 
             return (
-                <div style={{ minHeight: '100vh', background: 'linear-gradient(145deg,#EEF2FF 0%,#F8FAFC 45%,#FFF0F8 100%)' }}>
+                <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'linear-gradient(145deg,#EEF2FF 0%,#F8FAFC 45%,#FFF0F8 100%)', overflow: 'hidden' }}>
                     <window.StepHeader stepIdx={2} />
-                    <div style={{ maxWidth: 1376, margin: '0 auto', padding: '0 32px' }}>
+                    <div style={{ flex: 1, maxWidth: 1280, width: '100%', margin: '0 auto', padding: '0 32px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
                         <FeedbackScreen chosen={chosen} tone={tone} onRegenerate={handleRegenerate} />
                     </div>
                 </div>
