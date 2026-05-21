@@ -2,20 +2,21 @@
   "name": "방아 찧는 호랑이 - 퍼펙트 문해",
   "short_name": "방아찧는호랑이",
   "description": "오누이의 지혜와 용기를 담은 AI 독후활동 단어 플레이 및 문장 플레이",
-  "start_url": "index.html",
+  "start_url": "/literacy/index.html",
+  "scope": "/literacy/",
   "display": "standalone",
   "background_color": "#EEF2FF",
   "theme_color": "#6366F1",
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "img/character_04.png",
+      "src": "/literacy/img/character_04.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "img/cover.png",
+      "src": "/literacy/img/cover.png",
       "sizes": "512x512",
       "type": "image/png"
     }
