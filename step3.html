@@ -121,21 +121,21 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-            padding: 16px 24px;
-            background: linear-gradient(135deg, #EEF2FF, #E0E7FF);
-            border: 1.5px solid #C7D2FE;
+            gap: 12px;
+            background: linear-gradient(135deg, #6366F1, #4F46E5);
+            border: none;
             border-radius: 20px;
             cursor: pointer;
-            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.15);
+            box-shadow: 0 8px 24px rgba(79, 70, 229, 0.25);
             transition: all .25s cubic-bezier(0.16, 1, 0.3, 1);
             font-family: var(--font-h);
+            color: #FFFFFF;
         }
 
         .rewrite-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.25);
-            background: linear-gradient(135deg, #E0E7FF, #C7D2FE);
+            box-shadow: 0 12px 28px rgba(79, 70, 229, 0.35);
+            background: linear-gradient(135deg, #4F46E5, #3730A3);
         }
 
         .rewrite-btn:active {
@@ -159,6 +159,25 @@
 
         .loading-bar-inner {
             animation: loadingSwipe 2s infinite ease-in-out;
+        }
+
+        /* Toast Popup slide-up and close button styles */
+        @keyframes toastSlideUp {
+            from {
+                transform: translateY(100%);
+            }
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        .toast-popup-sheet {
+            animation: toastSlideUp 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .close-hover-effect:hover {
+            background: #F1F5F9 !important;
+            color: #64748B !important;
         }
     </style>
 </head>
@@ -663,22 +682,11 @@
                                     ))}
                                 </div>
                             </div>
-
-                            {/* Rewrite button - bottom */}
-                            {showPeek && (
-                                <div className="a-pop" style={{ flexShrink: 0 }}>
-                                    <button className="rewrite-btn" onClick={() => setShowTonePopup(true)}>
-                                        <img src={window.IMG.feedback} alt="" style={{ width: 36, height: 36, objectFit: 'contain' }} />
-                                        <span className="font-h" style={{ fontSize: 17, color: 'var(--primary-deep)' }}>다르게도 써볼래?</span>
-                                        <span style={{ fontSize: 13, color: 'var(--primary)', fontWeight: 600, marginLeft: 4 }}>분위기 바꾸기 →</span>
-                                    </button>
-                                </div>
-                            )}
                         </div>
 
                         {/* RIGHT: Compact fixed 380px width Chat comments panel */}
                         <div style={{ flex: '0 0 380px', width: 380, display: 'flex', flexDirection: 'column', opacity: phase === 'writing' ? 0 : (phase === 'sliding' ? 0 : 1), animation: phase === 'done' ? 'commentsFadeIn 0.8s ease forwards' : 'none' }}>
-                            <div style={{ background: 'var(--card)', backdropFilter: 'blur(24px)', border: '1px solid var(--stroke)', borderRadius: 24, boxShadow: 'var(--shadow-md)', overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%' }}>
+                            <div style={{ background: 'var(--card)', backdropFilter: 'blur(24px)', border: '1px solid var(--stroke)', borderRadius: 24, boxShadow: 'var(--shadow-md)', overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
                                 {/* Chat header */}
                                 <div style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid var(--border-light)', background: 'rgba(255,255,255,0.6)', flexShrink: 0 }}>
                                     <div style={{ width: 8, height: 8, borderRadius: '50%', background: storyFinished ? '#22C55E' : '#F59E0B', boxShadow: `0 0 0 3px ${storyFinished ? 'rgba(34,197,94,0.2)' : 'rgba(245,158,11,0.2)'}`, animation: 'bounce 2s ease-in-out infinite' }} />
@@ -759,6 +767,7 @@
                                                     liked={!!likes[msg.id]} onLike={() => toggleLike(msg.id)} />
                                             ))}
                                             <div ref={chatEndRef} />
+                                            {showPeek && <div style={{ height: 80, flexShrink: 0 }} />}
                                         </div>
                                     )}
                                     {regenerating && (
@@ -769,48 +778,120 @@
                                         </div>
                                     )}
                                 </div>
+
+                                {/* Rewrite button - Floating style */}
+                                {showPeek && (
+                                    <div className="a-pop" style={{ position: 'absolute', bottom: 20, left: 16, right: 16, zIndex: 10 }}>
+                                        <button className="rewrite-btn" onClick={() => setShowTonePopup(true)} style={{ 
+                                            borderRadius: 20, 
+                                            boxShadow: '0 10px 28px rgba(79, 70, 229, 0.3)', 
+                                            height: 64, 
+                                            padding: '0 24px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: 12
+                                        }}>
+                                            <img src={window.IMG.feedback} alt="" style={{ width: 34, height: 34, objectFit: 'contain', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }} />
+                                            <span className="font-h" style={{ fontSize: 16.5, color: '#FFFFFF', fontWeight: 800 }}>다르게도 써볼래?</span>
+                                            <span style={{ fontSize: 12.5, color: 'rgba(255, 255, 255, 0.85)', fontWeight: 600, marginLeft: 6 }}>분위기 바꾸기 →</span>
+                                        </button>
+                                    </div>
+                                )}
+
+                                {/* Slide-up Bottom Sheet Popup inside Chat Window */}
+                                {showTonePopup && (
+                                    <>
+                                        {/* Backdrop inside Chat Window only */}
+                                        <div style={{ position: 'absolute', inset: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(3px)', zIndex: 15 }}
+                                            onClick={() => setShowTonePopup(false)} />
+                                        
+                                        {/* Bottom Sheet */}
+                                        <div className="toast-popup-sheet" style={{ 
+                                            position: 'absolute', 
+                                            bottom: 0, 
+                                            left: 0, 
+                                            right: 0, 
+                                            background: '#FFFFFF', 
+                                            borderTopLeftRadius: 24, 
+                                            borderTopRightRadius: 24, 
+                                            boxShadow: '0 -10px 30px rgba(15, 23, 42, 0.15)', 
+                                            padding: '22px 20px 20px', 
+                                            zIndex: 20,
+                                            boxSizing: 'border-box',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            minHeight: 0
+                                        }}>
+                                            {/* Header with Title and Close Button */}
+                                            <div style={{ position: 'relative', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 8, flexShrink: 0 }}>
+                                                <h3 className="font-h" style={{ fontSize: 17, color: 'var(--navy-dark)', margin: 0, paddingRight: 24, paddingLeft: 24, textAlign: 'center' }}>어떤 분위기로 바꿔볼까?</h3>
+                                                <button onClick={() => setShowTonePopup(false)} className="close-hover-effect" style={{
+                                                    position: 'absolute',
+                                                    right: 0,
+                                                    top: -4,
+                                                    width: 28,
+                                                    height: 28,
+                                                    borderRadius: '50%',
+                                                    border: 'none',
+                                                    background: 'transparent',
+                                                    color: '#94A3B8',
+                                                    fontSize: 20,
+                                                    fontWeight: 600,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.2s ease',
+                                                    outline: 'none',
+                                                    padding: 0,
+                                                    lineHeight: 1
+                                                }}>&times;</button>
+                                            </div>
+                                            <p style={{ fontSize: 12, color: 'var(--gray)', fontWeight: 500, margin: '0 0 16px', textAlign: 'center', flexShrink: 0 }}>같은 단어로도 이렇게 다른 이야기가 나와요!</p>
+                                            
+                                            {/* Options list container - extremely compact to ensure zero scrollbars on 700px height */}
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
+                                                {window.TONE_OPTIONS.map(opt => (
+                                                    <button key={opt.id} onClick={() => handleToneSelect(opt.id)}
+                                                        className="a-pop"
+                                                        disabled={opt.id === tone}
+                                                        style={{
+                                                            width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 14,
+                                                            background: opt.id === tone ? 'linear-gradient(135deg, #EEF2FF, #E0E7FF)' : '#F8FAFC',
+                                                            border: opt.id === tone ? '2px solid var(--blue)' : '2px solid rgba(0,0,0,0.03)',
+                                                            textAlign: 'left', cursor: opt.id === tone ? 'default' : 'pointer', transition: 'all 0.2s ease', boxSizing: 'border-box',
+                                                            flexShrink: 0
+                                                        }}>
+                                                        {opt.icon ? (
+                                                            <img src={opt.icon} alt="" style={{ width: 40, height: 40, objectFit: 'contain', flexShrink: 0 }} />
+                                                        ) : (
+                                                            <span style={{ fontSize: 24, width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{opt.emoji}</span>
+                                                        )}
+                                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                                            <div className="font-h" style={{ fontSize: 14, color: 'var(--navy-dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{opt.label}</div>
+                                                            <div style={{ fontSize: 11.5, color: 'var(--gray)', marginTop: 2, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{opt.desc}</div>
+                                                        </div>
+                                                        {opt.id === tone && <span style={{ fontSize: 10.5, color: 'var(--blue)', fontWeight: 800, flexShrink: 0 }}>지금 분위기</span>}
+                                                    </button>
+                                                ))}
+
+                                                {/* Go to Step 2 card */}
+                                                <div style={{ marginTop: 8, padding: '10px 14px', background: 'linear-gradient(135deg, var(--blue-light), #EEF2FF)', border: '1px dashed var(--blue-mid)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, cursor: 'pointer', transition: 'all 0.2s ease', flexShrink: 0 }}
+                                                    onClick={() => { location.href = 'step2.html'; }}>
+                                                    <div style={{ flex: 1 }}>
+                                                        <div className="font-h" style={{ fontSize: 13.5, color: 'var(--blue)', marginBottom: 2 }}>다른 단어 골라보기</div>
+                                                        <div style={{ fontSize: 11, color: '#64748B', fontWeight: 500 }}>처음 모은 단어로 새로운 조합을 만들어요</div>
+                                                    </div>
+                                                    <div style={{ fontSize: 14, color: 'var(--blue)', fontWeight: 800 }}>→</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>
-
-                    {/* Tone popup */}
-                    {showTonePopup && (
-                        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 300, padding: 20 }}
-                            onClick={() => setShowTonePopup(false)}>
-                            <div className="a-slideup" onClick={e => e.stopPropagation()}
-                                style={{ background: 'var(--card-solid)', borderRadius: 32, padding: '40px 32px', maxWidth: 480, width: '100%', boxShadow: 'var(--shadow-lg)' }}>
-                                <h3 className="font-h" style={{ fontSize: 22, color: 'var(--navy-dark)', marginBottom: 6 }}>어떤 분위기로 바꿔볼까?</h3>
-                                <p style={{ fontSize: 14, color: 'var(--gray)', fontWeight: 500 }}>같은 단어로도 이렇게 다른 이야기가 나와요!</p>
-                                <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                                    {window.TONE_OPTIONS.map(opt => (
-                                        <button key={opt.id} onClick={() => handleToneSelect(opt.id)}
-                                            disabled={opt.id === tone}
-                                            style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '10px 20px', border: `2px solid ${opt.id === tone ? 'var(--blue)' : 'var(--gray-light)'}`, borderRadius: 20, background: opt.id === tone ? 'var(--blue-light)' : '#fff', cursor: opt.id === tone ? 'default' : 'pointer', transition: 'all .3s cubic-bezier(0.16,1,0.3,1)', textAlign: 'left', width: '100%' }}>
-                                            {opt.icon ? (
-                                                <img src={opt.icon} alt="" style={{ width: 70, height: 70, objectFit: 'contain', flexShrink: 0 }} />
-                                            ) : (
-                                                <span style={{ fontSize: 40, width: 70, height: 70, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{opt.emoji}</span>
-                                            )}
-                                            <div style={{ flex: 1 }}>
-                                                <div className="font-h" style={{ fontSize: 18, color: 'var(--navy-dark)' }}>{opt.label}</div>
-                                                <div style={{ fontSize: 14, color: 'var(--gray)', marginTop: 4, fontWeight: 500 }}>{opt.desc}</div>
-                                            </div>
-                                            {opt.id === tone && <span style={{ fontSize: 12, color: 'var(--blue)', fontWeight: 800 }}>지금 분위기</span>}
-                                        </button>
-                                    ))}
-                                </div>
-                                <div style={{ marginTop: 24, padding: '16px 20px', background: 'linear-gradient(135deg, var(--blue-light), #EEF2FF)', border: '1.5px dashed var(--blue-mid)', borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, cursor: 'pointer', transition: 'all 0.2s ease' }}
-                                    onClick={() => { location.href = 'step2.html'; }}>
-                                    <div style={{ flex: 1 }}>
-                                        <div className="font-h" style={{ fontSize: 17, color: 'var(--blue)', marginBottom: 5 }}>다른 단어 골라보기</div>
-                                        <div style={{ fontSize: 13, color: '#64748B', fontWeight: 500 }}>처음 모은 단어로 새로운 조합을 만들어요</div>
-                                    </div>
-                                    <div style={{ fontSize: 20, color: 'var(--blue)', fontWeight: 800 }}>→</div>
-                                </div>
-                                <button onClick={() => setShowTonePopup(false)} className="btn-primary" style={{ width: '100%', marginTop: 24, padding: '16px' }}>닫기</button>
-                            </div>
-                        </div>
-                    )}
                 </div>
             );
         }

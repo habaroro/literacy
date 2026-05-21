@@ -156,16 +156,25 @@
             '오빠': { emoji: '👦', meaning: '여동생이 자기보다 나이 많은 남자 형제를 부르는 말이에요.', detail: '동생을 든든하게 지켜주고 챙겨주는 든든한 존재예요. 이야기 속 오빠처럼 용감하게 동생을 보호하기도 해요!', color: '#0284C7' },
         };
 
+        // 타이머의 시각적 형태와 애니메이션을 처리하는 컴포넌트입니다.
         function Timer({ seconds, isWarning }) {
             const m = Math.floor(seconds / 60);
             const s = seconds % 60;
             return (
+                // 마지막 10초 이하(isWarning === true)일 때 'timer-warning' 애니메이션 클래스를 적용하여 타이머를 흔들거나 키웁니다.
                 <div className={isWarning ? 'timer-warning' : ''} style={{
                     display: 'flex', alignItems: 'center', gap: 6,
-                    background: '#FFF', padding: '10px 16px', borderRadius: '18px',
-                    fontFamily: 'var(--font-h)', fontSize: 15, fontWeight: 700,
+                    // 마지막 10초가 남았을 때 배경색을 연하고 은은한 붉은 톤(#FEE2E2)으로 바꾸고, 평소에는 흰색(#FFF)을 유지합니다.
+                    background: isWarning ? '#FEE2E2' : '#FFF',
+                    padding: '10px 16px',
+                    borderRadius: '18px',
+                    fontFamily: 'var(--font-h)',
+                    fontSize: 15,
+                    fontWeight: 700,
+                    // 마지막 10초가 남았을 때 글자색을 경고의 빨간색(#EF4444)으로 바꾸고, 평소에는 진한 남색(var(--navy-dark))으로 표현합니다.
                     color: isWarning ? '#EF4444' : 'var(--navy-dark)',
-                    transition: 'color 0.3s ease',
+                    // 배경색과 글자색 등이 변경될 때 0.3초 동안 부드러운 애니메이션 효과(transition)를 줍니다.
+                    transition: 'all 0.3s ease',
                     whiteSpace: 'nowrap'
                 }}>
                     <span style={{ fontSize: 16, lineHeight: 1 }}>⏱️</span>
@@ -184,7 +193,7 @@
                         style={{ background: '#fff', borderRadius: 28, padding: '36px 32px', maxWidth: 440, width: '100%', boxShadow: '0 30px 80px rgba(15,23,42,0.3)', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
                         <div style={{ position: 'absolute', top: -40, right: -40, width: 140, height: 140, borderRadius: '50%', background: `radial-gradient(circle, ${def.color}30, transparent 70%)`, pointerEvents: 'none' }} />
                         <div style={{ display: 'inline-block', padding: '6px 16px', background: def.color + '15', color: def.color, borderRadius: 100, fontSize: 12, fontWeight: 800, letterSpacing: 1.5, marginBottom: 14 }}>
-                            새로운 단어를 배웠어요!
+                            단어를 획득했어요!
                         </div>
                         <div style={{ fontSize: 56, marginBottom: 6, lineHeight: 1 }}>{def.emoji}</div>
                         <h2 className="font-h" style={{ fontSize: 34, color: def.color, marginBottom: 16, letterSpacing: -1 }}>{word}</h2>
@@ -197,7 +206,7 @@
                             </p>
                         </div>
                         <button onClick={onClose} className="btn-primary" style={{ width: '100%', padding: '14px', fontSize: 16, background: `linear-gradient(135deg, ${def.color}, ${def.color}DD)`, boxShadow: `0 8px 24px ${def.color}50` }}>
-                            좋아요! 계속하기 →
+                            계속하기 →
                         </button>
                     </div>
                 </div>
@@ -208,13 +217,15 @@
         function AcquiredPopup({ words, onNext, isAll }) {
             return (
                 <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200 }}>
-                    <div className="a-slideup" style={{ background: 'var(--card-solid)', borderRadius: 32, padding: '64px 48px', maxWidth: 560, width: '90%', textAlign: 'center', boxShadow: 'var(--shadow-lg)' }}>
-                        <div style={{ fontSize: 64, marginBottom: 20 }}>🎉</div>
+                    <div className="a-slideup" style={{ background: 'var(--card-solid)', borderRadius: 32, padding: '48px 48px', maxWidth: 560, width: '90%', textAlign: 'center', boxShadow: 'var(--shadow-lg)' }}>
+                        <div style={{ width: 120, height: 120, margin: '0 auto 24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <img src="img/cha_01_01.png" alt="기뻐하는 호랑이" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                        </div>
                         <h2 className="font-h" style={{ fontSize: 36, color: 'var(--navy-dark)', marginBottom: 12 }}>
                             {/* 단어를 전부 다 모으지 못한 경우, 찾은 단어의 개수를 포함하여 동적으로 문구를 출력합니다. */}
                             {isAll ? '단어를 모두 모았어요!' : `단어를 ${words.length}개 모았어요!`}
                         </h2>
-                        <p style={{ color: 'var(--gray)', fontSize: 16, marginBottom: 40, fontWeight: 500 }}>이 단어들로 다음 이야기를 만들어봐요</p>
+                        <p style={{ color: 'var(--gray)', fontSize: 16, marginBottom: 40, fontWeight: 500 }}>이 단어들로 이야기를 만들어봐요.</p>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center', marginBottom: 56 }}>
                             {words.map((w, i) => (
                                 <span key={i} className="font-h a-pop" style={{ padding: '12px 28px', background: 'var(--primary-soft)', color: 'var(--primary)', borderRadius: 30, fontSize: 22, animationDelay: `${i * 80}ms` }}>{w}</span>
@@ -231,19 +242,20 @@
                 <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 250 }}>
                     <div className="a-slideup" style={{ background: 'var(--card-solid)', borderRadius: 32, padding: '48px 40px', maxWidth: 480, width: '90%', textAlign: 'center', boxShadow: 'var(--shadow-lg)' }}>
                         <div style={{ width: 120, height: 120, margin: '0 auto 24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <img src="img/cha_01_02.png" alt="아쉬워하는 호랑이" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                            {/* 획득한 단어의 개수가 3개 이상이면 기본 포즈 캐릭터(img/cha_01.png)를 노출하고, 3개 미만이면 아쉬워하는 우는 캐릭터(img/cha_01_02.png)를 노출합니다. */}
+                            <img src={foundCount >= 3 ? "img/cha_01.png" : "img/cha_01_02.png"} alt={foundCount >= 3 ? "기본 호랑이" : "아쉬워하는 호랑이"} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
                         </div>
                         <h2 className="font-h" style={{ fontSize: 32, color: 'var(--navy-dark)', marginBottom: 14 }}>시간이 다 되었어요!</h2>
                         <p style={{ color: 'var(--gray)', fontSize: 16, marginBottom: 10, fontWeight: 500 }}>
-                            지금까지 <strong style={{ color: 'var(--primary)' }}>{foundCount}개</strong>의 단어를 찾았어요
+                            지금까지 <strong style={{ color: 'var(--primary)' }}>{foundCount}개</strong>의 단어를 찾았어요.
                         </p>
                         <p style={{ color: 'var(--gray)', fontSize: 16, marginBottom: 36, fontWeight: 500, lineHeight: 1.5 }}>
-                            찾은 단어가 최소 3개 이상일 때만 이야기 만들기를 계속할 수 있어요.
+                            찾은 단어가 3개 이상이면 이야기 만들기를 계속할 수 있어요.
                         </p>
                         <div style={{ display: 'flex', gap: 12 }}>
                             <button onClick={onRetry} className="btn-primary" style={{ flex: 1, padding: '18px', fontSize: 16, fontWeight: 700 }}>↺ 다시 도전</button>
                             {foundCount >= 3 && (
-                                <button onClick={onContinue} className="btn-primary" style={{ flex: 1, padding: '18px', fontSize: 16, fontWeight: 700 }}>계속 진행 →</button>
+                                <button onClick={onContinue} className="btn-primary" style={{ flex: 1, padding: '18px', fontSize: 16, fontWeight: 700 }}>다음 단계 진행 →</button>
                             )}
                         </div>
                     </div>
