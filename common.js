@@ -1,4 +1,4 @@
-/* ── IMAGES ── */
+/* ── IMAGES (게임 내에서 사용할 이미지 경로 정의) ── */
 window.IMG = {
     chaek: "img/chaek.png",
     momo: "img/momo.png",
@@ -9,7 +9,7 @@ window.IMG = {
     story: "img/story.png"
 };
 
-/* ── CHARACTERS ── */
+/* ── CHARACTERS (피드백 화면에 등장할 캐릭터들의 정보) ── */
 window.CHARACTERS = [
     { id: "chaekchaekie", name: "책책이", role: "연결자", img: window.IMG.chaek, ring: "#81C784" },
     { id: "momo", name: "모모", role: "응원단", img: window.IMG.momo, ring: "#F48FB1" },
@@ -17,10 +17,10 @@ window.CHARACTERS = [
     { id: "moonbaksa", name: "문박사", role: "질문자", img: window.IMG.moon, ring: "#90CAF9" },
 ];
 
-/* ── BOOK EXCERPT ── */
+/* ── BOOK EXCERPT (교재에서 발췌한 기본 문장) ── */
 window.BOOK_EXCERPT = "배가 고팠던 호랑이는 맛있는 냄새를 따라 아이들이 있는 산골 집에 도착했지.";
 
-/* ── SENTENCE POOL ── */
+/* ── SENTENCE POOL (AI가 동화 이야기를 만들 때 사용할 문장 꾸러미) ── */
 window.SENTENCE_POOL = {
     intro: {
         base: '어느 가을날 밤, 조용한 산골 마을에서 이야기가 시작됐어요.',
@@ -80,6 +80,7 @@ window.SENTENCE_POOL = {
     },
 };
 
+/* ── STORY GENERATOR (선택된 단어와 어조에 맞춰 이야기를 완성하는 함수) ── */
 window.generateStory = function (chosen, tone) {
     const t = tone || 'base';
     const parts = [];
@@ -90,13 +91,14 @@ window.generateStory = function (chosen, tone) {
     return parts.join(' ');
 };
 
+/* ── TONE OPTIONS (이야기 어조 선택지 구성) ── */
 window.TONE_OPTIONS = [
     { id: "fun", icon: "img/icon_01.png", label: "더 재미있고 유쾌하게", desc: "통통 튀는 이야기로!" },
     { id: "tense", icon: "img/icon_02.png", label: "더 긴장감 넘치게", desc: "두근두근 스릴 가득!" },
     { id: "warm", icon: "img/icon_03.png", label: "더 따뜻하고 뭉클하게", desc: "가슴이 뭉클해지는 이야기로" },
 ];
 
-/* ── GRID DATA ── */
+/* ── GRID DATA (첫 번째 단어 찾기 게임에서 쓰이는 7x7 글자판 정보) ── */
 window.GRID_DATA = {
     cells: [
         ['창', '두', '화', '무', '들', '산', '마'],
@@ -118,7 +120,7 @@ window.GRID_DATA = {
     ],
 };
 
-/* ── CROSSWORD DATA ── */
+/* ── CROSSWORD DATA (두 번째 빈칸 십자말풀이 게임에서 쓰이는 정보) ── */
 window.CW = {
     cols: 8,
     rows: 5,
@@ -143,10 +145,11 @@ window.CW = {
         a[idx(4, 7)] = { kind: 'fixed', syl: '매' };
         return a;
     })(),
+    // 화면에 보여줄 낱글자 카드 목록 (c10 화 카드가 안전하게 삭제되었습니다.)
     cards: [
         { id: 'c5', syl: '오' }, { id: 'c8', syl: '두' }, { id: 'c3', syl: '산' }, { id: 'c6', syl: '감' },
         { id: 'c2', syl: '랑' }, { id: 'c7', syl: '남' }, { id: 'c4', syl: '부' },
-        { id: 'c9', syl: '무' }, { id: 'c1', syl: '창' }, { id: 'c10', syl: '화' },
+        { id: 'c9', syl: '무' }, { id: 'c1', syl: '창' }
     ],
     hints: [
         '🐯 산속 동물 「호 ⬚ 이」',
@@ -160,7 +163,7 @@ window.CW = {
     wordMap: { b_cha: '창호지', b_rang: '호랑이', b_san: '산골집', b_bu: '부부', b_o: '오빠', b_gam: '감자', b_nam: '남매' },
 };
 
-/* ── FEEDBACK COMMENTS ── */
+/* ── FEEDBACK COMMENTS (네 가지 캐릭터들이 남겨줄 동적 AI 피드백 텍스트 생성) ── */
 window.getDynamicComments = function (chosen, tone) {
     const words = chosen && chosen.length > 0 ? chosen : ['호랑이', '창호지', '산골집'];
     const t = tone || 'base';
@@ -204,7 +207,7 @@ window.getDynamicComments = function (chosen, tone) {
     return { chaekchaekie: chaekText, momo: momoText, meora: meoraText, moonbaksa: moonText };
 };
 
-/* ── STATE HELPERS (sessionStorage) ── */
+/* ── STATE HELPERS (sessionStorage를 사용하여 게임 진행 상황 유지) ── */
 window.AppState = {
     get(key, fallback) {
         try {
@@ -220,7 +223,7 @@ window.AppState = {
     }
 };
 
-/* ── HEADER (shared step nav) ── */
+/* ── HEADER (화면 상단에 노출될 스텝 네비게이션 헤더 바) ── */
 window.StepHeader = function ({ stepIdx }) {
     const { useState } = React;
     const goTo = (i) => {
@@ -256,7 +259,7 @@ window.StepHeader = function ({ stepIdx }) {
                         onClick: handleReset,
                         style: { display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(13, 148, 136, 0.08)', border: '1.5px solid rgba(13, 148, 136, 0.2)', color: '#0D9488', padding: '8px 16px', borderRadius: 16, fontSize: 14, cursor: 'pointer', transition: 'all 0.2s ease' },
                         onMouseEnter: e => { e.currentTarget.style.background = '#0D9488'; e.currentTarget.style.color = '#FFF'; },
-                        onMouseLeave: e => { e.currentTarget.style.background = 'rgba(13, 148, 136, 0.08)'; e.currentTarget.style.color = '#0D9488'; }
+                        onMouseLeave: e => { e.currentTarget.style.background = 'rgba(13, 148, 136, 0.08)'; e.currentTarget.style.color = '#0D9488' }
                     }, '↺ 처음부터 다시하기')
                 )
             )
@@ -264,27 +267,20 @@ window.StepHeader = function ({ stepIdx }) {
     );
 };
 
-/* ── FULLSCREEN SUPPORT ── */
-window.requestAppFullscreen = function() {
+/* ── FULLSCREEN SUPPORT (브라우저 전체화면 기능 제어) ── */
+window.requestAppFullscreen = function () {
     const docEl = document.documentElement;
     const doc = document;
-    
-    // 이미 전체화면 모드인지 검증 (표준 및 브라우저 엔진별 속성 대응)
+
     if (!doc.fullscreenElement && !doc.webkitFullscreenElement && !doc.mozFullScreenElement && !doc.msFullscreenElement) {
         if (docEl.requestFullscreen) {
-            docEl.requestFullscreen().catch(err => {});
+            docEl.requestFullscreen().catch(err => { });
         } else if (docEl.webkitRequestFullscreen) {
-            docEl.webkitRequestFullscreen().catch(err => {});
+            docEl.webkitRequestFullscreen().catch(err => { });
         } else if (docEl.mozRequestFullScreen) {
-            docEl.mozRequestFullScreen().catch(err => {});
+            docEl.mozRequestFullScreen().catch(err => { });
         } else if (docEl.msRequestFullscreen) {
             docEl.msRequestFullscreen();
         }
     }
 };
-
-
-
-
-
-

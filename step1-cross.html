@@ -250,7 +250,7 @@
                             지금까지 <strong style={{ color: 'var(--primary)' }}>{foundCount}개</strong>의 단어를 찾았어요.
                         </p>
                         <p style={{ color: 'var(--gray)', fontSize: 16, marginBottom: 36, fontWeight: 500, lineHeight: 1.5 }}>
-                            찾은 단어가 3개 이상이면 이야기 만들기를 계속할 수 있어요.
+                            찾은 단어가 3개 이상이면 이야기 만들기를 할 수 있어요.
                         </p>
                         <div style={{ display: 'flex', gap: 12 }}>
                             <button onClick={onRetry} className="btn-primary" style={{ flex: 1, padding: '18px', fontSize: 16, fontWeight: 700 }}>↺ 다시 도전</button>
@@ -634,7 +634,7 @@
                                 </div>
 
                                 {/* Syllable Cards */}
-                                <div style={{ background: '#F5F0E6', borderRadius: 28, padding: '24px', display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'center', boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.03)' }}>
+                                <div style={{ background: '#F5F0E6', borderRadius: 28, padding: '24px 24px 30px 24px', display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'center', boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.03)' }}>
                                     {CW.cards.map(card => {
                                         const used = usedCards.includes(card.id);
                                         const enabled = !used && !!activeBlank;
