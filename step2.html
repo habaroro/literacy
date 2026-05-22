@@ -13,6 +13,74 @@
     <link rel="stylesheet" href="common.css" />
     <link rel="shortcut icon" href="img/appicon.png" type="image/png" />
     <link rel="apple-touch-icon" href="img/appicon.png" />
+    <style>
+        /* 📱 화면 높이와 넓이에 맞춰 레이아웃 요소를 동적으로 조절하기 위한 반응형 스타일 설정입니다. */
+        .step2-app-container {
+            max-width: 1280px !important;
+            /* Step 3와 화면 크기를 맞추기 위해 최대 가로폭을 1280px로 고정합니다. */
+
+            /* 기본 레이아웃 여백 및 크기 변수 정의 (기본값) */
+            --s2-screen-padding: 40px 0;
+            --s2-title-mb: 8px;
+            --s2-sub-display: block;
+            --s2-sub-mb: 20px;
+            --s2-card-height: 550px;
+            --s2-card-padding: 28px 32px;
+            --s2-card-mb: 24px;
+            --s2-excerpt-size: 21px;
+            --s2-excerpt-mb: 24px;
+            --s2-divider-padding: 24px;
+            --s2-img-width: 300px;
+            --s2-drop-height: 220px;
+            --s2-drop-padding: 20px;
+            --s2-drop-mb: 24px;
+            --s2-pool-height: 88px;
+            --s2-pool-padding: 20px;
+            --s2-pool-mb: 24px;
+            --s2-btn-padding: 22px;
+        }
+
+        /* 💻 노트북 등 화면 세로 높이가 약간 작은 기기(높이 820px 이하)를 위한 크기 조정 설정 */
+        @media (max-height: 820px) and (min-width: 1024px) {
+            .step2-app-container {
+                --s2-screen-padding: 20px 0;
+                --s2-title-mb: 20px;
+                --s2-sub-display: none; /* 화면이 좁을 때 불필요한 부제목을 숨겨 공간을 확보합니다. */
+                --s2-card-height: 570px;
+                --s2-card-padding: 24px 28px;
+                --s2-card-mb: 20px;
+                --s2-excerpt-size: 20px;
+                --s2-excerpt-mb: 20px;
+                --s2-divider-padding: 20px;
+                --s2-img-width: 290px;
+                --s2-drop-height: 240px;
+                --s2-drop-padding: 16px;
+                --s2-drop-mb: 20px;
+                --s2-pool-height: 80px;
+                --s2-pool-padding: 16px;
+                --s2-pool-mb: 20px;
+                --s2-btn-padding: 18px;
+            }
+        }
+
+        /* 🖥️ 화면 세로 높이가 아주 작은 기기(높이 720px 이하)를 위한 최적화 설정 */
+        @media (max-height: 720px) and (min-width: 1024px) {
+            .step2-app-container {
+                --s2-screen-padding: 12px 0;
+                --s2-title-mb: 12px;
+                --s2-card-height: 440px;
+                --s2-card-padding: 16px 20px;
+                --s2-card-mb: 12px;
+                --s2-excerpt-size: 18px;
+                --s2-excerpt-mb: 12px;
+                --s2-divider-padding: 12px;
+                --s2-img-width: 200px;
+                --s2-drop-height: 140px;
+                --s2-pool-height: 72px;
+                --s2-btn-padding: 14px;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -21,15 +89,24 @@
     <script type="text/babel">
         const { useState, useEffect, useRef, useCallback } = React;
 
+        // 📝 SentenceScreen: 획득한 단어 카드를 드래그 앤 드롭으로 배치해 문장을 조립하는 화면 컴포넌트입니다.
         function SentenceScreen({ acquired, onGenerate }) {
-            const [pool, setPool] = useState([...acquired]);
+            // 단어 카드 풀(pool)의 상태를 관리합니다. 단어 배열이 정상적으로 넘어오지 않은 경우 빈 배열로 처리합니다.
+            const [pool, setPool] = useState(Array.isArray(acquired) ? [...acquired] : []);
+            // 배치 영역에 들어간 단어 카드 목록을 관리합니다.
             const [placed, setPlaced] = useState([]);
+            // 드래그 중인 카드 정보(단어, 출발지, 드래그 시작 인덱스, 좌표)를 관리합니다.
             const [drag, setDrag] = useState(null);
+            // 드래그 중인 카드가 들어갈 배치 영역의 인덱스를 관리합니다.
             const [insertAt, setInsertAt] = useState(null);
+            // AI 이야기 생성이 진행 중인지 여부를 나타냅니다.
             const [loading, setLoading] = useState(false);
+            // 드롭 대상(배치 영역)의 DOM 요소를 가리키는 ref 객체입니다.
             const dropRef = useRef(null);
+            // 경고 메시지 텍스트를 저장하는 상태입니다.
             const [warning, setWarning] = useState('');
 
+            // 경고 메시지가 화면에 뜨면 2초 후에 자동으로 사라지게 만듭니다.
             useEffect(() => {
                 if (warning) {
                     const t = setTimeout(() => setWarning(''), 2000);
@@ -37,23 +114,29 @@
                 }
             }, [warning]);
 
+            // 단어 카드가 딱 3개 배치되었을 때만 이야기를 생성할 수 있도록 활성화합니다.
             const canGo = placed.length === 3;
 
-            // 드래그를 시작할 때 호출되는 함수입니다.
+            // 🖱️ 드래그 시작 시 호출되는 함수입니다. (마우스/터치 시작)
             const startDrag = (e, word, from, fromIdx) => {
                 e.preventDefault();
-                // 1. 단어 카드를 마우스나 터치로 잡았을 때 째깍하는 효과음(click)을 재생합니다.
+                // 1. 단어 카드를 마우스나 터치로 집어 올릴 때 째깍거리는 효과음(click)을 재생합니다.
                 if (window.SoundEffects) {
                     window.SoundEffects.play('click');
                 }
                 setDrag({ word, from, fromIdx, x: e.clientX, y: e.clientY });
             };
 
+            // 🖐️ 드래그 도중 마우스나 터치가 움직일 때 호출되는 함수입니다.
             const onMove = useCallback((e) => {
                 if (!drag) return;
                 const cx = e.touches?.[0]?.clientX ?? e.clientX;
                 const cy = e.touches?.[0]?.clientY ?? e.clientY;
+                
+                // 마우스/터치 움직임에 맞춰 드래그 중인 카드의 화면상 위치 좌표를 업데이트합니다.
                 setDrag(d => d ? { ...d, x: cx, y: cy } : null);
+
+                // 배치 영역 내부를 지나고 있는지 감지하여 카드가 끼어들 자리(인덱스)를 계산합니다.
                 if (dropRef.current) {
                     const rect = dropRef.current.getBoundingClientRect();
                     const inZone = cx >= rect.left && cx <= rect.right && cy >= rect.top && cy <= rect.bottom;
@@ -69,21 +152,23 @@
                 }
             }, [drag, placed]);
 
-            // 드래그를 끝마치고(드롭) 마우스/터치를 떼었을 때 호출되는 함수입니다.
+            // 🫳 드래그를 끝마치고 마우스/터치 버튼을 뗄 때 호출되는 함수입니다.
             const onEnd = useCallback((e) => {
                 if (!drag) return;
                 const cx = e.changedTouches?.[0]?.clientX ?? e.clientX;
                 const cy = e.changedTouches?.[0]?.clientY ?? e.clientY;
                 const rect = dropRef.current?.getBoundingClientRect();
+                
+                // 마우스를 뗀 시점에 마우스가 배치 영역 안에 위치하는지 판별합니다.
                 const inZone = rect && cx >= rect.left && cx <= rect.right && cy >= rect.top && cy <= rect.bottom;
                 let newPool = [...pool], newPlaced = [...placed];
-                
+
                 if (inZone) {
+                    // 1) 카드 풀에서 배치 영역으로 들어오는 경우
                     if (drag.from === 'pool') {
-                        // 카드를 3장 초과하여 배치하려고 할 때 경고를 띄웁니다.
+                        // 카드를 이미 3장 이상 배치한 경우 에러 메시지와 실패음(wrong)을 재생하고 동작을 막습니다.
                         if (placed.length >= 3) {
                             setWarning('단어 카드는 최대 3장만 배치할 수 있어요!');
-                            // 2. 단어 개수 제한 경고 메시지가 나타날 때 오답/실패 효과음(wrong)을 재생합니다.
                             if (window.SoundEffects) {
                                 window.SoundEffects.play('wrong');
                             }
@@ -91,24 +176,28 @@
                         }
                         newPool = newPool.filter(w => w !== drag.word);
                     } else {
+                        // 2) 이미 배치 영역에 있는 카드의 순서를 변경하는 경우
                         newPlaced.splice(drag.fromIdx, 1);
                     }
+                    
+                    // 지정된 계산 위치에 카드를 끼워 넣습니다.
                     let idx = insertAt ?? newPlaced.length;
                     if (drag.from === 'placed' && drag.fromIdx < idx) idx = Math.max(0, idx - 1);
                     newPlaced.splice(idx, 0, drag.word);
                     setPool(newPool); setPlaced(newPlaced);
-                    
-                    // 3. 단어 카드를 배치 영역에 성공적으로 올리거나 내부에서 순서를 바꿀 때 효과음(click)을 재생합니다.
+
+                    // 2. 단어 카드를 배치 영역에 올려놓거나 순서를 바꿀 때 효과음(click)을 재생합니다.
                     if (window.SoundEffects) {
                         window.SoundEffects.play('click');
                     }
                 } else {
+                    // 3) 배치 영역 밖으로 카드를 드롭했을 경우, 카드를 다시 풀(pool)로 되돌립니다.
                     if (drag.from === 'placed') {
                         newPlaced.splice(drag.fromIdx, 1);
                         newPool.push(drag.word);
                         setPool(newPool); setPlaced(newPlaced);
-                        
-                        // 4. 단어 카드를 배치 영역 밖으로 드래그하여 다시 풀(pool)로 뺄 때 효과음(click)을 재생합니다.
+
+                        // 3. 카드를 바깥으로 던져서 배치 해제할 때도 깔끔하게 효과음(click)을 재생합니다.
                         if (window.SoundEffects) {
                             window.SoundEffects.play('click');
                         }
@@ -117,74 +206,89 @@
                 setDrag(null); setInsertAt(null);
             }, [drag, pool, placed, insertAt]);
 
-            // 'AI 이야기 만들기' 버튼을 클릭했을 때 호출되는 함수입니다.
+            // 🪄 'AI 이야기 만들기' 버튼을 눌렀을 때 작동하는 함수입니다.
             const go = () => {
-                // 5. 이야기 만들기 시작 버튼을 누를 때 클릭 효과음(click)을 재생합니다.
+                // 4. 이야기 만들기 시작 버튼을 누를 때 신비롭고 아름다운 오르골 효과음(magic)을 재생합니다.
                 if (window.SoundEffects) {
-                    window.SoundEffects.play('click');
+                    window.SoundEffects.play('magic');
                 }
                 setLoading(true);
+                // 1.2초 동안 로딩 상태를 유지한 뒤, 상위 컴포넌트의 생성 함수를 실행합니다.
                 setTimeout(() => onGenerate(placed.slice(0, 3)), 1200);
             };
 
-            // 배치된 카드를 클릭하여 제거(풀로 회수)할 때 호출되는 함수입니다.
+            // 🗑️ 배치된 카드를 클릭하여 제거(풀로 되돌림)할 때 작동하는 함수입니다.
             const removePlaced = (i) => {
                 if (drag) return;
                 const word = placed[i];
-                
-                // 6. 배치 영역의 단어 카드를 클릭하여 뺄 때에도 효과음(click)을 재생합니다.
+
+                // 5. 클릭으로 카드를 제거할 때 효과음(click)을 재생합니다.
                 if (window.SoundEffects) {
                     window.SoundEffects.play('click');
                 }
-                
+
                 setPlaced(p => p.filter((_, idx) => idx !== i));
                 setPool(p => [...p, word]);
             };
 
             return (
-                <div style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 24px', minHeight: 'calc(100vh - 70px)', touchAction: 'none' }}
+                <div style={{ padding: 'var(--s2-screen-padding)', minHeight: 'calc(100vh - 70px)', touchAction: 'none' }}
                     onPointerMove={onMove} onPointerUp={onEnd}
                     onTouchMove={e => { e.preventDefault(); onMove(e); }} onTouchEnd={onEnd}>
 
-                    <h2 className="font-h" style={{ fontSize: 25, color: 'var(--navy-dark)', textAlign: 'center', marginBottom: 8 }}>문장 플레이</h2>
-                    <p style={{ textAlign: 'center', color: 'var(--gray)', fontSize: 15, marginBottom: 32, fontWeight: 500 }}>단어 카드를 배치해서 이야기를 생성해 봐!</p>
+                    {/* 타이틀 영역 */}
+                    <h2 className="font-h" style={{ fontSize: 25, color: 'var(--navy-dark)', textAlign: 'center', marginBottom: 'var(--s2-title-mb)' }}>문장 플레이</h2>
+                    <p style={{ display: 'var(--s2-sub-display)', textAlign: 'center', color: 'var(--gray)', fontSize: 15, marginBottom: 'var(--s2-sub-mb, 20px)', fontWeight: 500 }}>단어 카드를 배치해서 이야기를 생성해 봐!</p>
 
+                    {/* 좌우 2단 그리드 레이아웃 */}
                     <div className="step2-main-layout">
+                        {/* 1. 좌측 칼럼: 책 구절 및 귀여운 호랑이 일러스트 */}
                         <div className="step2-left-col">
-                            <div style={{ background: 'var(--card)', height: 550, backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.8)', borderRadius: 28, padding: '28px 32px', marginBottom: 24, textAlign: 'center', boxShadow: 'var(--shadow-md)', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                            <div style={{ background: 'var(--card)', height: 'var(--s2-card-height)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.8)', borderRadius: 28, padding: 'var(--s2-card-padding)', marginBottom: 'var(--s2-card-mb)', textAlign: 'center', boxShadow: 'var(--shadow-md)', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
                                 <div style={{ position: 'absolute', top: -20, left: -20, fontSize: 100, opacity: 0.05, transform: 'rotate(-10deg)', pointerEvents: 'none' }}>📖</div>
                                 <div style={{ display: 'inline-block', background: 'linear-gradient(135deg, #FEF3C7, #FDE68A)', padding: '5px 14px', borderRadius: 18, boxShadow: '0 4px 12px rgba(253,230,138,0.4)', marginBottom: 16 }}>
                                     <span style={{ fontSize: 13, fontWeight: 800, color: '#92400E', letterSpacing: 2 }}>📖 책 속 한 장면</span>
                                 </div>
-                                <p style={{ fontSize: 21, color: 'var(--navy-dark)', lineHeight: 1.9, margin: '0 0 24px', fontWeight: 700, wordBreak: 'keep-all' }}>
+                                <p style={{ fontSize: 'var(--s2-excerpt-size)', color: 'var(--navy-dark)', lineHeight: 1.9, margin: '0 0 var(--s2-excerpt-mb)', fontWeight: 700, wordBreak: 'keep-all' }}>
                                     <span style={{ color: 'var(--primary)', fontSize: 24 }}>"</span>{window.BOOK_EXCERPT}<span style={{ color: 'var(--primary)', fontSize: 24 }}>"</span>
                                 </p>
-                                <div style={{ width: '100%', borderTop: '2px dashed var(--border-light)', paddingTop: 24, marginBottom: 24 }}>
+                                <div style={{ width: '100%', borderTop: '2px dashed var(--border-light)', paddingTop: 'var(--s2-divider-padding)', marginBottom: 'var(--s2-divider-padding)' }}>
                                     <span className="a-spinfade" style={{ display: 'inline-block', fontSize: 16, color: 'var(--primary)', fontWeight: 800 }}>🤔 다음엔 어떤 일이 일어났을까요?</span>
                                 </div>
-                                <img src="img/tig.png" alt="호랑이" style={{ width: 300, height: 'auto', filter: 'drop-shadow(0 15px 30px rgba(0,0,0,0.1))', animation: 'bounce 3s ease-in-out infinite' }} />
+                                <img src="img/tig.png" alt="호랑이" style={{ width: 'var(--s2-img-width)', height: 'auto', filter: 'drop-shadow(0 15px 30px rgba(0,0,0,0.1))', animation: 'bounce 3s ease-in-out infinite' }} />
                             </div>
                         </div>
+
+                        {/* 2. 우측 칼럼: 배치 및 단어 카드 관리 공간 */}
                         <div className="step2-right-col">
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                                 <span className="font-h" style={{ fontSize: 15, color: 'var(--navy-dark)' }}>배치 영역</span>
                                 <span style={{ fontSize: 12, color: 'var(--gray)', fontWeight: 500 }}>클릭하면 풀로 돌아가요</span>
                             </div>
+
+                            {/* 드롭 영역 (단어 카드가 여기에 올라갑니다) */}
                             <div ref={dropRef}
-                                style={{ minHeight: 220, border: `3px dashed ${drag && insertAt !== null ? 'var(--primary)' : 'var(--blue-mid)'}`, borderRadius: 26, padding: '20px', background: drag && insertAt !== null ? 'var(--primary-soft)' : 'rgba(238, 242, 255, 0.5)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', boxShadow: 'inset 0 4px 20px rgba(0,0,0,0.03)', transition: 'all .3s cubic-bezier(0.16,1,0.3,1)', display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', alignContent: 'flex-start', gap: 10, position: 'relative', marginBottom: 24 }}>
+                                style={{ minHeight: 'var(--s2-drop-height)', border: `3px dashed ${drag && insertAt !== null ? 'var(--primary)' : 'var(--blue-mid)'}`, borderRadius: 26, padding: 'var(--s2-drop-padding)', background: drag && insertAt !== null ? 'var(--primary-soft)' : 'rgba(238, 242, 255, 0.5)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', boxShadow: 'inset 0 4px 20px rgba(0,0,0,0.03)', transition: 'all .3s cubic-bezier(0.16,1,0.3,1)', display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', alignContent: 'flex-start', gap: 10, position: 'relative', marginBottom: 'var(--s2-drop-mb)' }}>
+                                
+                                {/* 초과 배치 경고창 */}
                                 {warning && (
                                     <div className="a-pop" style={{ position: 'absolute', top: 20, left: '50%', transform: 'translateX(-50%)', background: '#EF4444', color: '#fff', padding: '10px 20px', borderRadius: 20, fontSize: 14, fontWeight: 700, boxShadow: '0 8px 24px rgba(239,68,68,0.2)', zIndex: 100, pointerEvents: 'none' }}>
                                         ⚠️ {warning}
                                     </div>
                                 )}
+
+                                {/* 카드가 하나도 배치되지 않았을 때의 안내 문구 */}
                                 {placed.length === 0 && !drag && (
                                     <div style={{ width: '100%', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, opacity: 0.7, paddingTop: 40 }}>
                                         <span className="a-bounce" style={{ fontSize: 28 }}>👇</span>
                                         <span style={{ color: 'var(--primary)', fontSize: 15, fontWeight: 700 }}>아래 단어 카드 3장을 배치해주세요!</span>
                                     </div>
                                 )}
+
+                                {/* 배치된 카드 렌더링 */}
                                 {placed.map((word, i) => (
                                     <React.Fragment key={word + i}>
+                                        {/* 드래그 도중 위치 가이드라인 바 */}
                                         {drag && insertAt === i && <div style={{ width: 4, height: 56, background: 'var(--blue)', borderRadius: 2, flexShrink: 0 }} />}
                                         <div data-pi={i} onPointerDown={e => startDrag(e, word, 'placed', i)} onClick={() => removePlaced(i)}
                                             style={{ padding: '12px 20px', background: drag?.word === word && drag?.from === 'placed' ? 'var(--primary-soft)' : 'linear-gradient(135deg, var(--primary), var(--primary-deep))', color: drag?.word === word && drag?.from === 'placed' ? 'var(--primary)' : '#fff', borderRadius: 14, fontFamily: 'var(--font-h)', fontWeight: 700, fontSize: 18, cursor: 'grab', boxShadow: drag?.word === word && drag?.from === 'placed' ? 'none' : '0 6px 20px rgba(99,102,241,.25)', opacity: drag?.word === word && drag?.from === 'placed' ? 0.6 : 1, userSelect: 'none', flexShrink: 0, transition: 'all .2s cubic-bezier(0.16,1,0.3,1)' }}>
@@ -194,8 +298,10 @@
                                 ))}
                                 {drag && insertAt === placed.length && <div style={{ width: 4, height: 56, background: 'var(--blue)', borderRadius: 2, flexShrink: 0 }} />}
                             </div>
+
+                            {/* 단어 풀 영역 */}
                             <div className="font-h" style={{ fontSize: 15, color: 'var(--navy-dark)', marginBottom: 12 }}>단어 카드 풀</div>
-                            <div style={{ background: 'var(--card)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', border: '1px solid var(--stroke)', borderRadius: 22, padding: '20px', boxShadow: 'var(--shadow-sm)', display: 'flex', flexWrap: 'wrap', gap: 10, minHeight: 88, alignItems: 'center', marginBottom: 24 }}>
+                            <div style={{ background: 'var(--card)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', border: '1px solid var(--stroke)', borderRadius: 22, padding: 'var(--s2-pool-padding)', boxShadow: 'var(--shadow-sm)', display: 'flex', flexWrap: 'wrap', gap: 10, minHeight: 'var(--s2-pool-height)', alignItems: 'center', marginBottom: 'var(--s2-pool-mb)' }}>
                                 {pool.length === 0 && <span style={{ color: '#94A3B8', fontSize: 14, width: '100%', textAlign: 'center', fontWeight: 500 }}>모든 카드가 배치됐어요!</span>}
                                 {pool.map((word, i) => (
                                     <div key={word + i} onPointerDown={e => startDrag(e, word, 'pool', i)}
@@ -204,12 +310,15 @@
                                     </div>
                                 ))}
                             </div>
-                            <button className="btn-primary" disabled={!canGo || loading} style={{ width: '100%', fontSize: 20, padding: '22px' }} onClick={go}>
+
+                            {/* 이야기 생성 진행/대기 버튼 */}
+                            <button className="btn-primary" disabled={!canGo || loading} style={{ width: '100%', fontSize: 20, padding: 'var(--s2-btn-padding)' }} onClick={go}>
                                 {loading ? '✨ 이야기를 만드는 중...' : canGo ? `✨ AI 이야기 만들기` : '단어 카드를 배치해 주세요'}
                             </button>
                         </div>
                     </div>
 
+                    {/* 드래그 중 화면을 따라다니는 피드백 카드 컴포넌트 */}
                     {drag && (
                         <div style={{ position: 'fixed', left: drag.x - 50, top: drag.y - 30, pointerEvents: 'none', zIndex: 999, padding: '12px 20px', background: 'linear-gradient(135deg, var(--primary), var(--primary-deep))', color: '#fff', borderRadius: 14, fontFamily: 'var(--font-h)', fontWeight: 700, fontSize: 18, boxShadow: '0 12px 32px rgba(99,102,241,.4)', opacity: .95, transform: 'rotate(4deg)' }}>
                             {drag.word}
@@ -219,9 +328,29 @@
             );
         }
 
+        // 🚀 App: step2 화면을 감싸고 전체 애플리케이션 상태와 BGM 컨트롤러를 선언하는 루트 컴포넌트입니다.
         function App() {
-            const acquired = window.AppState.get('acquired', ['호랑이', '창호지', '산골집', '부부', '오빠', '감자', '남매']);
+            // 이전 스텝에서 획득한 단어 목록을 AppState에서 가져오되, 값이 비어 있으면 기본 전래동화 키워드 풀을 제공합니다.
+            const rawAcquired = window.AppState.get('acquired');
+            const acquired = Array.isArray(rawAcquired) && rawAcquired.length > 0
+                ? rawAcquired
+                : ['호랑이', '창호지', '산골집', '부부', '오빠', '감자', '남매'];
 
+            // 🎵 화면이 켜지거나 꺼질 때 배경음악(BGM)을 자동으로 제어하는 이펙트 훅입니다.
+            React.useEffect(() => {
+                // 1. step2 화면이 나타나면 지정된 배경음악(seven_soft_turns.mp4)을 자동으로 재생합니다.
+                if (window.SoundEffects) {
+                    window.SoundEffects.playBGM("sound/seven_soft_turns.mp4");
+                }
+                // 2. 다른 페이지로 이동하거나 이 화면을 벗어날(Unmount) 때 배경음악 재생을 확실하게 멈춥니다.
+                return () => {
+                    if (window.SoundEffects) {
+                        window.SoundEffects.stopBGM();
+                    }
+                };
+            }, []); // 빈 배열 []을 넣어 처음 화면이 로드될 때 딱 한 번만 실행되도록 보장합니다.
+
+            // 이야기를 다 완성했을 때 데이터를 넘겨주고 다음 step3 화면으로 화면을 넘겨주는 이벤트 핸들러입니다.
             const handleGenerate = (chosen) => {
                 window.AppState.set('chosen', chosen);
                 window.AppState.set('tone', 'base');

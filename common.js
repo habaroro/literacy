@@ -757,6 +757,76 @@ class SoundEffectsManager {
                 
                 osc.start(now);
                 osc.stop(now + 0.02);
+            } else if (type === 'magic') {
+                // 9. AI 이야기 만들기 버튼을 누를 때 재생할 신비롭고 영롱한 마법 효과음 (공간감이 가미된 따뜻한 차임 아르페지오)
+                try {
+                    // 🔊 소리가 잔향처럼 부드럽게 반사되어 울려 퍼질 수 있도록 공간감(Echo/Delay) 노드를 생성합니다.
+                    const delayNode = this.ctx.createDelay(1.0);
+                    const feedbackNode = this.ctx.createGain();
+                    
+                    // 0.18초 간격으로 메아리(에코)가 들리도록 딜레이 시간을 세팅합니다.
+                    delayNode.delayTime.setValueAtTime(0.18, now);
+                    // 메아리칠 때마다 볼륨이 이전의 35% 크기로 줄어들며 자연스럽게 사라지도록 설정합니다.
+                    feedbackNode.gain.setValueAtTime(0.35, now);
+                    
+                    // 피드백 루프 연결: 원음 -> 딜레이 -> 피드백 볼륨 -> 다시 딜레이
+                    delayNode.connect(feedbackNode);
+                    feedbackNode.connect(delayNode);
+                    
+                    // 메아리 소리를 최종 스피커 출력단(destination)에 연결합니다.
+                    delayNode.connect(this.ctx.destination);
+                    
+                    // 도9(C9) 화음에 펜타토닉 음정들을 얹어 옥타브를 넓게 분포시킨 영롱한 음계입니다.
+                    // G5, C6, D6, E6, G6, B6, C7, E7, G7 (주파수 범위: 783Hz ~ 3135Hz)
+                    const notes = [783.99, 1046.50, 1174.66, 1318.51, 1567.98, 1975.53, 2093.00, 2637.02, 3135.96]; 
+                    
+                    notes.forEach((freq, idx) => {
+                        // 각 음의 재생 시점을 0.06초씩 미세하게 늦추어 "도레미파솔..." 하듯 아르페지오를 만듭니다.
+                        const playTime = now + idx * 0.06; 
+                        
+                        const oscSine = this.ctx.createOscillator();
+                        const oscTri = this.ctx.createOscillator();
+                        const oscGain = this.ctx.createGain();
+                        
+                        // 🎧 날카롭고 기계적인 초고주파 소리를 부드럽고 따뜻하게 깎아주는 로우패스 필터를 생성합니다.
+                        const lowpass = this.ctx.createBiquadFilter();
+                        lowpass.type = 'lowpass';
+                        // 각 주파수의 2배 영역 윗부분을 필터링하여 기계적인 이질감을 제거합니다.
+                        lowpass.frequency.setValueAtTime(freq * 2.0, playTime);
+                        
+                        // 오실레이터 소스들을 필터에 거친 후 볼륨 제어 노드(Gain)로 전달합니다.
+                        oscSine.connect(lowpass);
+                        oscTri.connect(lowpass);
+                        lowpass.connect(oscGain);
+                        
+                        // 원음 소리를 최종 스피커 출력단과 아까 만든 딜레이(공간감) 노드 양쪽에 동시에 전송합니다.
+                        oscGain.connect(this.ctx.destination);
+                        oscGain.connect(delayNode);
+                        
+                        // 맑은 Sine 파형과 부드러운 Triangle 파형을 결합해 깊고 알찬 오르골 소리를 합성합니다.
+                        oscSine.type = 'sine';
+                        oscSine.frequency.setValueAtTime(freq, playTime);
+                        // 0.5초 동안 아주 미세하게 주파수가 2% 상승하게 만들어 소리가 맑게 하늘로 올라가는 느낌을 줍니다.
+                        oscSine.frequency.exponentialRampToValueAtTime(freq * 1.02, playTime + 0.5);
+                        
+                        oscTri.type = 'triangle';
+                        oscTri.frequency.setValueAtTime(freq, playTime);
+                        oscTri.frequency.exponentialRampToValueAtTime(freq * 1.02, playTime + 0.5);
+                        
+                        // 어택(Attack)을 0.04초로 둥글게 늘려 틱 튀는 클릭 노이즈를 없애고 부드럽게 소리가 켜지게 합니다.
+                        oscGain.gain.setValueAtTime(0, playTime);
+                        oscGain.gain.linearRampToValueAtTime(0.04, playTime + 0.04); 
+                        // 0.5초에 걸쳐 부드럽게 볼륨이 소멸하도록 감쇠 곡선을 적용합니다.
+                        oscGain.gain.exponentialRampToValueAtTime(0.001, playTime + 0.5);
+                        
+                        oscSine.start(playTime);
+                        oscSine.stop(playTime + 0.5);
+                        oscTri.start(playTime);
+                        oscTri.stop(playTime + 0.5);
+                    });
+                } catch (err) {
+                    console.error("Magic sound synthesis failed", err);
+                }
             }
         } catch (e) {
             console.error('Audio play error:', e);
