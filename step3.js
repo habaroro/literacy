@@ -53,8 +53,8 @@ window.getDynamicComments = function (chosen, tone, seed) {
     // 1. 책책이: 책과 이야기 연결 (차분, 상냥, 몽글몽글)
     const CHAEK_TEXTS = {
         base: '이 글을 읽으니까 명작 동화인 "해와 달이 된 오누이"가 바로 생각나! 남매의 용기가 마음을 몽글몽글하게 만들어주네.',
-        fun: '재미있는 지혜가 가득한 전래동화 한 편을 읽은 것 같아! 오빠의 재치 넘치는 대사 덕분에 한참 웃었어.',
-        tense: '콩쥐를 도와주던 착한 동물들처럼, 이번 남매의 밤도 조마조마하고 흥미진진해서 손에 땀을 쥐며 읽었어!',
+        fun: '이 글을 읽으니까 유쾌한 재미와 교훈이 가득한 전래동화 "흥부와 놀부"가 바로 생각나! 오빠의 재치 넘치는 대사 덕분에 한참 웃었어.',
+        tense: '콩쥐를 도와주던 착한 동물들이 나오는 전래동화 "콩쥐 팥쥐"처럼, 이번 남매의 밤도 조마조마하고 흥미진진해서 손에 땀을 쥐며 읽었어!',
         warm: '마치 따뜻한 그림책 "강아지 똥"을 읽었을 때처럼, 쓸쓸한 산골집 밤을 비추는 훈훈한 사랑이 느껴져.'
     };
 
@@ -77,9 +77,23 @@ window.getDynamicComments = function (chosen, tone, seed) {
         if (word === '감자') return '감자는 척박한 땅에서도 알차게 자라준 눈물겨운 역사적 식량이야! 화롯불에 호호 불어먹는 묘사가 참 군침 도는구나!';
         if (word === '남매') return '남매는 오누이를 정겹게 부르는 순우리말 호칭이야! 투닥거리다가도 위기엔 손 꼭 잡는 동생 사랑이 가득 묻어나네!';
         if (word === '부부') return '부부는 기쁜 일도 힘든 일도 평생 나란히 나누는 인생 최고의 짝꿍이야! 가족의 든든한 사랑을 예쁘게 그려냈네!';
+        if (word === '오빠') return '오빠는 여동생을 아끼고 지켜주는 든든한 버팀목이자 멋진 우리말 가족 이름이야! 듬직한 매력이 듬뿍 느껴지는구나!';
         return `오늘 고른 "${word}" 단어는 우리 문장에 찰떡같이 녹아들어서 이야기의 영양가를 아주 듬뿍 높여주는 핵심 비타민이란다!`;
     }
     const meoraText = getWordDialogue(chosenWord);
+
+    function getSimilarWords(word) {
+        const map = {
+            '호랑이': ['범', '칡범', '산군(山君)', '호구(虎口)'],
+            '창호지': ['한지', '창문종이', '문창지', '창문지'],
+            '산골집': ['오두막', '토담집', '귀틀집', '외딴집'],
+            '감자': ['하지감자', '마령서(馬鈴薯)', '북감저', '감저'],
+            '남매': ['오누이', '동생과 오빠', '누이와 올아비', '형제자매'],
+            '부부': ['내외(內外)', '부처(夫妻)', '반려자', '부부간'],
+            '오빠': ['오라버니', '오라버님', '형님(방언)', '오라비']
+        };
+        return map[word] || ['비슷한 낱말'];
+    }
 
     // 4. 문박사: 호기심과 생각할 거리 질문
     const MOON_QUESTIONS = {
@@ -92,7 +106,8 @@ window.getDynamicComments = function (chosen, tone, seed) {
     return {
         chaekchaekie: {
             emoji: EMOJI_POOL.chaekchaekie[rnd('chaek_em', EMOJI_POOL.chaekchaekie.length)],
-            content: CHAEK_TEXTS[t] || CHAEK_TEXTS.base
+            content: CHAEK_TEXTS[t] || CHAEK_TEXTS.base,
+            book: t === 'base' ? '해와 달이 된 오누이' : t === 'fun' ? '흥부와 놀부' : t === 'tense' ? '콩쥐 팥쥐' : '강아지 똥'
         },
         momo: {
             emoji: MOMO_EMOTI[t] || MOMO_EMOTI.base,   // 이미지 이모티콘 객체 { src, isImg }
@@ -100,7 +115,9 @@ window.getDynamicComments = function (chosen, tone, seed) {
         },
         meora: {
             emoji: MEORA_EMOTI[t] || MEORA_EMOTI.base, // 이미지 이모티콘 객체 { src, isImg }
-            content: meoraText
+            content: meoraText,
+            word: chosenWord,
+            similarWords: getSimilarWords(chosenWord)
         },
         moonbaksa: {
             emoji: EMOJI_POOL.moonbaksa[rnd('moon_em', EMOJI_POOL.moonbaksa.length)],
@@ -118,3 +135,16 @@ window.TONE_OPTIONS = [
     { id: "tense", icon: "img/icon_02.png", label: "더 긴장감 넘치게", desc: "두근두근 스릴 가득!" },
     { id: "warm", icon: "img/icon_03.png", label: "더 따뜻하고 뭉클하게", desc: "가슴이 뭉클해지는 이야기로" },
 ];
+
+/* ── 4. CHARACTERS 역할명 오버라이드 (step3 전용) ── */
+// common.js에 영향을 주지 않고 step3 화면에서만 캐릭터 역할을 덮어씁니다.
+if (window.CHARACTERS) {
+    const chaek = window.CHARACTERS.find(c => c.id === 'chaekchaekie');
+    if (chaek) chaek.role = '책소개왕';
+
+    const moon = window.CHARACTERS.find(c => c.id === 'moonbaksa');
+    if (moon) moon.role = '질문 대장';
+
+    const meora = window.CHARACTERS.find(c => c.id === 'meora');
+    if (meora) meora.role = '단어 대장';
+}

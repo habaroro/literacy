@@ -166,6 +166,7 @@
             from {
                 transform: translateY(100%);
             }
+
             to {
                 transform: translateY(0);
             }
@@ -197,7 +198,7 @@
             moonbaksa: { text: '#3B82F6', bg: 'rgba(59, 130, 246, 0.08)', border: 'rgba(59, 130, 246, 0.2)' }, // Vibrant Blue
         };
 
-        function ChatBubble({ msg, liked, onLike, chosen }) {
+        function ChatBubble({ msg, liked, onLike, chosen, onSearchSimilar }) {
             const isLearner = msg.isLearner;
 
             // Highlight chosen words inside chat bubble text
@@ -304,12 +305,90 @@
                             </div>
                         )}
 
-                        {!isEmojiOnly && (
-                            <button className={`chat-like-btn${liked ? ' liked' : ''}`} onClick={onLike} style={{ marginTop: 4 }}>
-                                <span>{liked ? '❤️' : '🤍'}</span>
-                                <span>{liked ? '좋아요 1' : '좋아요'}</span>
+                        {msg.recommendedBook && (
+                            <button
+                                onClick={() => {
+                                    if (window.SoundEffects) window.SoundEffects.play('click');
+                                    alert(`"${msg.recommendedBook}" 책을 읽으러 이동합니다!`);
+                                }}
+                                style={{
+                                    marginTop: 6,
+                                    marginBottom: 6,
+                                    padding: '6px 12px',
+                                    background: 'rgba(99, 102, 241, 0.08)',
+                                    border: '1.5px solid rgba(99, 102, 241, 0.2)',
+                                    borderRadius: 12,
+                                    color: '#4F46E5',
+                                    fontSize: '12px',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 4,
+                                    transition: 'all 0.2s ease',
+                                    outline: 'none',
+                                    boxShadow: '0 2px 6px rgba(99, 102, 241, 0.08)'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = 'rgba(99, 102, 241, 0.15)';
+                                    e.currentTarget.style.transform = 'translateY(-1px)';
+                                    e.currentTarget.style.boxShadow = '0 4px 10px rgba(99, 102, 241, 0.12)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = 'rgba(99, 102, 241, 0.08)';
+                                    e.currentTarget.style.transform = 'translateY(0)';
+                                    e.currentTarget.style.boxShadow = '0 2px 6px rgba(99, 102, 241, 0.08)';
+                                }}
+                            >
+                                📔 <strong>{msg.recommendedBook}</strong> 읽으러 가기 →
                             </button>
                         )}
+
+                        {msg.similarWords && (
+                            <button
+                                onClick={() => {
+                                    if (window.SoundEffects) window.SoundEffects.play('click');
+                                    if (onSearchSimilar) {
+                                        onSearchSimilar(msg.word, msg.similarWords);
+                                    }
+                                }}
+                                style={{
+                                    marginTop: 6,
+                                    marginBottom: 6,
+                                    padding: '6px 12px',
+                                    background: 'rgba(245, 158, 11, 0.08)',
+                                    border: '1.5px solid rgba(245, 158, 11, 0.2)',
+                                    borderRadius: 12,
+                                    color: '#D97706',
+                                    fontSize: '12px',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 4,
+                                    transition: 'all 0.2s ease',
+                                    outline: 'none',
+                                    boxShadow: '0 2px 6px rgba(245, 158, 11, 0.08)'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = 'rgba(245, 158, 11, 0.15)';
+                                    e.currentTarget.style.transform = 'translateY(-1px)';
+                                    e.currentTarget.style.boxShadow = '0 4px 10px rgba(245, 158, 11, 0.12)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = 'rgba(245, 158, 11, 0.08)';
+                                    e.currentTarget.style.transform = 'translateY(0)';
+                                    e.currentTarget.style.boxShadow = '0 2px 6px rgba(245, 158, 11, 0.08)';
+                                }}
+                            >
+                                🔍 <strong>{msg.word}</strong> 유사한 단어 찾아보기 →
+                            </button>
+                        )}
+
+                        <button className={`chat-like-btn${liked ? ' liked' : ''}`} onClick={onLike} style={{ marginTop: 4 }}>
+                            <span>{liked ? '❤️' : '🤍'}</span>
+                            <span>{liked ? '좋아요 1' : '좋아요'}</span>
+                        </button>
                     </div>
                 </div>
             );
@@ -330,6 +409,11 @@
             const [storyFinished, setStoryFinished] = useState(false); // True when sentence typewriter fully ends
             const isFirstMountRef = useRef(true);
             const chatEndRef = useRef(null);
+            const [similarWordsData, setSimilarWordsData] = useState(null);
+
+            const handleOpenSimilarWords = (word, similarList) => {
+                setSimilarWordsData({ word, list: similarList });
+            };
 
             const story = window.generateStory(chosen, tone);
 
@@ -406,7 +490,15 @@
 
             // Scroll chat to bottom on new message
             useEffect(() => {
-                if (chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+                if (chatEndRef.current) {
+                    const container = chatEndRef.current.parentElement;
+                    if (container) {
+                        container.scrollTo({
+                            top: container.scrollHeight,
+                            behavior: 'smooth'
+                        });
+                    }
+                }
             }, [chatMessages, regenerating]);
 
             // [추가된 로직] 문해 프렌즈 채팅 말풍선이 하단에 새롭게 하나씩 팝업되어 추가될 때 효과음 재생
@@ -464,7 +556,7 @@
                     const commentData = feedback[char.id];
 
                     if (char.id === 'chaekchaekie') {
-                        // 책책이 (연결자): Single bubble containing text merged with small emoji at the end
+                        // 책책이 (책소개왕): Single bubble containing text merged with small emoji at the end
                         messages.push({
                             id: char.id,
                             keyId: char.id + '-' + storyKey + '-merged',
@@ -476,7 +568,8 @@
                             isEmojiOnly: false,
                             text: `${commentData.content} ${commentData.emoji}`,
                             isSubsequent: false,
-                            delay: cumulativeDelay
+                            delay: cumulativeDelay,
+                            recommendedBook: commentData.book
                         });
                         cumulativeDelay += 1800; // time spacing for next user
                     }
@@ -543,12 +636,14 @@
                             isEmojiOnly: false,
                             text: commentData.content,
                             isSubsequent: true, // Collapses consecutive avatar box nicely!
-                            delay: cumulativeDelay + 650 // 650ms after the first emoji bubble
+                            delay: cumulativeDelay + 650, // 650ms after the first emoji bubble
+                            word: commentData.word,
+                            similarWords: commentData.similarWords
                         });
                         cumulativeDelay += 2400;
                     }
                     else if (char.id === 'moonbaksa') {
-                        // 문박사 (질문자): Single bubble containing text merged with small emoji at the end
+                        // 문박사 (질문 대장): Single bubble containing text merged with small emoji at the end
                         messages.push({
                             id: char.id,
                             keyId: char.id + '-' + storyKey + '-merged',
@@ -600,12 +695,12 @@
             };
 
             // 좋아요(하트) 버튼을 토글할 때 호출되는 함수입니다.
-            const toggleLike = (charId) => {
+            const toggleLike = (keyId) => {
                 // 2. 좋아요 버튼을 누를 때 째깍 효과음(click)을 재생합니다.
                 if (window.SoundEffects) {
                     window.SoundEffects.play('click');
                 }
-                setLikes(l => ({ ...l, [charId]: !l[charId] }));
+                setLikes(l => ({ ...l, [keyId]: !l[keyId] }));
             };
 
             const renderStory = (text) => {
@@ -661,7 +756,7 @@
                                     </div>
                                     <div style={{ display: 'flex', gap: 16, color: '#64748B', fontSize: 12, fontWeight: 600 }}>
                                         <span>❤️ {Object.values(likes).filter(Boolean).length}</span>
-                                        <span>💬 {chatMessages.filter(m => !m.isEmojiOnly && !m.isLearner).length}</span>
+                                        <span>💬 {chatMessages.filter(m => !m.isLearner).length}</span>
                                     </div>
                                 </div>
 
@@ -670,8 +765,8 @@
                                     {regenerating && (
                                         <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,.85)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 5, borderRadius: 20 }}>
                                             <div style={{ textAlign: 'center' }}>
-                                                <div className="a-bounce" style={{ fontSize: 30, marginBottom: 8 }}>✨</div>
-                                                <div className="font-h" style={{ color: 'var(--blue)', fontSize: 14 }}>이야기를 다시 쓰고 있어요...</div>
+                                                <div className="a-bounce" style={{ fontSize: 50, marginBottom: 8 }}>✨</div>
+                                                <div className="font-h" style={{ color: 'var(--blue)', fontSize: 20 }}>이야기를 다시 쓰고 있어요...</div>
                                             </div>
                                         </div>
                                     )}
@@ -725,45 +820,45 @@
                                     {!storyFinished ? (
                                         /* 📖 AI Reading/Analyzing dynamic animation cards before chat feedback starts */
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 16, padding: '24px 28px', textAlign: 'center', boxSizing: 'border-box' }}>
-                                            <div style={{ position: 'relative', width: 250, height: 250, marginBottom: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <div style={{ position: 'relative', width: 270, height: 270, marginBottom: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                                 {/* Soft ambient blue glow behind the loading frame */}
                                                 <div style={{
                                                     position: 'absolute',
-                                                    width: 220,
-                                                    height: 220,
+                                                    width: 250,
+                                                    height: 250,
                                                     borderRadius: '50%',
                                                     background: 'radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, rgba(99, 102, 241, 0) 70%)',
                                                     filter: 'blur(16px)',
                                                     zIndex: 0
                                                 }} />
-                                                
+
                                                 {/* Animated bouncing circle frame with masked edges */}
-                                                <div className="a-bounce" style={{ 
+                                                <div className="a-bounce" style={{
                                                     position: 'relative',
                                                     zIndex: 1,
-                                                    width: 240, 
-                                                    height: 240, 
-                                                    borderRadius: '50%', 
-                                                    overflow: 'hidden', 
-                                                    display: 'flex', 
-                                                    alignItems: 'center', 
-                                                    justifyContent: 'center', 
+                                                    width: 250,
+                                                    height: 250,
+                                                    borderRadius: '50%',
+                                                    overflow: 'hidden',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
                                                     animation: 'bounce 2.5s ease-in-out infinite',
-                                                    WebkitMaskImage: 'radial-gradient(circle, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 86%)',
-                                                    maskImage: 'radial-gradient(circle, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 86%)'
+                                                    WebkitMaskImage: 'radial-gradient(circle, rgba(0,0,0,1) 45%, rgba(0,0,0,0) 78%)',
+                                                    maskImage: 'radial-gradient(circle, rgba(0,0,0,1) 45%, rgba(0,0,0,0) 78%)'
                                                 }}>
-                                                    <video 
-                                                        src="img/chat_loading.mp4" 
-                                                        autoPlay 
-                                                        loop 
-                                                        muted 
-                                                        playsInline 
-                                                        style={{ 
-                                                            width: '100%', 
-                                                            height: '100%', 
+                                                    <video
+                                                        src="img/chat_loading.mp4"
+                                                        autoPlay
+                                                        loop
+                                                        muted
+                                                        playsInline
+                                                        style={{
+                                                            width: '100%',
+                                                            height: '100%',
                                                             objectFit: 'cover',
-                                                            transform: 'scale(1.15)'
-                                                        }} 
+                                                            transform: 'scale(1.06)'
+                                                        }}
                                                     />
                                                 </div>
                                             </div>
@@ -789,7 +884,8 @@
                                                     </div>
                                                     {oldChatMessages.map((msg) => (
                                                         <ChatBubble key={'old-' + msg.keyId} msg={msg} chosen={chosen}
-                                                            liked={!!likes[msg.id]} onLike={() => toggleLike(msg.id)} />
+                                                            liked={!!likes[msg.keyId]} onLike={() => toggleLike(msg.keyId)}
+                                                            onSearchSimilar={handleOpenSimilarWords} />
                                                     ))}
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '6px 0 14px' }}>
                                                         <div style={{ flex: 1, height: 1, background: '#CBD5E1' }} />
@@ -802,7 +898,8 @@
                                             {/* Render Current Active Messages */}
                                             {chatMessages.map((msg) => (
                                                 <ChatBubble key={msg.keyId + '-' + likeKey} msg={msg} chosen={chosen}
-                                                    liked={!!likes[msg.id]} onLike={() => toggleLike(msg.id)} />
+                                                    liked={!!likes[msg.keyId]} onLike={() => toggleLike(msg.keyId)}
+                                                    onSearchSimilar={handleOpenSimilarWords} />
                                             ))}
                                             <div ref={chatEndRef} />
                                             {showPeek && <div style={{ height: 80, flexShrink: 0 }} />}
@@ -819,13 +916,13 @@
 
                                 {/* Floating Bottom Peek Sheet to invite user to rewrite story */}
                                 {showComments && showPeek && !showTonePopup && (
-                                    <div style={{ 
-                                        position: 'absolute', 
-                                        bottom: 16, 
-                                        left: 16, 
-                                        right: 16, 
-                                        zIndex: 10, 
-                                        animation: 'toastSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both' 
+                                    <div style={{
+                                        position: 'absolute',
+                                        bottom: 16,
+                                        left: 16,
+                                        right: 16,
+                                        zIndex: 10,
+                                        animation: 'toastSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both'
                                     }}>
                                         <button className="rewrite-btn" onClick={() => {
                                             // 3. '다르게도 써볼래? 분위기 바꾸기' 버튼을 클릭할 때 효과음(click)을 재생합니다.
@@ -833,10 +930,10 @@
                                                 window.SoundEffects.play('click');
                                             }
                                             setShowTonePopup(true);
-                                        }} style={{ 
-                                            borderRadius: 20, 
-                                            boxShadow: '0 10px 28px rgba(79, 70, 229, 0.3)', 
-                                            height: 64, 
+                                        }} style={{
+                                            borderRadius: 20,
+                                            boxShadow: '0 10px 28px rgba(79, 70, 229, 0.3)',
+                                            height: 64,
                                             padding: '0 24px',
                                             display: 'flex',
                                             alignItems: 'center',
@@ -844,8 +941,8 @@
                                             gap: 12
                                         }}>
                                             <img src={window.IMG.feedback} alt="" style={{ width: 34, height: 34, objectFit: 'contain', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }} />
-                                            <span className="font-h" style={{ fontSize: 16.5, color: '#FFFFFF', fontWeight: 800 }}>다르게도 써볼래?</span>
-                                            <span style={{ fontSize: 12.5, color: 'rgba(255, 255, 255, 0.85)', fontWeight: 600, marginLeft: 6 }}>분위기 바꾸기 →</span>
+                                            <span className="font-h" style={{ fontSize: 16.5, color: '#FFFFFF', fontWeight: 800 }}>다른 이야기로 바꿔볼까?</span>
+                                            <span style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.95)', fontWeight: 800, marginLeft: 2 }}>→</span>
                                         </button>
                                     </div>
                                 )}
@@ -862,18 +959,18 @@
                                                 }
                                                 setShowTonePopup(false);
                                             }} />
-                                        
+
                                         {/* Bottom Sheet */}
-                                        <div className="toast-popup-sheet" style={{ 
-                                            position: 'absolute', 
-                                            bottom: 0, 
-                                            left: 0, 
-                                            right: 0, 
-                                            background: '#FFFFFF', 
-                                            borderTopLeftRadius: 24, 
-                                            borderTopRightRadius: 24, 
-                                            boxShadow: '0 -10px 30px rgba(15, 23, 42, 0.15)', 
-                                            padding: '22px 20px 20px', 
+                                        <div className="toast-popup-sheet" style={{
+                                            position: 'absolute',
+                                            bottom: 0,
+                                            left: 0,
+                                            right: 0,
+                                            background: '#FFFFFF',
+                                            borderTopLeftRadius: 24,
+                                            borderTopRightRadius: 24,
+                                            boxShadow: '0 -10px 30px rgba(15, 23, 42, 0.15)',
+                                            padding: '22px 20px 20px',
                                             zIndex: 20,
                                             boxSizing: 'border-box',
                                             display: 'flex',
@@ -912,7 +1009,7 @@
                                                 }}>&times;</button>
                                             </div>
                                             <p style={{ fontSize: 12, color: 'var(--gray)', fontWeight: 500, margin: '0 0 16px', textAlign: 'center', flexShrink: 0 }}>같은 단어로도 이렇게 다른 이야기가 나와요!</p>
-                                            
+
                                             {/* Options list container - extremely compact to ensure zero scrollbars on 700px height */}
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
                                                 {window.TONE_OPTIONS.map(opt => (
@@ -953,6 +1050,110 @@
                                                         <div style={{ fontSize: 11, color: '#64748B', fontWeight: 500 }}>처음 모은 단어로 새로운 조합을 만들어요</div>
                                                     </div>
                                                     <div style={{ fontSize: 14, color: 'var(--blue)', fontWeight: 800 }}>→</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                                {similarWordsData && (
+                                    <>
+                                        {/* Backdrop inside Chat Window only */}
+                                        <div style={{ position: 'absolute', inset: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(3px)', zIndex: 15 }}
+                                            onClick={() => {
+                                                if (window.SoundEffects) window.SoundEffects.play('click');
+                                                setSimilarWordsData(null);
+                                            }} />
+
+                                        {/* Bottom Sheet */}
+                                        <div className="toast-popup-sheet" style={{
+                                            position: 'absolute',
+                                            bottom: 0,
+                                            left: 0,
+                                            right: 0,
+                                            background: '#FFFFFF',
+                                            borderTopLeftRadius: 24,
+                                            borderTopRightRadius: 24,
+                                            boxShadow: '0 -10px 30px rgba(15, 23, 42, 0.15)',
+                                            padding: '22px 20px 24px',
+                                            zIndex: 20,
+                                            boxSizing: 'border-box',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            minHeight: 0
+                                        }}>
+                                            {/* Header with Title and Close Button */}
+                                            <div style={{ position: 'relative', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 14, flexShrink: 0 }}>
+                                                <h3 className="font-h" style={{ fontSize: 17, color: 'var(--navy-dark)', margin: 0, paddingRight: 24, paddingLeft: 24, textAlign: 'center', display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                    🦖 <span>"{similarWordsData.word}"와(과) 비슷한 낱말</span>
+                                                </h3>
+                                                <button onClick={() => {
+                                                    if (window.SoundEffects) window.SoundEffects.play('click');
+                                                    setSimilarWordsData(null);
+                                                }} className="close-hover-effect" style={{
+                                                    position: 'absolute',
+                                                    right: 0,
+                                                    top: -4,
+                                                    width: 28,
+                                                    height: 28,
+                                                    borderRadius: '50%',
+                                                    border: 'none',
+                                                    background: 'transparent',
+                                                    color: '#94A3B8',
+                                                    cursor: 'pointer',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    fontSize: 20,
+                                                    fontWeight: 600,
+                                                    transition: 'all 0.2s ease',
+                                                    outline: 'none',
+                                                    padding: 0,
+                                                    lineHeight: 1
+                                                }}>&times;</button>
+                                            </div>
+
+                                            {/* Content Body */}
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
+                                                <div style={{ fontSize: 12.5, color: '#475569', textAlign: 'center', lineHeight: 1.5, fontWeight: 500 }}>
+                                                    <strong>"{similarWordsData.word}"</strong> 대신 이야기 문장에 넣어 쓸 수 있는<br />
+                                                    다채로운 낱말 사전이란다! 💡
+                                                </div>
+
+                                                {/* Similar words badges */}
+                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', margin: '6px 0 10px' }}>
+                                                    {similarWordsData.list.map((word, idx) => (
+                                                        <div key={idx} style={{
+                                                            padding: '8px 14px',
+                                                            background: 'rgba(245, 158, 11, 0.08)',
+                                                            border: '1.5px solid rgba(245, 158, 11, 0.2)',
+                                                            color: '#D97706',
+                                                            borderRadius: 14,
+                                                            fontWeight: 800,
+                                                            fontSize: 14,
+                                                            boxShadow: '0 2px 6px rgba(245, 158, 11, 0.04)',
+                                                            animation: 'bounce 2.5s ease-in-out infinite',
+                                                            animationDelay: `${idx * 0.15}s`
+                                                        }}>
+                                                            {word}
+                                                        </div>
+                                                    ))}
+                                                </div>
+
+                                                {/* Captain Dino advice box */}
+                                                <div style={{
+                                                    background: '#FEF3C7',
+                                                    border: '1px dashed #F59E0B',
+                                                    borderRadius: 16,
+                                                    padding: '10px 14px',
+                                                    fontSize: 11.5,
+                                                    color: '#B45309',
+                                                    fontWeight: 600,
+                                                    lineHeight: 1.5,
+                                                    width: '100%',
+                                                    boxSizing: 'border-box',
+                                                    textAlign: 'center'
+                                                }}>
+                                                    이야기 속 단어들을 통해 풍부하고 다채로운 우리말 표현을 배워봐! 🦕
                                                 </div>
                                             </div>
                                         </div>
