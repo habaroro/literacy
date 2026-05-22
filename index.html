@@ -46,7 +46,36 @@
                                         <div className="spine-shadow" />
                                         <img src="img/cover.png" alt="방아 찧는 호랑이 책 표지" className="intro-book-cover-v2" style={{ width: 340, height: 'auto', display: 'block', borderRadius: 16 }} />
                                     </div>
-                                    <img src="img/character_04.png" alt="" className="intro-book-char-v2 a-bounce" style={{ position: 'absolute', left: -139, bottom: -36, width: 206, filter: 'drop-shadow(0 15px 25px rgba(0,0,0,0.15))', zIndex: 10 }} />
+                                    <div
+                                        className="char-with-blink intro-book-char-v2 a-bounce"
+                                        style={{
+                                            position: 'absolute',
+                                            left: -139,
+                                            bottom: -36,
+                                            width: 206,
+                                            filter: 'drop-shadow(0 15px 25px rgba(0,0,0,0.15))',
+                                            zIndex: 10
+                                        }}
+                                    >
+                                        <img src="img/character_04.png" alt="" />
+                                        <div className="eyelid eyelid-left"></div>
+                                        <div className="eyelid eyelid-right"></div>
+
+                                        {/* ✨ 캐릭터 책 주변 반짝이 별 (Book sparkles) */}
+                                        <div className="char-sparkle sparkle-book-1">
+                                            <svg viewBox="0 0 24 24" fill="none"><path d="M12 0L14.5 9.5L24 12L14.5 14.5L12 24L9.5 14.5L0 12L9.5 9.5L12 0Z" fill="#FFF5A5"/></svg>
+                                        </div>
+                                        <div className="char-sparkle sparkle-book-2">
+                                            <svg viewBox="0 0 24 24" fill="none"><path d="M12 0L14.5 9.5L24 12L14.5 14.5L12 24L9.5 14.5L0 12L9.5 9.5L12 0Z" fill="#FFD700"/></svg>
+                                        </div>
+                                        <div className="char-sparkle sparkle-book-3">
+                                            <svg viewBox="0 0 24 24" fill="none"><path d="M12 0L14.5 9.5L24 12L14.5 14.5L12 24L9.5 14.5L0 12L9.5 9.5L12 0Z" fill="#FFF"/></svg>
+                                        </div>
+                                        <div className="char-sparkle sparkle-book-4">
+                                            <svg viewBox="0 0 24 24" fill="none"><path d="M12 0L14.5 9.5L24 12L14.5 14.5L12 24L9.5 14.5L0 12L9.5 9.5L12 0Z" fill="#FFF5A5"/></svg>
+                                        </div>
+                                    </div>
+
                                 </div>
                             </div>
                             <div className="intro-content-v2" style={{ paddingLeft: 16 }}>

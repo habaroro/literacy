@@ -1100,10 +1100,11 @@ body:has(.premium-aurora-bg)::after {
 /* ── 📱 RESPONSIVE ADJUSTMENTS FOR TABLETS AND MOBILE DEVICES (iPad Pro 11-inch, etc.) ── */
 
 @media (max-width: 1023px) {
+
     /* Allow root and main containers to expand naturally in portrait */
     body:has(.step3-main-layout),
     body:has(.step3-main-layout) #root,
-    body:has(.step3-main-layout) > div {
+    body:has(.step3-main-layout)>div {
         height: auto !important;
         overflow: visible !important;
     }
@@ -1137,26 +1138,26 @@ body:has(.premium-aurora-bg)::after {
     .step2-app-container {
         padding: 0 16px !important;
     }
-    
+
     .step2-main-layout {
         flex-direction: column;
         align-items: stretch;
         gap: 24px;
     }
-    
+
     .step2-left-col,
     .step2-right-col {
         flex: none !important;
         width: 100% !important;
     }
-    
+
     /* Reduce height of book scene card slightly in portrait to save vertical space */
-    .step2-left-col > div {
+    .step2-left-col>div {
         height: auto !important;
         min-height: 400px !important;
         padding: 24px 20px !important;
     }
-    
+
     .step2-left-col img {
         width: 220px !important;
         max-width: 80% !important;
@@ -1213,6 +1214,7 @@ body:has(.premium-aurora-bg)::after {
         flex: 0 0 320px;
         width: 320px;
     }
+
     .step3-main-layout {
         gap: 16px;
     }
@@ -1222,12 +1224,12 @@ body:has(.premium-aurora-bg)::after {
     .step3-app-container {
         padding: 0 16px !important;
     }
-    
+
     .step3-outer-container {
         height: auto !important;
         padding: 16px 0 40px !important;
     }
-    
+
     .step3-main-layout {
         flex-direction: column;
         overflow-y: visible;
@@ -1235,15 +1237,144 @@ body:has(.premium-aurora-bg)::after {
         min-height: 100%;
         gap: 24px;
     }
-    
+
     .step3-story-col,
     .step3-chat-col {
         flex: none !important;
         width: 100% !important;
     }
-    
+
     .step3-chat-col {
-        height: 600px !important; /* give the chat panel a fixed height when stacked */
+        height: 600px !important;
+        /* give the chat panel a fixed height when stacked */
         margin-bottom: 20px;
     }
+}
+
+/* ════════════════════════════════════
+   EYE BLINK ANIMATION
+════════════════════════════════════ */
+
+.char-with-blink {
+    position: relative;
+    display: inline-block;
+    line-height: 0;
+    /* 이미지 아래 여백 제거 */
+}
+
+.char-with-blink img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+/* 깜빡임 — 평소엔 안 보이다가 잠깐 나타남 */
+@keyframes blink {
+
+    0%,
+    93%,
+    100% {
+        transform: scaleY(0);
+        opacity: 0;
+    }
+
+    95%,
+    98% {
+        transform: scaleY(1);
+        opacity: 1;
+    }
+}
+
+/* 눈꺼풀 공통 */
+.eyelid {
+    position: absolute;
+    background: #FCE4C4;
+    /* 캐릭터 얼굴 살색 */
+    border-radius: 50%;
+    transform-origin: center top;
+    animation: blink 4s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 10;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* 왼쪽 눈 */
+.eyelid-left {
+    top: 39%;
+    left: 54%;
+    width: 10%;
+    height: 10.5%;
+}
+
+/* 오른쪽 눈 */
+.eyelid-right {
+    top: 39%;
+    left: 71%;
+    width: 10%;
+    height: 10.5%;
+}
+
+/* ════════════════════════════════════
+   CHARACTER BOOK SPARKLE ANIMATION
+   (캐릭터가 들고 있는 노란 책 주변 반짝이 효과)
+   ════════════════════════════════════ */
+
+.char-sparkle {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    pointer-events: none;
+    z-index: 12;
+    filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.85));
+    opacity: 0;
+    animation: sparkleTwinkle 2.0s ease-in-out infinite;
+    transform-origin: center;
+}
+
+@keyframes sparkleTwinkle {
+    0%, 100% {
+        transform: scale(0) rotate(0deg);
+        opacity: 0;
+    }
+    45%, 55% {
+        transform: scale(1.1) rotate(90deg);
+        opacity: 0.95;
+    }
+    90% {
+        transform: scale(0) rotate(180deg);
+        opacity: 0;
+    }
+}
+
+/* 4개 별들의 책 주변 절대 좌표 및 타이밍 조율 (엇박자 깜빡임) */
+.sparkle-book-1 {
+    bottom: 35%; /* 책의 왼쪽 위 모퉁이 부근 */
+    left: 18%;
+    animation-duration: 2.2s;
+    animation-delay: 0.1s;
+}
+
+.sparkle-book-2 {
+    bottom: 33%; /* 책의 오른쪽 위 모퉁이 부근 */
+    right: 15%;
+    animation-duration: 1.8s;
+    animation-delay: 0.6s;
+}
+
+.sparkle-book-3 {
+    bottom: 50%; /* 책의 펼쳐진 페이지 중앙 윗부분 */
+    left: 48%;
+    width: 11px;
+    height: 11px;
+    animation-duration: 2.5s;
+    animation-delay: 1.2s;
+}
+
+.sparkle-book-4 {
+    bottom: 22%; /* 책의 아래쪽 페이지 모퉁이/발 부근 */
+    left: 30%;
+    width: 12px;
+    height: 12px;
+    animation-duration: 2.0s;
+    animation-delay: 1.7s;
 }
