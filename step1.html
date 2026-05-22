@@ -80,6 +80,19 @@
         }
 
         function App() {
+            React.useEffect(() => {
+                // 1단계 선택 화면이 나타나면 배경음악을 재생합니다.
+                if (window.SoundEffects) {
+                    window.SoundEffects.playBGM();
+                }
+                // 페이지를 벗어나거나 컴포넌트가 사라지면 배경음악을 멈춥니다.
+                return () => {
+                    if (window.SoundEffects) {
+                        window.SoundEffects.stopBGM();
+                    }
+                };
+            }, []);
+
             return (
                 <div className="premium-aurora-bg" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
                     <window.StepHeader stepIdx={0} />

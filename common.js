@@ -145,7 +145,7 @@ window.CW = {
         a[idx(4, 7)] = { kind: 'fixed', syl: '매' };
         return a;
     })(),
-    // 화면에 보여줄 낱글자 카드 목록 (c10 화 카드가 안전하게 삭제되었습니다.)
+    // 화면에 보여줄 낱글자 카드 목록
     cards: [
         { id: 'c5', syl: '오' }, { id: 'c8', syl: '두' }, { id: 'c3', syl: '산' }, { id: 'c6', syl: '감' },
         { id: 'c2', syl: '랑' }, { id: 'c7', syl: '남' }, { id: 'c4', syl: '부' },
@@ -335,13 +335,13 @@ window.StepHeader = function ({ stepIdx }) {
                         // 뮤트 상태에 따른 동적 SVG 아이콘 렌더링
                         isMuted 
                         ? React.createElement('svg', { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: '#64748B', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' },
-                            React.createElement('path', { d: 'M11 5L6 9H2v6h4l5 4V5z' }),
-                            React.createElement('line', { x1: 23, y1: 9, x2: 17, y2: 15 }),
-                            React.createElement('line', { x1: 17, y1: 9, x2: 23, y2: 15 })
+                             React.createElement('path', { d: 'M11 5L6 9H2v6h4l5 4V5z' }),
+                             React.createElement('line', { x1: 23, y1: 9, x2: 17, y2: 15 }),
+                             React.createElement('line', { x1: 17, y1: 9, x2: 23, y2: 15 })
                           )
                         : React.createElement('svg', { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: '#4F46E5', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' },
-                            React.createElement('path', { d: 'M11 5L6 9H2v6h4l5 4V5z' }),
-                            React.createElement('path', { d: 'M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07' })
+                             React.createElement('path', { d: 'M11 5L6 9H2v6h4l5 4V5z' }),
+                             React.createElement('path', { d: 'M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07' })
                           )
                     )
                 )
@@ -375,6 +375,13 @@ class SoundEffectsManager {
         // 로컬 스토리지에서 사운드 활성화 여부를 조회합니다 (기본값: true)
         this.enabled = localStorage.getItem('app_sound_enabled') !== 'false';
         
+        // 배경음악(BGM) 오디오 객체를 담을 변수를 생성자에 선언합니다.
+        this.bgm = null;
+        
+        // 오토플레이 우회를 위한 전역 제스처 리스너 등록 상태 관리 변수들입니다.
+        this.hasGestureListener = false;
+        this.gestureHandler = null;
+        
         // 🔊 어린이 환호소리 효과음 MP3를 캐싱하여 로드 지연(딜레이)을 완벽히 없애기 위해 미리 오디오 객체를 로드해 둡니다.
         try {
             this.cheerAudio = new Audio("https://raw.githubusercontent.com/nicole-learn/PostShotClarity/main/kids-cheering-yay-applause.mp3");
@@ -401,6 +408,85 @@ class SoundEffectsManager {
     setEnabled(enabled) {
         this.enabled = enabled;
         localStorage.setItem('app_sound_enabled', enabled ? 'true' : 'false');
+        
+        // 사용자가 헤더의 소리 버튼으로 음소거를 변경할 때, BGM 재생 상태도 동기화합니다.
+        if (enabled) {
+            this.playBGM();
+        } else {
+            this.stopBGM();
+            this.removeGestureListeners();
+        }
+    }
+
+    // BGM을 루프로 재생하는 메서드입니다. Seesaw Synth Loop.mp3를 소스로 사용합니다.
+    playBGM() {
+        if (!this.bgm) {
+            this.bgm = new Audio("sound/Seesaw Synth Loop.mp3");
+            this.bgm.loop = true; // 무한 반복 설정
+            this.bgm.volume = 0.25; // 배경음악 볼륨 조절
+            this.bgm.preload = "auto"; // 브라우저가 사전에 오디오 소스를 로드하도록 설정
+        }
+        
+        if (this.enabled) {
+            // 이미 재생 중이라면 중복 실행하지 않습니다.
+            if (!this.bgm.paused) return;
+
+            // 브라우저의 오토플레이 제약으로 플레이가 막힐 경우를 감지하여 대응합니다.
+            this.bgm.play().then(() => {
+                // 성공적으로 즉시 재생되면 불필요한 제스처 리스너가 등록되지 않도록 정리합니다.
+                this.removeGestureListeners();
+            }).catch(err => {
+                console.warn("BGM autoplay blocked. Fallback interaction listener registered.", err);
+                // 브라우저의 오토플레이 제한에 걸렸다면 일회성 제스처 리스너를 바인딩하여 대비합니다.
+                this.registerGestureListeners();
+            });
+        }
+    }
+
+    // 오토플레이 우회를 위한 네이티브 사용자 제스처 리스너를 등록합니다.
+    registerGestureListeners() {
+        if (this.hasGestureListener) return; // 이미 등록되어 있다면 중복 등록 방지
+        this.hasGestureListener = true;
+
+        // 클릭이나 터치가 처음 일어났을 때 단 한 번만 실행될 안전한 핸들러입니다.
+        this.gestureHandler = () => {
+            if (this.enabled && this.bgm && this.bgm.paused) {
+                this.init(); // Web Audio 컨텍스트를 동기식으로 확실히 깨워줍니다.
+                this.bgm.play()
+                    .then(() => {
+                        // 성공적으로 소리가 나오기 시작하면 제스처 리스너를 완전히 청소합니다.
+                        this.removeGestureListeners();
+                    })
+                    .catch(e => {
+                        console.error("BGM play failed on gesture:", e);
+                        // 재생에 완전히 실패한 경우에는 리스너를 살려두어 다음 클릭 시도 때 재생할 기회를 남깁니다.
+                    });
+            } else {
+                this.removeGestureListeners();
+            }
+        };
+
+        // passive: true 옵션으로 스크롤 성능 저하 없이 가볍고 안전하게 터치를 감지합니다.
+        document.addEventListener('click', this.gestureHandler, { passive: true });
+        document.addEventListener('touchstart', this.gestureHandler, { passive: true });
+    }
+
+    // 등록해 둔 제스처 리스너들을 메모리 누수 없이 깨끗하게 제거합니다.
+    removeGestureListeners() {
+        if (this.gestureHandler) {
+            document.removeEventListener('click', this.gestureHandler);
+            document.removeEventListener('touchstart', this.gestureHandler);
+            this.gestureHandler = null;
+        }
+        this.hasGestureListener = false;
+    }
+
+    // BGM을 일시 정지하고 재생 시간을 맨 앞으로 초기화하는 메서드입니다.
+    stopBGM() {
+        if (this.bgm) {
+            this.bgm.pause();
+            this.bgm.currentTime = 0;
+        }
     }
 
     // 지정된 효과음을 신디사이저 방식으로 즉석 생성하여 출력합니다.
