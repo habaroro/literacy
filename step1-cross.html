@@ -308,9 +308,10 @@
         }
 
         function CrossScreen() {
-            const TOTAL_TIME = 60;
+            const TOTAL_TIME = 50;
 
             // --- 3초 카운트다운 관련 상태 ---
+            // 터치 시작 여부를 판단하는 countdownStarted는 제거하고, 화면 로드 시 바로 시작하도록 처리합니다.
             const [isStarting, setIsStarting] = useState(true);
             const [countdown, setCountdown] = useState(3);
 
@@ -341,9 +342,17 @@
             useEffect(() => {
                 if (isStarting) {
                     if (countdown > 0) {
+                        // 3, 2, 1 카운트다운이 진행될 때 "틱" 효과음을 재생합니다. (진입 즉시 바로 출력)
+                        if (window.SoundEffects) {
+                            window.SoundEffects.play('count');
+                        }
                         const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
                         return () => clearTimeout(timer);
                     } else if (countdown === 0) {
+                        // "시작!" 문구가 나타날 때 맑은 시작음 효과음을 재생합니다.
+                        if (window.SoundEffects) {
+                            window.SoundEffects.play('start');
+                        }
                         // '시작!' 텍스트가 화면에 머무는 시간 조정
                         const timer = setTimeout(() => setCountdown(-1), 1100);
                         return () => clearTimeout(timer);
@@ -376,6 +385,25 @@
             useEffect(() => {
                 if (allFilled) setTimerActive(false);
             }, [allFilled]);
+
+            // --- 시간 임박 시 빠르게 째깍이는 사운드 재생 로직 ---
+            useEffect(() => {
+                if (!isWarning || !timerActive || allFilled) return;
+                
+                const playWarningTick = () => {
+                    if (window.SoundEffects) {
+                        window.SoundEffects.play('warning_tick');
+                    }
+                };
+                
+                // 즉시 째깍 소리를 한 번 냅니다.
+                playWarningTick();
+                
+                // 0.5초(500ms) 간격으로 빠르게 째깍이는 사운드를 반복 트리거합니다.
+                const warningTickId = setInterval(playWarningTick, 500);
+                
+                return () => clearInterval(warningTickId);
+            }, [isWarning, timerActive, allFilled]);
 
             useEffect(() => {
                 if (idleSeconds >= 10) {
@@ -706,6 +734,19 @@
 
         // 전체 메인 앱 컴포넌트
         function App() {
+            useEffect(() => {
+                // 게임 화면이 나타나면 새로운 BGM(Cheese Coin Hop.mp3)을 재생합니다.
+                if (window.SoundEffects) {
+                    window.SoundEffects.playBGM("sound/Cheese Coin Hop.mp3");
+                }
+                // 페이지를 벗어날 때는 배경음악을 정지합니다.
+                return () => {
+                    if (window.SoundEffects) {
+                        window.SoundEffects.stopBGM();
+                    }
+                };
+            }, []);
+
             return (
                 <div style={{ minHeight: '100vh', background: 'linear-gradient(145deg,#EEF2FF 0%,#F8FAFC 45%,#FFF0F8 100%)' }}>
                     <window.StepHeader stepIdx={0} />

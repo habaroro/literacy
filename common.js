@@ -377,6 +377,8 @@ class SoundEffectsManager {
         
         // 배경음악(BGM) 오디오 객체를 담을 변수를 생성자에 선언합니다.
         this.bgm = null;
+        // 현재 재생 중인 배경음악(BGM)의 파일 경로를 추적합니다.
+        this.bgmUrl = "";
         
         // 오토플레이 우회를 위한 전역 제스처 리스너 등록 상태 관리 변수들입니다.
         this.hasGestureListener = false;
@@ -411,17 +413,29 @@ class SoundEffectsManager {
         
         // 사용자가 헤더의 소리 버튼으로 음소거를 변경할 때, BGM 재생 상태도 동기화합니다.
         if (enabled) {
-            this.playBGM();
+            this.playBGM(this.bgmUrl);
         } else {
             this.stopBGM();
             this.removeGestureListeners();
         }
     }
 
-    // BGM을 루프로 재생하는 메서드입니다. Seesaw Synth Loop.mp3를 소스로 사용합니다.
-    playBGM() {
+    // BGM을 루프로 재생하는 메서드입니다. 경로를 주면 해당 경로의 음악을 재생하고, 없으면 기본 BGM을 재생합니다.
+    playBGM(url) {
+        // 인자가 주어지지 않은 경우의 기본 BGM 설정 (Seesaw Synth Loop.mp3)
+        const targetUrl = url || "sound/Seesaw Synth Loop.mp3";
+
+        // 기존에 재생 중이던 음악 파일과 다른 음악 파일이 요청된 경우, 기존 음악을 중지하고 갈아끼웁니다.
+        if (this.bgm && this.bgmUrl !== targetUrl) {
+            this.bgm.pause();
+            this.bgm = null;
+        }
+
+        // 현재 설정한 배경음악 경로를 기록해 둡니다.
+        this.bgmUrl = targetUrl;
+
         if (!this.bgm) {
-            this.bgm = new Audio("sound/Seesaw Synth Loop.mp3");
+            this.bgm = new Audio(targetUrl);
             this.bgm.loop = true; // 무한 반복 설정
             this.bgm.volume = 0.25; // 배경음악 볼륨 조절
             this.bgm.preload = "auto"; // 브라우저가 사전에 오디오 소스를 로드하도록 설정
@@ -670,6 +684,79 @@ class SoundEffectsManager {
                 } catch (audioErr) {
                     console.warn("오디오 객체 실행 불가. Web Audio API Fallback 실로폰 사운드로만 재생되었습니다.", audioErr);
                 }
+            } else if (type === 'count') {
+                // 6. 3초 카운트다운 진행 시 재생할 시계 초침 틱(Tick) 사운드 (우드블록 스타일 타격음)
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                
+                osc.type = 'triangle'; // 단단하고 포근한 음색을 만드는 삼각파 파형
+                // 1200Hz에서 200Hz로 0.1초 동안 아주 빠르게 주파수를 떨어뜨려 "톡!" 하는 타격감을 줍니다.
+                osc.frequency.setValueAtTime(1200, now);
+                osc.frequency.exponentialRampToValueAtTime(200, now + 0.1);
+                
+                // 볼륨을 0.28로 늘려 확실하게 들리도록 개선합니다.
+                gain.gain.setValueAtTime(0.28, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                
+                osc.start(now);
+                osc.stop(now + 0.1);
+                
+            } else if (type === 'start') {
+                // 7. 카운트다운이 끝나고 게임이 "시작!"될 때 재생할 맑고 영롱한 차임벨 아르페지오 화음 (닌텐도풍 띠리링)
+                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5(도), E5(미), G5(솔), C6(도)
+                notes.forEach((freq, idx) => {
+                    const playTime = now + idx * 0.04; // 0.04초 간격으로 순차적 아르페지오 재생
+                    const osc = this.ctx.createOscillator();
+                    const gainNode = this.ctx.createGain();
+                    
+                    osc.connect(gainNode);
+                    gainNode.connect(this.ctx.destination);
+                    
+                    // 맑은 Sine 파형과 부드러운 Triangle 파형을 절반씩 섞는 느낌을 위해 triangle을 선택
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, playTime);
+                    
+                    // 각 음이 시작될 때 시원하게 볼륨을 0.32로 주고 0.3초 동안 사르륵 사라지는 잔향 설계
+                    gainNode.gain.setValueAtTime(0.32, playTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, playTime + 0.3);
+                    
+                    osc.start(playTime);
+                    osc.stop(playTime + 0.3);
+                });
+            } else if (type === 'warning_tick') {
+                // 8. 시간 임박 시 재생할 빠르게 째깍이는 시계 소리 (리얼 아날로그 Tick-Tock 교차 사운드)
+                // 째깍-째깍 교차를 위해 tickToggle 상태를 관리합니다.
+                if (this.tickToggle === undefined) {
+                    this.tickToggle = false;
+                }
+                this.tickToggle = !this.tickToggle;
+                
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                
+                // 건조하고 포근한 기계 마찰음을 내기 위한 삼각파(Triangle)
+                osc.type = 'triangle';
+                
+                // Tick(째)은 조금 높은 하이 피치 음, Tock(깍)은 내부 톱니 울림에 대응하는 미들 피치 음을 설정합니다.
+                const startFreq = this.tickToggle ? 3200 : 2000;
+                const endFreq = this.tickToggle ? 800 : 400;
+                
+                osc.frequency.setValueAtTime(startFreq, now);
+                // 0.02초(20ms) 동안 매우 빠르게 소리를 떨어뜨려 "틱" 하는 바늘 튕김을 리얼하게 구현합니다.
+                osc.frequency.exponentialRampToValueAtTime(endFreq, now + 0.02);
+                
+                // 시계 소리는 잔향 없이 깔끔하게 끊어져야 하므로 빠르게 볼륨을 소멸시킵니다.
+                gain.gain.setValueAtTime(this.tickToggle ? 0.16 : 0.12, now); // 피치에 따른 볼륨 밸런스 조정
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.02);
+                
+                osc.start(now);
+                osc.stop(now + 0.02);
             }
         } catch (e) {
             console.error('Audio play error:', e);
