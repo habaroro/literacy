@@ -409,6 +409,18 @@
                 if (chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
             }, [chatMessages, regenerating]);
 
+            // [추가된 로직] 문해 프렌즈 채팅 말풍선이 하단에 새롭게 하나씩 팝업되어 추가될 때 효과음 재생
+            const prevChatLengthRef = useRef(0);
+            useEffect(() => {
+                // 이전 메시지 개수보다 현재 메시지 개수가 많아진 경우(새로운 메시지 추가) 효과음 재생
+                if (chatMessages.length > prevChatLengthRef.current) {
+                    if (window.SoundEffects) {
+                        window.SoundEffects.play('click');
+                    }
+                }
+                prevChatLengthRef.current = chatMessages.length;
+            }, [chatMessages]);
+
             // Dialog generation logic - TRIGGERS ONLY AFTER STORY FINISHED TYPING
             useEffect(() => {
                 if (phase === 'writing' || !storyFinished) return;
@@ -568,7 +580,12 @@
                 return () => timers.forEach(clearTimeout);
             }, [tone, phase, storyKey, storyFinished]);
 
+            // 분위기를 선택할 때 호출되는 함수입니다.
             const handleToneSelect = (newTone) => {
+                // 1. 분위기 선택지를 클릭할 때 효과음(click)을 재생합니다.
+                if (window.SoundEffects) {
+                    window.SoundEffects.play('click');
+                }
                 setShowTonePopup(false);
                 setRegenerating(true);
                 setStoryFinished(false); // Reset to allow 'reading' animation
@@ -582,7 +599,14 @@
                 }, 800);
             };
 
-            const toggleLike = (charId) => setLikes(l => ({ ...l, [charId]: !l[charId] }));
+            // 좋아요(하트) 버튼을 토글할 때 호출되는 함수입니다.
+            const toggleLike = (charId) => {
+                // 2. 좋아요 버튼을 누를 때 째깍 효과음(click)을 재생합니다.
+                if (window.SoundEffects) {
+                    window.SoundEffects.play('click');
+                }
+                setLikes(l => ({ ...l, [charId]: !l[charId] }));
+            };
 
             const renderStory = (text) => {
                 if (!chosen || chosen.length === 0) return text;
@@ -793,10 +817,23 @@
                                     )}
                                 </div>
 
-                                {/* Rewrite button - Floating style */}
-                                {showPeek && (
-                                    <div className="a-pop" style={{ position: 'absolute', bottom: 20, left: 16, right: 16, zIndex: 10 }}>
-                                        <button className="rewrite-btn" onClick={() => setShowTonePopup(true)} style={{ 
+                                {/* Floating Bottom Peek Sheet to invite user to rewrite story */}
+                                {showComments && showPeek && !showTonePopup && (
+                                    <div style={{ 
+                                        position: 'absolute', 
+                                        bottom: 16, 
+                                        left: 16, 
+                                        right: 16, 
+                                        zIndex: 10, 
+                                        animation: 'toastSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both' 
+                                    }}>
+                                        <button className="rewrite-btn" onClick={() => {
+                                            // 3. '다르게도 써볼래? 분위기 바꾸기' 버튼을 클릭할 때 효과음(click)을 재생합니다.
+                                            if (window.SoundEffects) {
+                                                window.SoundEffects.play('click');
+                                            }
+                                            setShowTonePopup(true);
+                                        }} style={{ 
                                             borderRadius: 20, 
                                             boxShadow: '0 10px 28px rgba(79, 70, 229, 0.3)', 
                                             height: 64, 
@@ -818,7 +855,13 @@
                                     <>
                                         {/* Backdrop inside Chat Window only */}
                                         <div style={{ position: 'absolute', inset: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(3px)', zIndex: 15 }}
-                                            onClick={() => setShowTonePopup(false)} />
+                                            onClick={() => {
+                                                // 4. 분위기 팝업 밖의 어두운 배경(Backdrop)을 터치하여 팝업을 닫을 때 효과음(click)을 재생합니다.
+                                                if (window.SoundEffects) {
+                                                    window.SoundEffects.play('click');
+                                                }
+                                                setShowTonePopup(false);
+                                            }} />
                                         
                                         {/* Bottom Sheet */}
                                         <div className="toast-popup-sheet" style={{ 
@@ -840,7 +883,13 @@
                                             {/* Header with Title and Close Button */}
                                             <div style={{ position: 'relative', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 8, flexShrink: 0 }}>
                                                 <h3 className="font-h" style={{ fontSize: 17, color: 'var(--navy-dark)', margin: 0, paddingRight: 24, paddingLeft: 24, textAlign: 'center' }}>어떤 분위기로 바꿔볼까?</h3>
-                                                <button onClick={() => setShowTonePopup(false)} className="close-hover-effect" style={{
+                                                <button onClick={() => {
+                                                    // 5. 분위기 팝업 우측 상단의 닫기(X) 단추를 누를 때 효과음(click)을 재생합니다.
+                                                    if (window.SoundEffects) {
+                                                        window.SoundEffects.play('click');
+                                                    }
+                                                    setShowTonePopup(false);
+                                                }} className="close-hover-effect" style={{
                                                     position: 'absolute',
                                                     right: 0,
                                                     top: -4,
@@ -892,7 +941,13 @@
 
                                                 {/* Go to Step 2 card */}
                                                 <div style={{ marginTop: 8, padding: '10px 14px', background: 'linear-gradient(135deg, var(--blue-light), #EEF2FF)', border: '1px dashed var(--blue-mid)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, cursor: 'pointer', transition: 'all 0.2s ease', flexShrink: 0 }}
-                                                    onClick={() => { location.href = 'step2.html'; }}>
+                                                    onClick={() => {
+                                                        // 6. 다른 단어 골라보기 카드를 눌렀을 때 효과음(click)을 재생합니다.
+                                                        if (window.SoundEffects) {
+                                                            window.SoundEffects.play('click');
+                                                        }
+                                                        location.href = 'step2.html';
+                                                    }}>
                                                     <div style={{ flex: 1 }}>
                                                         <div className="font-h" style={{ fontSize: 13.5, color: 'var(--blue)', marginBottom: 2 }}>다른 단어 골라보기</div>
                                                         <div style={{ fontSize: 11, color: '#64748B', fontWeight: 500 }}>처음 모은 단어로 새로운 조합을 만들어요</div>

@@ -250,7 +250,7 @@
                             지금까지 <strong style={{ color: 'var(--primary)' }}>{foundCount}개</strong>의 단어를 찾았어요.
                         </p>
                         <p style={{ color: 'var(--gray)', fontSize: 16, marginBottom: 36, fontWeight: 500, lineHeight: 1.5 }}>
-                            찾은 단어가 3개 이상이면 이야기 만들기를 계속할 수 있어요.
+                            찾은 단어가 3개 이상이면 이야기 만들기를 할 수 있어요.
                         </p>
                         <div style={{ display: 'flex', gap: 12 }}>
                             <button onClick={onRetry} className="btn-primary" style={{ flex: 1, padding: '18px', fontSize: 16, fontWeight: 700 }}>↺ 다시 도전</button>
@@ -309,6 +309,11 @@
 
             useEffect(() => {
                 if (celebrating) {
+                    if (window.SoundEffects) {
+                        window.SoundEffects.play('correct');
+                        // 파티클 폭죽과 싱크를 맞추어 "예~" 하고 기뻐하는 어린이 환호소리를 추가로 들려줍니다.
+                        window.SoundEffects.play('cheer');
+                    }
                     window.AppState.set('acquired', [...new Set(foundWords)]);
 
                     if (typeof confetti === 'function') {
@@ -406,6 +411,7 @@
             };
 
             const triggerHit = (newSel, hit) => {
+                if (window.SoundEffects) window.SoundEffects.play('correct');
                 const startP = cellCenter(newSel[0][0], newSel[0][1]);
                 const endP = cellCenter(newSel[newSel.length - 1][0], newSel[newSel.length - 1][1]);
                 const key = Date.now();
@@ -475,6 +481,8 @@
                     const word = cur.map(([sr, sc]) => window.GRID_DATA.cells[sr][sc]).join('');
                     const hit = window.GRID_DATA.targets.find(t => t.word === word && !foundWordsRef.current.includes(t.word));
                     if (hit) { triggerHit(cur, hit); return; }
+                    // 단어 매칭 실패 시 오답음 재생
+                    if (window.SoundEffects) window.SoundEffects.play('wrong');
                 }
                 anchorRef.current = null;
                 selRef.current = [];
@@ -483,6 +491,7 @@
 
             const startDrag = (r, c) => {
                 if (animActiveRef.current || !timerActive) return;
+                if (window.SoundEffects) window.SoundEffects.play('click');
                 draggingRef.current = true;
                 anchorRef.current = [r, c];
                 const init = [[r, c]];
@@ -492,6 +501,7 @@
 
             const showHint = (target) => {
                 if (foundWords.includes(target.word)) return;
+                if (window.SoundEffects) window.SoundEffects.play('click');
                 setHintCell(target.cells[0]);
                 const msgs = ['여기 힌트를 보여줄게! 💡', '어디 숨었나 잘 봐봐! 👀', '이 글자부터 시작이야! 🌟'];
                 setMascotMessage(msgs[Math.floor(Math.random() * msgs.length)]);
@@ -507,9 +517,16 @@
                 }
             };
 
-            const handleNext = () => { location.href = 'step2.html'; };
-            const handleRetry = () => { location.reload(); };
+            const handleNext = () => {
+                if (window.SoundEffects) window.SoundEffects.play('click');
+                location.href = 'step2.html';
+            };
+            const handleRetry = () => {
+                if (window.SoundEffects) window.SoundEffects.play('reset');
+                setTimeout(() => location.reload(), 150);
+            };
             const handleContinueAnyway = () => {
+                if (window.SoundEffects) window.SoundEffects.play('click');
                 setTimeUpOpen(false);
                 if (foundWords.length === 0) return;
                 window.AppState.set('acquired', [...new Set(foundWords)]);

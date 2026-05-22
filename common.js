@@ -225,13 +225,45 @@ window.AppState = {
 
 /* ── HEADER (화면 상단에 노출될 스텝 네비게이션 헤더 바) ── */
 window.StepHeader = function ({ stepIdx }) {
-    const { useState } = React;
+    const { useState, useEffect } = React;
+    
+    // 사운드 상태는 localStorage와 연동하여 상태를 정의합니다 (기본값: 켜짐)
+    const [isMuted, setIsMuted] = useState(() => {
+        return localStorage.getItem('app_sound_enabled') === 'false';
+    });
+
+    // 다른 창이나 탭에서 소리 설정을 변경했을 때 동기화되도록 리스너를 설정합니다.
+    useEffect(() => {
+        const handleStorageChange = (e) => {
+            if (e.key === 'app_sound_enabled') {
+                setIsMuted(e.newValue === 'false');
+            }
+        };
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
+    }, []);
+
+    // 소리 제어 버튼 클릭 시 호출되는 함수입니다.
+    const toggleMute = () => {
+        const nextMuted = !isMuted;
+        setIsMuted(nextMuted);
+        if (window.SoundEffects) {
+            window.SoundEffects.setEnabled(!nextMuted);
+            if (!nextMuted) {
+                // 음소거 해제 시 '뿅' 소리를 들려주어 켜졌음을 인지시킵니다.
+                window.SoundEffects.play('click');
+            }
+        }
+    };
+
     const goTo = (i) => {
+        if (window.SoundEffects) window.SoundEffects.play('click');
         if (i === 0) location.href = 'step1.html';
         else if (i === 1) location.href = 'step2.html';
         else if (i === 2) location.href = 'step3.html';
     };
     const handleReset = () => {
+        if (window.SoundEffects) window.SoundEffects.play('reset');
         window.AppState.reset();
         location.href = 'index.html';
     };
@@ -260,7 +292,58 @@ window.StepHeader = function ({ stepIdx }) {
                         style: { display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(13, 148, 136, 0.08)', border: '1.5px solid rgba(13, 148, 136, 0.2)', color: '#0D9488', padding: '8px 16px', borderRadius: 16, fontSize: 14, cursor: 'pointer', transition: 'all 0.2s ease' },
                         onMouseEnter: e => { e.currentTarget.style.background = '#0D9488'; e.currentTarget.style.color = '#FFF'; },
                         onMouseLeave: e => { e.currentTarget.style.background = 'rgba(13, 148, 136, 0.08)'; e.currentTarget.style.color = '#0D9488' }
-                    }, '↺ 처음부터 다시하기')
+                    }, '↺ 처음부터 다시하기'),
+                    // 🔊 사운드 ON/OFF 제어 토글 버튼 (동그란 형태, 헤더의 가장 우측에 위치)
+                    React.createElement('button', {
+                        onClick: toggleMute,
+                        title: isMuted ? '소리 켜기' : '소리 끄기',
+                        style: {
+                            width: 36,
+                            height: 36,
+                            borderRadius: '50%',
+                            border: isMuted ? '1.5px solid #CBD5E1' : '1.5px solid rgba(79, 70, 229, 0.3)',
+                            background: isMuted ? '#F8FAFC' : 'rgba(79, 70, 229, 0.06)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'all 0.2s ease',
+                            padding: 0,
+                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+                            flexShrink: 0,
+                            outline: 'none'
+                        },
+                        onMouseEnter: e => {
+                            e.currentTarget.style.transform = 'scale(1.08)';
+                            if (isMuted) {
+                                e.currentTarget.style.background = '#E2E8F0';
+                            } else {
+                                e.currentTarget.style.background = 'rgba(79, 70, 229, 0.12)';
+                                e.currentTarget.style.borderColor = 'rgba(79, 70, 229, 0.6)';
+                            }
+                        },
+                        onMouseLeave: e => {
+                            e.currentTarget.style.transform = 'scale(1)';
+                            if (isMuted) {
+                                e.currentTarget.style.background = '#F8FAFC';
+                            } else {
+                                e.currentTarget.style.background = 'rgba(79, 70, 229, 0.06)';
+                                e.currentTarget.style.borderColor = 'rgba(79, 70, 229, 0.3)';
+                            }
+                        }
+                    },
+                        // 뮤트 상태에 따른 동적 SVG 아이콘 렌더링
+                        isMuted 
+                        ? React.createElement('svg', { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: '#64748B', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' },
+                            React.createElement('path', { d: 'M11 5L6 9H2v6h4l5 4V5z' }),
+                            React.createElement('line', { x1: 23, y1: 9, x2: 17, y2: 15 }),
+                            React.createElement('line', { x1: 17, y1: 9, x2: 23, y2: 15 })
+                          )
+                        : React.createElement('svg', { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: '#4F46E5', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' },
+                            React.createElement('path', { d: 'M11 5L6 9H2v6h4l5 4V5z' }),
+                            React.createElement('path', { d: 'M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07' })
+                          )
+                    )
                 )
             )
         )
@@ -284,3 +367,229 @@ window.requestAppFullscreen = function () {
         }
     }
 };
+
+/* ── SOUND EFFECTS SYSTEM (Web Audio API 기반 효과음 시스템) ── */
+class SoundEffectsManager {
+    constructor() {
+        this.ctx = null;
+        // 로컬 스토리지에서 사운드 활성화 여부를 조회합니다 (기본값: true)
+        this.enabled = localStorage.getItem('app_sound_enabled') !== 'false';
+        
+        // 🔊 어린이 환호소리 효과음 MP3를 캐싱하여 로드 지연(딜레이)을 완벽히 없애기 위해 미리 오디오 객체를 로드해 둡니다.
+        try {
+            this.cheerAudio = new Audio("https://raw.githubusercontent.com/nicole-learn/PostShotClarity/main/kids-cheering-yay-applause.mp3");
+            this.cheerAudio.preload = "auto";
+            this.cheerAudio.load();
+        } catch (e) {
+            console.warn("Audio preloading failed", e);
+            this.cheerAudio = null;
+        }
+    }
+
+    // 브라우저의 오디오 컨텍스트를 동적으로 초기화합니다.
+    // 사용자 제스처(클릭 등) 이후에 실행해야 자동재생 제약에 걸리지 않습니다.
+    init() {
+        if (!this.ctx) {
+            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
+    }
+
+    // 사운드 활성화/비활성화 상태를 업데이트하고 저장합니다.
+    setEnabled(enabled) {
+        this.enabled = enabled;
+        localStorage.setItem('app_sound_enabled', enabled ? 'true' : 'false');
+    }
+
+    // 지정된 효과음을 신디사이저 방식으로 즉석 생성하여 출력합니다.
+    play(type) {
+        if (!this.enabled) return;
+        
+        try {
+            this.init();
+            if (!this.ctx) return;
+            
+            const now = this.ctx.currentTime;
+            
+            if (type === 'click') {
+                // 1. 맑고 깨끗한 '뿅' 소리 (버튼 클릭 / 카드 선택)
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                
+                osc.type = 'sine';
+                // 400Hz에서 1200Hz로 짧게 상승시킵니다.
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.exponentialRampToValueAtTime(1200, now + 0.08);
+                
+                gain.gain.setValueAtTime(0.12, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                
+                osc.start(now);
+                osc.stop(now + 0.08);
+                
+            } else if (type === 'correct') {
+                // 2. 경쾌하게 도-미-솔-도 순서로 올라가는 정답음
+                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                notes.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    
+                    osc.type = 'triangle'; // 조금 더 마일드하고 레트로한 음색
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.07);
+                    
+                    gain.gain.setValueAtTime(0.1, now + idx * 0.07);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.07 + 0.18);
+                    
+                    osc.start(now + idx * 0.07);
+                    osc.stop(now + idx * 0.07 + 0.18);
+                });
+                
+            } else if (type === 'wrong') {
+                // 3. 묵직하고 나직하게 하강하는 경고 오답음 (부드러운 로우패스 필터 사용)
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                const filter = this.ctx.createBiquadFilter();
+                
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.ctx.destination);
+                
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(800, now);
+                
+                osc.type = 'sawtooth';
+                // 220Hz에서 110Hz로 무겁게 떨어집니다.
+                osc.frequency.setValueAtTime(220, now);
+                osc.frequency.linearRampToValueAtTime(110, now + 0.22);
+                
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.22);
+                
+                osc.start(now);
+                osc.stop(now + 0.22);
+                
+            } else if (type === 'reset') {
+                // 4. 물결치며 맑게 흘러가는 다시하기 리셋음
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                
+                osc.type = 'sine';
+                // 300Hz에서 850Hz로 천천히 부드럽게 훑어 올라갑니다.
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.exponentialRampToValueAtTime(850, now + 0.25);
+                
+                gain.gain.setValueAtTime(0.08, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                
+                osc.start(now);
+                osc.stop(now + 0.25);
+                
+            } else if (type === 'cheer') {
+                // 5. 파티클이 흩날릴 때 함께 재생할 어린이 환호소리 및 영롱한 실로폰 팡파르
+                
+                // 🔊 극도로 밝고 청명한 닌텐도 풍 크리스탈 실로폰 멜로디를 실시간 합성하여 재생합니다. (딜레이 0ms 보장)
+                const playXylophoneMelody = () => {
+                    const notes = [
+                        { f: 523.25, t: 0.00 },  // 도 (C5)
+                        { f: 659.25, t: 0.05 },  // 미 (E5)
+                        { f: 783.99, t: 0.10 },  // 솔 (G5)
+                        { f: 1046.50, t: 0.15 }, // 도 (C6)
+                        { f: 1318.51, t: 0.20 }, // 미 (E6)
+                        { f: 1567.98, t: 0.25 }, // 솔 (G6)
+                        { f: 2093.00, t: 0.30 }  // 도 (C7) - 가장 높은 맑은 음
+                    ];
+
+                    notes.forEach((note) => {
+                        const playTime = now + note.t;
+                        
+                        // 맑은 소리를 내는 Sine 오실레이터와 약간의 배음을 더하는 Triangle 오실레이터를 조합합니다.
+                        const oscSine = this.ctx.createOscillator();
+                        const oscTri = this.ctx.createOscillator();
+                        const gainNode = this.ctx.createGain();
+                        
+                        oscSine.connect(gainNode);
+                        oscTri.connect(gainNode);
+                        gainNode.connect(this.ctx.destination);
+                        
+                        oscSine.type = 'sine';
+                        oscSine.frequency.setValueAtTime(note.f, playTime);
+                        
+                        oscTri.type = 'triangle';
+                        oscTri.frequency.setValueAtTime(note.f, playTime);
+                        
+                        // 통통 튀는 스타카토 질감을 위해 아주 짧은 볼륨 엔벨로프를 설계합니다.
+                        gainNode.gain.setValueAtTime(0, playTime);
+                        // 0.01초 만에 최대로 커졌다가
+                        gainNode.gain.linearRampToValueAtTime(0.06, playTime + 0.01);
+                        // 0.15초에 걸쳐 부드럽게 사라집니다.
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, playTime + 0.15);
+                        
+                        oscSine.start(playTime);
+                        oscSine.stop(playTime + 0.15);
+                        oscTri.start(playTime);
+                        oscTri.stop(playTime + 0.15);
+                    });
+
+                    // 멜로디의 끝부분에 따뜻하게 퍼지는 메이저 화음 잔향을 추가하여 완성도를 높입니다.
+                    const chord = [1046.50, 1318.51, 1567.98, 2093.00]; // C6 메이저 코드
+                    chord.forEach((freq, idx) => {
+                        const playTime = now + 0.35 + idx * 0.02;
+                        const osc = this.ctx.createOscillator();
+                        const gainNode = this.ctx.createGain();
+                        
+                        osc.connect(gainNode);
+                        gainNode.connect(this.ctx.destination);
+                        
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(freq, playTime);
+                        
+                        gainNode.gain.setValueAtTime(0, playTime);
+                        gainNode.gain.linearRampToValueAtTime(0.04, playTime + 0.02);
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, playTime + 0.5);
+                        
+                        osc.start(playTime);
+                        osc.stop(playTime + 0.5);
+                    });
+                };
+
+                // 실시간 실로폰 멜로디는 딜레이 없이 즉각 실행시킵니다.
+                playXylophoneMelody();
+
+                // 동시에 이미 프리로드 시도를 해둔 외부 어린이 환호 MP3 재생을 트리거합니다.
+                try {
+                    if (this.cheerAudio) {
+                        this.cheerAudio.volume = 0.35;
+                        this.cheerAudio.currentTime = 0;
+                        this.cheerAudio.play().catch(err => {
+                            console.warn("Preloaded Audio play 거부됨. Web Audio API 실로폰 사운드로만 대체 재생되었습니다.", err);
+                        });
+                    } else {
+                        // 만약 클래스 내부 오디오 객체가 준비되어 있지 않았다면 임시 생성하여 재생
+                        const audioUrl = "https://raw.githubusercontent.com/nicole-learn/PostShotClarity/main/kids-cheering-yay-applause.mp3";
+                        const audio = new Audio(audioUrl);
+                        audio.volume = 0.35;
+                        audio.play().catch(e => {});
+                    }
+                } catch (audioErr) {
+                    console.warn("오디오 객체 실행 불가. Web Audio API Fallback 실로폰 사운드로만 재생되었습니다.", audioErr);
+                }
+            }
+        } catch (e) {
+            console.error('Audio play error:', e);
+        }
+    }
+}
+
+// 전역 객체로 사운드 매니저를 생성하여 등록합니다.
+window.SoundEffects = new SoundEffectsManager();

@@ -32,6 +32,7 @@
     <script type="text/babel">
         function IntroScreen() {
             const onStart = () => {
+                if (window.SoundEffects) window.SoundEffects.play('click');
                 window.AppState.reset();
                 location.href = 'step1.html';
             };
@@ -91,7 +92,7 @@
                                         <span className="btn-premium-shine-arrow">→</span>
                                     </button>
                                     <p className="intro-cta-hint-v2" style={{ fontSize: 13, color: 'var(--text-mute)', marginTop: 8, fontWeight: 600 }}>
-                                        ✨ AI와 나만의 이야기를 만들어 보아요~!
+                                        ✨ AI가 나만의 이야기를 만들어줘요~!
                                     </p>
                                 </div>
                             </div>

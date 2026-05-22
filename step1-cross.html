@@ -321,6 +321,11 @@
             useEffect(() => {
                 if (allFilled) {
                     window.AppState.set('acquired', Object.values(CW.wordMap));
+                    if (window.SoundEffects) {
+                        window.SoundEffects.play('correct');
+                        // 팡파르/파티클 폭죽 효과와 맞추어 "예~" 하는 신나는 어린이 환호소리를 같이 들려줍니다.
+                        window.SoundEffects.play('cheer');
+                    }
 
                     if (typeof confetti === 'function') {
                         // 어두운 팝업창 오버레이 뒤에서도 묻히지 않고 골고루 선명하게 보이도록
@@ -404,6 +409,7 @@
 
             // 게임 재도전 시 모든 상태를 초기 상태로 깨끗하게 리셋합니다.
             const handleRetry = () => {
+                if (window.SoundEffects) window.SoundEffects.play('reset');
                 setFilled({});
                 setUsedCards([]);
                 setWrongId(null);
@@ -436,6 +442,7 @@
                 if (timeLeft <= 0) return;
 
                 if (card.syl === activeBlank.expected) {
+                    if (window.SoundEffects) window.SoundEffects.play('correct');
                     const msgs = ['와! 맞았어! 👍', '정말 대단해! ✨', '정답이야! 🎈', '멋지다! 😍'];
                     setMascotMessage(msgs[Math.floor(Math.random() * msgs.length)]);
                     setMascotImg('img/cha_02_02.png');
@@ -449,6 +456,7 @@
                         setMascotImg('img/cha_02.png');
                     }, 700);
                 } else {
+                    if (window.SoundEffects) window.SoundEffects.play('wrong');
                     const msgs = [
                         '앗! 다시 생각해볼까? 🧐',
                         '음... 이건 아닌 것 같아! 😣',
@@ -480,10 +488,12 @@
 
             const CW_CELL = 64;
             const handleNext = () => {
+                if (window.SoundEffects) window.SoundEffects.play('click');
                 location.href = 'step2.html';
             };
             // 시간초과 후 3개 이상 단어를 맞추었을 때 계속하기를 누르면 호출되어 결과 팝업을 띄워줍니다.
             const handleContinueAnyway = () => {
+                if (window.SoundEffects) window.SoundEffects.play('click');
                 setTimeUpOpen(false);
                 const foundWords = Object.keys(filled).map(id => CW.wordMap[id]);
                 if (foundWords.length === 0) return;
@@ -558,6 +568,7 @@
                                             <div key={i}
                                                 onClick={() => {
                                                     if (isSolved) return;
+                                                    if (window.SoundEffects) window.SoundEffects.play('click');
                                                     const b = blanks.find(x => x.word === hintWords[i]);
                                                     if (b && !filled[b.id]) {
                                                         setActiveId(b.id);
@@ -617,6 +628,7 @@
                                                     className={`${just ? 'a-pop' : ''} ${wrong ? 'a-cell-wrong-shake a-red-flash' : ''} ${active && !wrong ? 'a-hint-blink' : ''}`}
                                                     onClick={() => {
                                                         if (!val) {
+                                                            if (window.SoundEffects) window.SoundEffects.play('click');
                                                             setActiveId(cell.id);
                                                             setIdleSeconds(0);
                                                         }

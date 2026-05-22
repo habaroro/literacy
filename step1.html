@@ -44,6 +44,7 @@
             ];
 
             const handleSelect = (o) => {
+                if (window.SoundEffects) window.SoundEffects.play('click');
                 window.AppState.set('mode', o.mode);
                 location.href = o.href;
             };
