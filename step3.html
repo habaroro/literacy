@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=1280, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI 피드백 · 방아 찧는 호랑이</title>
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -645,12 +645,12 @@
             const CONTENT_H = 'calc(100vh - 70px)';
 
             return (
-                <div style={{ height: CONTENT_H, display: 'flex', flexDirection: 'column', padding: '16px 0', boxSizing: 'border-box' }}>
+                <div className="step3-outer-container">
                     {/* Two column layout: Left expanded, Right compact 380px fixed width */}
-                    <div style={{ flex: 1, display: 'flex', gap: 24, minHeight: 0 }}>
+                    <div className="step3-main-layout">
 
                         {/* LEFT: Expanded Story card */}
-                        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 12, animation: phase === 'sliding' ? 'slideFromCenter 1s cubic-bezier(0.16,1,0.3,1) forwards' : 'none' }}>
+                        <div className="step3-story-col" style={{ animation: phase === 'sliding' ? 'slideFromCenter 1s cubic-bezier(0.16,1,0.3,1) forwards' : 'none' }}>
                             <div style={{ background: 'var(--card)', backdropFilter: 'blur(24px)', border: '1px solid var(--stroke)', borderRadius: 24, boxShadow: 'var(--shadow-md)', overflow: 'hidden', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
                                 {/* Card header */}
                                 <div style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
@@ -709,7 +709,7 @@
                         </div>
 
                         {/* RIGHT: Compact fixed 380px width Chat comments panel */}
-                        <div style={{ flex: '0 0 380px', width: 380, display: 'flex', flexDirection: 'column', opacity: phase === 'writing' ? 0 : (phase === 'sliding' ? 0 : 1), animation: phase === 'done' ? 'commentsFadeIn 0.8s ease forwards' : 'none' }}>
+                        <div className="step3-chat-col" style={{ opacity: phase === 'writing' ? 0 : (phase === 'sliding' ? 0 : 1), animation: phase === 'done' ? 'commentsFadeIn 0.8s ease forwards' : 'none' }}>
                             <div style={{ background: 'var(--card)', backdropFilter: 'blur(24px)', border: '1px solid var(--stroke)', borderRadius: 24, boxShadow: 'var(--shadow-md)', overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
                                 {/* Chat header */}
                                 <div style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid var(--border-light)', background: 'rgba(255,255,255,0.6)', flexShrink: 0 }}>
@@ -977,7 +977,7 @@
             return (
                 <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'linear-gradient(145deg,#EEF2FF 0%,#F8FAFC 45%,#FFF0F8 100%)', overflow: 'hidden' }}>
                     <window.StepHeader stepIdx={2} />
-                    <div style={{ flex: 1, maxWidth: 1280, width: '100%', margin: '0 auto', padding: '0 32px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                    <div className="step3-app-container">
                         <FeedbackScreen chosen={chosen} tone={tone} onRegenerate={handleRegenerate} />
                     </div>
                 </div>

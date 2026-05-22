@@ -1096,3 +1096,154 @@ body:has(.premium-aurora-bg)::before,
 body:has(.premium-aurora-bg)::after {
     display: none !important;
 }
+
+/* ── 📱 RESPONSIVE ADJUSTMENTS FOR TABLETS AND MOBILE DEVICES (iPad Pro 11-inch, etc.) ── */
+
+@media (max-width: 1023px) {
+    /* Allow root and main containers to expand naturally in portrait */
+    body:has(.step3-main-layout),
+    body:has(.step3-main-layout) #root,
+    body:has(.step3-main-layout) > div {
+        height: auto !important;
+        overflow: visible !important;
+    }
+}
+
+/* ── 📝 STEP 2 RESPONSIVE LAYOUT (Sentence Screen) ── */
+.step2-app-container {
+    max-width: 1376px;
+    margin: 0 auto;
+    padding: 0 32px;
+}
+
+.step2-main-layout {
+    display: flex;
+    gap: 32px;
+    align-items: flex-start;
+    width: 100%;
+}
+
+.step2-left-col {
+    flex: 0 0 52%;
+    min-width: 0;
+}
+
+.step2-right-col {
+    flex: 1;
+    min-width: 0;
+}
+
+@media (max-width: 1023px) {
+    .step2-app-container {
+        padding: 0 16px !important;
+    }
+    
+    .step2-main-layout {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 24px;
+    }
+    
+    .step2-left-col,
+    .step2-right-col {
+        flex: none !important;
+        width: 100% !important;
+    }
+    
+    /* Reduce height of book scene card slightly in portrait to save vertical space */
+    .step2-left-col > div {
+        height: auto !important;
+        min-height: 400px !important;
+        padding: 24px 20px !important;
+    }
+    
+    .step2-left-col img {
+        width: 220px !important;
+        max-width: 80% !important;
+    }
+}
+
+/* ── 💬 STEP 3 RESPONSIVE LAYOUT (Feedback Screen) ── */
+.step3-app-container {
+    flex: 1;
+    max-width: 1280px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 32px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.step3-outer-container {
+    height: calc(100vh - 70px);
+    display: flex;
+    flex-direction: column;
+    padding: 16px 0;
+    box-sizing: border-box;
+}
+
+.step3-main-layout {
+    flex: 1;
+    display: flex;
+    gap: 24px;
+    min-height: 0;
+    width: 100%;
+}
+
+.step3-story-col {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.step3-chat-col {
+    flex: 0 0 380px;
+    width: 380px;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s ease;
+}
+
+@media (max-width: 1200px) {
+    .step3-chat-col {
+        flex: 0 0 320px;
+        width: 320px;
+    }
+    .step3-main-layout {
+        gap: 16px;
+    }
+}
+
+@media (max-width: 1023px) {
+    .step3-app-container {
+        padding: 0 16px !important;
+    }
+    
+    .step3-outer-container {
+        height: auto !important;
+        padding: 16px 0 40px !important;
+    }
+    
+    .step3-main-layout {
+        flex-direction: column;
+        overflow-y: visible;
+        height: auto;
+        min-height: 100%;
+        gap: 24px;
+    }
+    
+    .step3-story-col,
+    .step3-chat-col {
+        flex: none !important;
+        width: 100% !important;
+    }
+    
+    .step3-chat-col {
+        height: 600px !important; /* give the chat panel a fixed height when stacked */
+        margin-bottom: 20px;
+    }
+}

@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=1280, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>문장 플레이 · 방아 찧는 호랑이</title>
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -149,8 +149,8 @@
                     <h2 className="font-h" style={{ fontSize: 25, color: 'var(--navy-dark)', textAlign: 'center', marginBottom: 8 }}>문장 플레이</h2>
                     <p style={{ textAlign: 'center', color: 'var(--gray)', fontSize: 15, marginBottom: 32, fontWeight: 500 }}>단어 카드를 배치해서 이야기를 생성해 봐!</p>
 
-                    <div style={{ display: 'flex', gap: 32, alignItems: 'flex-start' }}>
-                        <div style={{ flex: '0 0 52%', minWidth: 0 }}>
+                    <div className="step2-main-layout">
+                        <div className="step2-left-col">
                             <div style={{ background: 'var(--card)', height: 550, backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.8)', borderRadius: 28, padding: '28px 32px', marginBottom: 24, textAlign: 'center', boxShadow: 'var(--shadow-md)', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
                                 <div style={{ position: 'absolute', top: -20, left: -20, fontSize: 100, opacity: 0.05, transform: 'rotate(-10deg)', pointerEvents: 'none' }}>📖</div>
                                 <div style={{ display: 'inline-block', background: 'linear-gradient(135deg, #FEF3C7, #FDE68A)', padding: '5px 14px', borderRadius: 18, boxShadow: '0 4px 12px rgba(253,230,138,0.4)', marginBottom: 16 }}>
@@ -165,7 +165,7 @@
                                 <img src="img/tig.png" alt="호랑이" style={{ width: 300, height: 'auto', filter: 'drop-shadow(0 15px 30px rgba(0,0,0,0.1))', animation: 'bounce 3s ease-in-out infinite' }} />
                             </div>
                         </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
+                        <div className="step2-right-col">
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                                 <span className="font-h" style={{ fontSize: 15, color: 'var(--navy-dark)' }}>배치 영역</span>
                                 <span style={{ fontSize: 12, color: 'var(--gray)', fontWeight: 500 }}>클릭하면 풀로 돌아가요</span>
@@ -231,7 +231,7 @@
             return (
                 <div style={{ minHeight: '100vh', background: 'linear-gradient(145deg,#EEF2FF 0%,#F8FAFC 45%,#FFF0F8 100%)' }}>
                     <window.StepHeader stepIdx={1} />
-                    <div style={{ maxWidth: 1376, margin: '0 auto', padding: '0 32px' }}>
+                    <div className="step2-app-container">
                         <SentenceScreen acquired={acquired} onGenerate={handleGenerate} />
                     </div>
                 </div>
