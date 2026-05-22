@@ -132,6 +132,58 @@
         .time-up-icon {
             animation: timeUpShake 0.6s ease-in-out infinite;
         }
+
+        /* 3초 카운트다운 관련 애니메이션 및 스타일 추가 */
+        /* 숫자는 팝업 후 바로 페이드아웃 */
+        @keyframes countPop {
+            0% {
+                transform: scale(0.6);
+                opacity: 0;
+            }
+
+            35% {
+                transform: scale(1.05);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 0;
+            }
+        }
+
+        /* '시작!' 문구는 등장 후 제자리에 유지되다 퇴장 트랜지션과 맞물림 */
+        @keyframes startPop {
+            0% {
+                transform: scale(0.6);
+                opacity: 0;
+            }
+
+            25%,
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* 유리판 전체가 스르륵 부드럽게 페이드아웃되면서 멀어지는 연출 */
+        @keyframes glassFadeOut {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+                filter: blur(0px);
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(0.92);
+                filter: blur(4px);
+            }
+        }
+
+        .a-glass-fadeout {
+            animation: glassFadeOut 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
     </style>
 </head>
 
@@ -266,6 +318,11 @@
         function GridScreen() {
             // 제한 시간을 기존 90초에서 1분(60초)으로 줄여서 설정합니다.
             const TOTAL_TIME = 60;
+
+            // --- 3초 카운트다운 관련 상태 추가 ---
+            const [isStarting, setIsStarting] = useState(true); // 게임 시작 전 카운트다운 상태 여부 (초기값: true)
+            const [countdown, setCountdown] = useState(3);       // 카운트다운 숫자 (3 -> 2 -> 1 -> 시작!)
+
             const [foundWords, setFoundWords] = useState([]);
             const [sel, setSel] = useState([]);
             const [anim, setAnim] = useState(null);
@@ -277,7 +334,7 @@
             const [celebrating, setCelebrating] = useState(false);
             const [definitionWord, setDefinitionWord] = useState(null);
             const [timeLeft, setTimeLeft] = useState(TOTAL_TIME);
-            const [timerActive, setTimerActive] = useState(true);
+            const [timerActive, setTimerActive] = useState(false); // 카운트다운이 끝난 후 게임이 시작되어야 하므로 초기값은 false로 설정합니다.
             const [timeUpOpen, setTimeUpOpen] = useState(false);
 
             const gridRef = useRef(null);
@@ -292,6 +349,29 @@
             // 10초 이하로 남았을 때 빨간 글씨 경고와 펄스 애니메이션이 활성화되도록 기준을 10초로 수정합니다.
             const isWarning = timeLeft <= 10 && timerActive;
 
+            // --- 3초 카운트다운 실행 로직 ---
+            useEffect(() => {
+                if (isStarting) {
+                    if (countdown > 0) {
+                        // 1초 간격으로 숫자를 1씩 줄여나갑니다. (3 -> 2 -> 1)
+                        const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+                        return () => clearTimeout(timer);
+                    } else if (countdown === 0) {
+                        // '시작!' 텍스트가 화면에 노출되는 대기 시간 (1.1초)
+                        const timer = setTimeout(() => setCountdown(-1), 1100);
+                        return () => clearTimeout(timer);
+                    } else {
+                        // 유리판 퇴장 페이드아웃 애니메이션(0.4초)이 끝난 후 실제 게임을 시작합니다.
+                        const timer = setTimeout(() => {
+                            setIsStarting(false);     // 카운트다운 모드 종료
+                            setTimerActive(true);     // 게임 메인 타이머 작동 시작
+                        }, 400);
+                        return () => clearTimeout(timer);
+                    }
+                }
+            }, [countdown, isStarting]);
+
+            // 기존 타이머 루프
             useEffect(() => {
                 if (!timerActive || allFound) return;
                 if (timeLeft <= 0) {
@@ -490,7 +570,8 @@
             };
 
             const startDrag = (r, c) => {
-                if (animActiveRef.current || !timerActive) return;
+                // [수정] 카운트다운 시작 중(isStarting === true)이거나 타이머가 시작되기 전에는 터치/드래그 조작을 할 수 없도록 리턴합니다.
+                if (animActiveRef.current || !timerActive || isStarting) return;
                 if (window.SoundEffects) window.SoundEffects.play('click');
                 draggingRef.current = true;
                 anchorRef.current = [r, c];
@@ -500,6 +581,8 @@
             };
 
             const showHint = (target) => {
+                // [수정] 카운트다운 진행 중(isStarting === true)에는 힌트 보기 버튼 상호작용을 차단합니다.
+                if (isStarting) return;
                 if (foundWords.includes(target.word)) return;
                 if (window.SoundEffects) window.SoundEffects.play('click');
                 setHintCell(target.cells[0]);
@@ -537,6 +620,62 @@
 
             return (
                 <>
+                    {/* --- [추정 피드백 반영] 다채로운 유색 글로우 대신 깔끔하게 떨어지는 소프트 블랙 섀도우 조합이 반영된 3초 카운트다운 오버레이 UI --- */}
+                    {isStarting && countdown >= -1 && (
+                        <div style={{
+                            position: 'fixed', inset: 0, zIndex: 9999, display: 'flex',
+                            alignItems: 'center', justifyContent: 'center',
+                            background: 'transparent', pointerEvents: 'none'
+                        }}>
+                            {/* 유리창 영역 (Glassmorphism 스타일) */}
+                            <div
+                                className={countdown === -1 ? 'a-glass-fadeout' : ''}
+                                style={{
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    width: 320, height: 320,
+                                    borderRadius: '60px',
+                                    background: 'rgba(255, 255, 255, 0.2)',
+                                    backdropFilter: 'blur(10px)',
+                                    border: '1px solid rgba(255, 255, 255, 0.55)',
+
+                                    // 흐릿하고 뿌연 오라 효과 대신 외곽선을 깔끔하게 떨어뜨려 입체감을 극대화한 정석 그림자 설계 (step1-cross의 피드백 반영)
+                                    boxShadow: `
+                                        0 4px 24px rgba(15, 23, 42, 0.05),     /* 얇고 정교한 밀착 음영 */
+                                        0 25px 60px rgba(15, 23, 42, 0.12),    /* 공중에 바짝 띄워주는 깊은 외부 그림자 */
+                                        inset 0 1px 1px rgba(255, 255, 255, 0.85) /* 상단 유리 절단면 하이라이트 */
+                                    `,
+                                    overflow: 'hidden'
+                                }}
+                            >
+                                {/* 내부 텍스트 전환 영역 */}
+                                {countdown <= 0 ? (
+                                    <div key="start" style={{
+                                        fontSize: 110,
+                                        fontWeight: 600,
+                                        color: '#2ab1a3',
+                                        animation: 'startPop 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                                        fontFamily: 'var(--font-h)',
+                                        letterSpacing: '0.04em',
+                                        paddingLeft: '0.04em'
+                                    }}>
+                                        시작!
+                                    </div>
+                                ) : (
+                                    <div key={countdown} style={{
+                                        fontSize: 150,
+                                        fontWeight: 600,
+                                        color: 'var(--primary)',
+                                        animation: 'countPop 1.0s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                                        fontFamily: 'var(--font-h)',
+                                        letterSpacing: '-0.03em'
+                                    }}>
+                                        {countdown}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
                     <div className="a-fadeup" style={{ padding: '0px', paddingTop: 20, position: 'relative' }}>
 
                         {/* Header: Title + Progress */}

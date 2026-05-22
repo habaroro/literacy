@@ -107,7 +107,6 @@
             }
 
             50% {
-                /* 타이머 영역이 커지는 효과의 폭을 절반(1.2배 -> 1.1배)으로 줄입니다. */
                 transform: scale(1.1);
                 color: #EF4444;
             }
@@ -176,6 +175,57 @@
         .a-subtle-blink {
             animation: subtleBlink 1.4s ease-in-out infinite;
         }
+
+        /* 숫자는 팝업 후 바로 페이드아웃 */
+        @keyframes countPop {
+            0% {
+                transform: scale(0.6);
+                opacity: 0;
+            }
+
+            35% {
+                transform: scale(1.05);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 0;
+            }
+        }
+
+        /* '시작!' 문구는 등장 후 제자리에 유지되다 퇴장 트랜지션과 맞물림 */
+        @keyframes startPop {
+            0% {
+                transform: scale(0.6);
+                opacity: 0;
+            }
+
+            25%,
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* 유리판 전체가 스르륵 부드럽게 페이드아웃되면서 멀어지는 연출 */
+        @keyframes glassFadeOut {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+                filter: blur(0px);
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(0.92);
+                filter: blur(4px);
+            }
+        }
+
+        .a-glass-fadeout {
+            animation: glassFadeOut 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
     </style>
 </head>
 
@@ -185,24 +235,20 @@
     <script type="text/babel">
         const { useState, useRef, useEffect } = React;
 
-        // 타이머의 시각적 형태와 애니메이션을 처리하는 컴포넌트입니다.
+        // 타이머 컴포넌트
         function Timer({ seconds, isWarning }) {
             const m = Math.floor(seconds / 60);
             const s = seconds % 60;
             return (
-                // 마지막 10초 이하(isWarning === true)일 때 'timer-warning' 애니메이션 클래스를 적용하여 타이머를 흔들거나 키웁니다.
                 <div className={isWarning ? 'timer-warning' : ''} style={{
                     display: 'flex', alignItems: 'center', gap: 6,
-                    // 마지막 10초가 남았을 때 배경색을 연하고 은은한 붉은 톤(#FEE2E2)으로 바꾸고, 평소에는 흰색(#FFF)을 유지합니다.
                     background: isWarning ? '#FEE2E2' : '#FFF',
                     padding: '10px 16px',
                     borderRadius: '18px',
                     fontFamily: 'var(--font-h)',
                     fontSize: 15,
                     fontWeight: 700,
-                    // 마지막 10초가 남았을 때 글자색을 경고의 빨간색(#EF4444)으로 바꾸고, 평소에는 진한 남색(var(--navy-dark))으로 표현합니다.
                     color: isWarning ? '#EF4444' : 'var(--navy-dark)',
-                    // 배경색과 글자색 등이 변경될 때 0.3초 동안 부드러운 애니메이션 효과(transition)를 줍니다.
                     transition: 'all 0.3s ease',
                     whiteSpace: 'nowrap'
                 }}>
@@ -212,7 +258,7 @@
             );
         }
 
-        // 획득한 단어를 보여주는 팝업 컴포넌트입니다.
+        // 단어 획득 팝업 컴포넌트
         function AcquiredPopup({ words, onNext, isAll }) {
             return (
                 <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200 }}>
@@ -221,7 +267,6 @@
                             <img src="img/cha_02_02.png" alt="기뻐하는 호랑이" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
                         </div>
                         <h2 className="font-h" style={{ fontSize: 36, color: 'var(--navy-dark)', marginBottom: 12 }}>
-                            {/* 단어를 전부 다 모으지 못한 경우, 찾은 단어의 개수를 포함하여 동적으로 문구를 출력합니다. */}
                             {isAll ? '단어를 모두 모았어요!' : `단어를 ${words.length}개 모았어요!`}
                         </h2>
                         <p style={{ color: 'var(--gray)', fontSize: 16, marginBottom: 40, fontWeight: 500 }}>이 단어들로 이야기를 만들어봐요.</p>
@@ -236,13 +281,12 @@
             );
         }
 
-        // 시간 만료 시 나타나는 팝업 컴포넌트입니다.
+        // 시간 초과 팝업 컴포넌트
         function TimeUpPopup({ foundCount, onRetry, onContinue }) {
             return (
                 <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 250 }}>
                     <div className="a-slideup" style={{ background: 'var(--card-solid)', borderRadius: 32, padding: '48px 40px', maxWidth: 480, width: '90%', textAlign: 'center', boxShadow: 'var(--shadow-lg)' }}>
                         <div style={{ width: 120, height: 120, margin: '0 auto 24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            {/* 획득한 단어의 개수가 3개 이상이면 기본 포즈 캐릭터(img/cha_02.png)를 노출하고, 3개 미만이면 아쉬워하는 우는 캐릭터(img/cha_02_01.png)를 노출합니다. */}
                             <img src={foundCount >= 3 ? "img/cha_02.png" : "img/cha_02_01.png"} alt={foundCount >= 3 ? "기본 호랑이" : "아쉬워하는 호랑이"} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
                         </div>
                         <h2 className="font-h" style={{ fontSize: 32, color: 'var(--navy-dark)', marginBottom: 14 }}>시간이 다 되었어요!</h2>
@@ -264,8 +308,12 @@
         }
 
         function CrossScreen() {
-            // 제한 시간을 기존 90초에서 1분(60초)으로 줄여서 설정합니다.
             const TOTAL_TIME = 60;
+
+            // --- 3초 카운트다운 관련 상태 ---
+            const [isStarting, setIsStarting] = useState(true);
+            const [countdown, setCountdown] = useState(3);
+
             const [filled, setFilled] = useState({});
             const [usedCards, setUsedCards] = useState([]);
             const [wrongId, setWrongId] = useState(null);
@@ -275,9 +323,8 @@
             const [mascotMessage, setMascotMessage] = useState('빈칸에 들어갈 단어를 눌러줘!');
             const [mascotImg, setMascotImg] = useState('img/cha_02.png');
             const [popup, setPopup] = useState(false);
-            // step1-grid와 플로우를 일치시키기 위해 timeUpOpen 상태 변수를 사용합니다.
             const [timeLeft, setTimeLeft] = useState(TOTAL_TIME);
-            const [timerActive, setTimerActive] = useState(true);
+            const [timerActive, setTimerActive] = useState(false);
             const [timeUpOpen, setTimeUpOpen] = useState(false);
             const [showXMark, setShowXMark] = useState(null);
             const [gridShake, setGridShake] = useState(false);
@@ -288,10 +335,30 @@
             const CW = window.CW;
             const blanks = CW.cells.filter(c => c?.kind === 'blank');
             const allFilled = Object.keys(filled).length === blanks.length;
-            // 10초 이하로 남았을 때 빨간 글씨 경고와 펄스 애니메이션이 활성화되도록 기준을 10초로 수정합니다.
             const isWarning = timeLeft <= 10 && timerActive;
 
-            // step1-grid와 동일한 setTimeout 기반의 1초 주기 타이머 루프를 동작시킵니다.
+            // --- 카운트다운 로직 ---
+            useEffect(() => {
+                if (isStarting) {
+                    if (countdown > 0) {
+                        const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+                        return () => clearTimeout(timer);
+                    } else if (countdown === 0) {
+                        // '시작!' 텍스트가 화면에 머무는 시간 조정
+                        const timer = setTimeout(() => setCountdown(-1), 1100);
+                        return () => clearTimeout(timer);
+                    } else {
+                        // 퇴장 애니메이션 완료 시간(0.4초) 확보 후 진짜 제거
+                        const timer = setTimeout(() => {
+                            setIsStarting(false);
+                            setTimerActive(true);
+                        }, 400);
+                        return () => clearTimeout(timer);
+                    }
+                }
+            }, [countdown, isStarting]);
+
+            // 기존 타이머 루프
             useEffect(() => {
                 if (!timerActive || allFilled) return;
                 if (timeLeft <= 0) {
@@ -323,91 +390,30 @@
                     window.AppState.set('acquired', Object.values(CW.wordMap));
                     if (window.SoundEffects) {
                         window.SoundEffects.play('correct');
-                        // 팡파르/파티클 폭죽 효과와 맞추어 "예~" 하는 신나는 어린이 환호소리를 같이 들려줍니다.
                         window.SoundEffects.play('cheer');
                     }
 
                     if (typeof confetti === 'function') {
-                        // 어두운 팝업창 오버레이 뒤에서도 묻히지 않고 골고루 선명하게 보이도록
-                        // 채도와 명도가 매우 높고 비율이 고르게 설계된 네온 페스티벌 컬러셋입니다.
-                        const festiveColors = [
-                            '#FF2E93', // 선명한 핫핑크
-                            '#FF70A6', // 밝은 네온 핑크
-                            '#A255FF', // 쨍한 바이올렛 보라
-                            '#00F5FF', // 형광 스카이 시안
-                            '#38EF7D', // 쨍한 네온 연두
-                            '#A6FF96', // 밝은 형광 연두
-                            '#FFE600', // 쨍한 형광 옐로우
-                            '#FFFB73', // 밝은 레몬 옐로우
-                            '#FF9F29', // 포인트 오렌지
-                            '#4D96FF'  // 비비드 블루
-                        ];
-
-                        // 1. 중앙에서 팡 터지는 첫 번째 폭죽
-                        confetti({
-                            particleCount: 60,
-                            spread: 100,
-                            origin: { x: 0.5, y: 0.4 },
-                            zIndex: 9999,
-                            colors: festiveColors
-                        });
-
-                        // 2. 좌측 하단에서 우상향으로 뿜어 올려 화면 전체를 덮는 효과
-                        confetti({
-                            particleCount: 40,
-                            angle: 60,
-                            spread: 70,
-                            origin: { x: 0.05, y: 0.8 },
-                            zIndex: 9999,
-                            colors: festiveColors
-                        });
-
-                        // 3. 우측 하단에서 좌상향으로 뿜어 올려 화면 전체를 덮는 효과
-                        confetti({
-                            particleCount: 40,
-                            angle: 120,
-                            spread: 70,
-                            origin: { x: 0.95, y: 0.8 },
-                            zIndex: 9999,
-                            colors: festiveColors
-                        });
+                        const festiveColors = ['#FF2E93', '#FF70A6', '#A255FF', '#00F5FF', '#38EF7D', '#A6FF96', '#FFE600', '#FFFB73', '#FF9F29', '#4D96FF'];
+                        confetti({ particleCount: 60, spread: 100, origin: { x: 0.5, y: 0.4 }, zIndex: 9999, colors: festiveColors });
+                        confetti({ particleCount: 40, angle: 60, spread: 70, origin: { x: 0.05, y: 0.8 }, zIndex: 9999, colors: festiveColors });
+                        confetti({ particleCount: 40, angle: 120, spread: 70, origin: { x: 0.95, y: 0.8 }, zIndex: 9999, colors: festiveColors });
 
                         const duration = 3000;
                         const end = Date.now() + duration;
-
-                        // 4. 화면 전체 영역(상단, 중간, 하단 무작위)에서 끊임없이 생성되어 하강하는 흩날림 효과
                         const frame = () => {
-                            // 매 프레임마다 10가지 컬러셋 중 무작위로 1가지를 수동으로 직접 매핑하여 컬러 편향을 차단합니다.
                             const randomColor = festiveColors[Math.floor(Math.random() * festiveColors.length)];
-                            confetti({
-                                particleCount: 2,
-                                angle: 270,
-                                spread: 360,
-                                ticks: 200,        // 파티클 수명을 200으로 최적화하여 화면 아래로 깔끔하게 떨어져 페이드아웃되도록 합니다.
-                                gravity: 0.55,     // 부드러운 낙하를 위해 중력 조정
-                                scalar: 0.8,
-                                startVelocity: 0,
-                                // y 좌표를 화면 전반(위에서 아래까지)에 무작위로 주어 화면 가득 입자가 생성되도록 합니다.
-                                origin: { x: Math.random(), y: Math.random() - 0.2 },
-                                zIndex: 9999,
-                                colors: [randomColor] // 직접 무작위 선택한 색상을 배열 형태로 전달
-                            });
-
-                            if (Date.now() < end) {
-                                requestAnimationFrame(frame);
-                            }
+                            confetti({ particleCount: 2, angle: 270, spread: 360, ticks: 200, gravity: 0.55, scalar: 0.8, startVelocity: 0, origin: { x: Math.random(), y: Math.random() - 0.2 }, zIndex: 9999, colors: [randomColor] });
+                            if (Date.now() < end) requestAnimationFrame(frame);
                         };
                         frame();
                     }
 
-                    const timer = setTimeout(() => {
-                        setPopup(true);
-                    }, 3000);
+                    const timer = setTimeout(() => { setPopup(true); }, 3000);
                     return () => clearTimeout(timer);
                 }
             }, [allFilled]);
 
-            // 게임 재도전 시 모든 상태를 초기 상태로 깨끗하게 리셋합니다.
             const handleRetry = () => {
                 if (window.SoundEffects) window.SoundEffects.play('reset');
                 setFilled({});
@@ -423,20 +429,21 @@
                 setShowXMark(null);
                 setGridShake(false);
                 setTimeLeft(TOTAL_TIME);
-                setTimerActive(true);
                 setIdleSeconds(0);
                 setShowCardHint(false);
+
+                setCountdown(3);
+                setIsStarting(true);
+                setTimerActive(false);
             };
 
-            // 사용자가 순서대로 학습할 수 있도록 다음 포커스 순서(창호지 -> 호랑이 -> 산골집 -> 오빠 -> 부부 -> 감자 -> 남매)를 정의합니다.
             const quizOrder = ['창호지', '호랑이', '산골집', '오빠', '부부', '감자', '남매'];
             const activeBlank = (activeId && !filled[activeId])
                 ? blanks.find(b => b.id === activeId)
-                : blanks
-                    .filter(b => !filled[b.id])
-                    .sort((x, y) => quizOrder.indexOf(x.word) - quizOrder.indexOf(y.word))[0] || null;
+                : blanks.filter(b => !filled[b.id]).sort((x, y) => quizOrder.indexOf(x.word) - quizOrder.indexOf(y.word))[0] || null;
 
             const clickCard = (card) => {
+                if (isStarting) return;
                 if (usedCards.includes(card.id)) return;
                 if (!activeBlank) return;
                 if (timeLeft <= 0) return;
@@ -457,13 +464,7 @@
                     }, 700);
                 } else {
                     if (window.SoundEffects) window.SoundEffects.play('wrong');
-                    const msgs = [
-                        '앗! 다시 생각해볼까? 🧐',
-                        '음... 이건 아닌 것 같아! 😣',
-                        '아쉬워! 다른 글자를 골라봐 ✏️',
-                        '에구.. 한 번 더 도전! 💪',
-                        '저런! 힌트를 다시 읽어볼까? 힌트를 다시 읽어볼까? 📖'
-                    ];
+                    const msgs = ['앗! 다시 생각해볼까? 🧐', '음... 이건 아닌 것 같아! 😣', '아쉬워! 다른 글자를 골라봐 ✏️', '에구.. 한 번 더 도전! 💪', '저런! 힌트를 다시 읽어볼까? 📖'];
                     setMascotMessage(msgs[Math.floor(Math.random() * msgs.length)]);
                     setMascotImg('img/cha_02_01.png');
                     setWrongId(activeBlank.id);
@@ -472,7 +473,6 @@
                     const cellIdx = CW.cells.findIndex(c => c?.id === activeBlank.id);
                     xMarkKeyRef.current += 1;
                     setShowXMark({ idx: cellIdx, key: xMarkKeyRef.current });
-
                     setGridShake(true);
                     setIdleSeconds(0);
 
@@ -491,7 +491,6 @@
                 if (window.SoundEffects) window.SoundEffects.play('click');
                 location.href = 'step2.html';
             };
-            // 시간초과 후 3개 이상 단어를 맞추었을 때 계속하기를 누르면 호출되어 결과 팝업을 띄워줍니다.
             const handleContinueAnyway = () => {
                 if (window.SoundEffects) window.SoundEffects.play('click');
                 setTimeUpOpen(false);
@@ -503,11 +502,65 @@
 
             return (
                 <>
-                    <div className="a-fadeup" style={{ padding: '0px', paddingTop: 20, position: 'relative' }}>
+                    {/* --- 피드백 반영: 다채로운 유색 글로우 대신 깔끔하게 떨어지는 소프트 블랙 섀도우 조합 적용 --- */}
+                    {isStarting && countdown >= -1 && (
+                        <div style={{
+                            position: 'fixed', inset: 0, zIndex: 9999, display: 'flex',
+                            alignItems: 'center', justifyContent: 'center',
+                            background: 'transparent', pointerEvents: 'none'
+                        }}>
+                            {/* 유리창 영역 */}
+                            <div
+                                className={countdown === -1 ? 'a-glass-fadeout' : ''}
+                                style={{
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    width: 320, height: 320,
+                                    borderRadius: '60px',
+                                    background: 'rgba(255, 255, 255, 0.2)',
+                                    backdropFilter: 'blur(10px)',
+                                    border: '1px solid rgba(255, 255, 255, 0.55)',
 
+                                    // 흐릿하고 뿌연 오라 효과 대신 외곽선을 깔끔하게 떨어뜨려 입체감을 극대화한 정석 그림자 설계
+                                    boxShadow: `
+                                        0 4px 24px rgba(15, 23, 42, 0.05),     /* 얇고 정교한 밀착 음영 */
+                                        0 25px 60px rgba(15, 23, 42, 0.12),    /* 공중에 바짝 띄워주는 깊은 외부 그림자 */
+                                        inset 0 1px 1px rgba(255, 255, 255, 0.85) /* 상단 유리 절단면 하이라이트 */
+                                    `,
+                                    overflow: 'hidden'
+                                }}
+                            >
+                                {/* 내부 텍스트 전환 영역 */}
+                                {countdown <= 0 ? (
+                                    <div key="start" style={{
+                                        fontSize: 110,
+                                        fontWeight: 600,
+                                        color: '#2ab1a3',
+                                        animation: 'startPop 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                                        fontFamily: 'var(--font-h)',
+                                        letterSpacing: '0.04em',
+                                        paddingLeft: '0.04em'
+                                    }}>
+                                        시작!
+                                    </div>
+                                ) : (
+                                    <div key={countdown} style={{
+                                        fontSize: 150,
+                                        fontWeight: 600,
+                                        color: 'var(--primary)',
+                                        animation: 'countPop 1.0s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                                        fontFamily: 'var(--font-h)',
+                                        letterSpacing: '-0.03em'
+                                    }}>
+                                        {countdown}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="a-fadeup" style={{ padding: '0px', paddingTop: 20, position: 'relative' }}>
                         {/* Header: Title + Progress */}
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap' }}>
-                            {/* 요청하신 타이틀 영역 안쪽에 좌우 10px 패딩(padding: '0 10px')을 삽입했습니다. */}
                             <div style={{ width: 320, maxWidth: 320, padding: '0 10px' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 4 }}>
                                     <h2 className="font-h" style={{ fontSize: 24, color: 'var(--navy-dark)', margin: 0 }}>빈칸 맞추기</h2>
@@ -521,73 +574,46 @@
                             </div>
                         </div>
 
-                        {/* TIMER Box - step1-grid와 동일한 Timer 컴포넌트 형식으로 교체합니다. */}
-                        <div style={{
-                            position: 'absolute', left: 344, top: 15, display: 'flex', alignItems: 'center', gap: 6,
-                            zIndex: 50
-                        }}>
+                        {/* TIMER Box */}
+                        <div style={{ position: 'absolute', left: 344, top: 15, display: 'flex', alignItems: 'center', gap: 6, zIndex: 50 }}>
                             <Timer seconds={timeLeft} isWarning={isWarning} />
                         </div>
 
                         {/* RIGHT: Mascot with Speech Bubble */}
                         <div style={{ position: 'absolute', right: 0, top: 10, display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', gap: 0, zIndex: 50 }}>
-                            <div className="a-pop" key={mascotMessage} style={{
-                                background: '#FFF', padding: '10px 14px', borderRadius: '18px',
-                                boxShadow: '0 6px 16px rgba(0,0,0,0.06)', border: '2px solid var(--primary-soft)',
-                                fontSize: 15, fontWeight: 600, color: '#475569', whiteSpace: 'nowrap',
-                                position: 'relative', marginTop: 5, display: 'flex', alignItems: 'center', gap: 6
-                            }}>
+                            <div className="a-pop" key={mascotMessage} style={{ background: '#FFF', padding: '10px 14px', borderRadius: '18px', boxShadow: '0 6px 16px rgba(0,0,0,0.06)', border: '2px solid var(--primary-soft)', fontSize: 15, fontWeight: 600, color: '#475569', whiteSpace: 'nowrap', position: 'relative', marginTop: 5, display: 'flex', alignItems: 'center', gap: 6 }}>
                                 <span>{mascotMessage}</span>
-                                <div style={{
-                                    position: 'absolute', right: -6, top: '50%',
-                                    width: 10, height: 10, background: '#FFF',
-                                    borderRight: '2px solid var(--primary-soft)',
-                                    borderTop: '2px solid var(--primary-soft)',
-                                    transform: 'translateY(-50%) rotate(45deg)', zIndex: 1
-                                }}></div>
+                                <div style={{ position: 'absolute', right: -6, top: '50%', width: 10, height: 10, background: '#FFF', borderRight: '2px solid var(--primary-soft)', borderTop: '2px solid var(--primary-soft)', transform: 'translateY(-50%) rotate(45deg)', zIndex: 1 }}></div>
                             </div>
                             <div style={{ width: 120, height: 140, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', flexShrink: 0, marginRight: 0 }}>
                                 <img src={mascotImg} alt="" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.1))' }} />
                             </div>
                         </div>
-                        {/* Main Layout: LEFT (Hints) + RIGHT (Puzzle + Cards) */}
-                        <div style={{ display: 'flex', gap: 24, alignItems: 'stretch', flexWrap: 'wrap', marginTop: 10, position: 'relative', zIndex: 1 }}>
 
-                            {/* LEFT: Hint List (White Card) */}
+                        {/* Main Layout */}
+                        <div style={{ display: 'flex', gap: 24, alignItems: 'stretch', flexWrap: 'wrap', marginTop: 10, position: 'relative', zIndex: 1 }}>
+                            {/* LEFT: Hint List */}
                             <div style={{ width: 320, flexShrink: 0, background: 'var(--card-solid)', borderRadius: 28, padding: '28px 24px', boxShadow: '0 10px 40px rgba(79,70,229,0.06)' }}>
                                 <div className="font-h" style={{ fontSize: 18, color: 'var(--navy-dark)', marginBottom: 16, paddingBottom: 12, borderBottom: '1px solid var(--gray-light)' }}>
                                     책 속의 단어를 맞춰봐!
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                                     {CW.hints.map((h, i) => {
-                                        // common.js 내 CW.hints 배열의 힌트 데이터 순서와 정확히 일치하도록 순서를 교정합니다.
                                         const hintWords = ['호랑이', '창호지', '산골집', '부부', '오빠', '감자', '남매'];
                                         const isActive = activeBlank && hintWords[i] === activeBlank.word;
                                         const isSolved = Object.keys(CW.wordMap).some(k => CW.wordMap[k] === hintWords[i] && filled[k]);
                                         return (
-                                            <div key={i}
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '16px 18px', borderRadius: 14, transition: 'all .25s ease', cursor: isSolved ? 'default' : 'pointer', opacity: isSolved ? 0.35 : 1, background: isActive ? 'var(--primary-soft)' : 'transparent' }}
+                                                key={i}
                                                 onClick={() => {
-                                                    if (isSolved) return;
+                                                    if (isStarting || isSolved) return;
                                                     if (window.SoundEffects) window.SoundEffects.play('click');
                                                     const b = blanks.find(x => x.word === hintWords[i]);
-                                                    if (b && !filled[b.id]) {
-                                                        setActiveId(b.id);
-                                                        setIdleSeconds(0);
-                                                    }
-                                                }}
-                                                style={{
-                                                    display: 'flex', alignItems: 'center', gap: 8, padding: '16px 18px', borderRadius: 14,
-                                                    transition: 'all .25s ease',
-                                                    cursor: isSolved ? 'default' : 'pointer',
-                                                    opacity: isSolved ? 0.35 : 1,
-                                                    background: isActive ? 'var(--primary-soft)' : 'transparent',
+                                                    if (b && !filled[b.id]) { setActiveId(b.id); setIdleSeconds(0); }
                                                 }}
                                                 onMouseEnter={e => { if (!isSolved && !isActive) e.currentTarget.style.background = '#F8FAFC'; }}
                                                 onMouseLeave={e => { if (!isSolved && !isActive) e.currentTarget.style.background = 'transparent'; }}>
-                                                <p style={{
-                                                    fontSize: 18, fontWeight: 600, margin: 0, lineHeight: 1.5,
-                                                    color: isSolved ? '#94A3B8' : (isActive ? 'var(--primary-deep)' : 'var(--navy)')
-                                                }}>
+                                                <p style={{ fontSize: 18, fontWeight: 600, margin: 0, lineHeight: 1.5, color: isSolved ? '#94A3B8' : (isActive ? 'var(--primary-deep)' : 'var(--navy)') }}>
                                                     {h}
                                                 </p>
                                             </div>
@@ -598,7 +624,6 @@
 
                             {/* RIGHT: Puzzle + Cards */}
                             <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 18 }}>
-
                                 {/* Puzzle Board */}
                                 <div style={{ background: '#F5F0E6', border: '2px solid #EAE1D3', borderRadius: 32, padding: '32px', display: 'flex', justifyContent: 'center', position: 'relative' }}>
                                     <div className={gridShake ? 'a-grid-shake' : ''} style={{ display: 'grid', gridTemplateColumns: `repeat(${CW.cols},${CW_CELL}px)`, gap: 8, position: 'relative', zIndex: 2 }}>
@@ -627,18 +652,15 @@
                                                 <div key={i}
                                                     className={`${just ? 'a-pop' : ''} ${wrong ? 'a-cell-wrong-shake a-red-flash' : ''} ${active && !wrong ? 'a-hint-blink' : ''}`}
                                                     onClick={() => {
-                                                        if (!val) {
-                                                            if (window.SoundEffects) window.SoundEffects.play('click');
-                                                            setActiveId(cell.id);
-                                                            setIdleSeconds(0);
-                                                        }
+                                                        if (isStarting || val) return;
+                                                        if (window.SoundEffects) window.SoundEffects.play('click');
+                                                        setActiveId(cell.id);
+                                                        setIdleSeconds(0);
                                                     }}
                                                     style={{ ...baseStyle, background: cellBg, color: cellColor, border: cellBorder, cursor: val ? 'default' : 'pointer', position: 'relative', transform: active && !wrong ? 'scale(1.15)' : 'scale(1)', zIndex: active ? 10 : 1 }}>
                                                     {val && <div style={{ position: 'absolute', inset: 4, border: '2px dashed #E5E5E5', borderRadius: 8, pointerEvents: 'none' }} />}
                                                     <span style={{ position: 'relative' }}>{val || ''}</span>
-                                                    {showX && (
-                                                        <span key={showXMark.key} className="x-mark">✕</span>
-                                                    )}
+                                                    {showX && <span key={showXMark.key} className="x-mark">✕</span>}
                                                 </div>
                                             );
                                         })}
@@ -649,24 +671,22 @@
                                 <div style={{ background: '#F5F0E6', borderRadius: 28, padding: '24px 24px 30px 24px', display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'center', boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.03)' }}>
                                     {CW.cards.map(card => {
                                         const used = usedCards.includes(card.id);
-                                        const enabled = !used && !!activeBlank;
-                                        const isWrongKey = wrongKeyId === card.id;
-                                        const isTargetHint = showCardHint && activeBlank && card.syl === activeBlank.expected;
+                                        const enabled = !isStarting && !used && !!activeBlank;
 
                                         return (
-                                            <button key={card.id} onClick={() => clickCard(card)} disabled={used}
-                                                className={`${isWrongKey ? 'a-shake' : ''} ${isTargetHint ? 'a-subtle-blink' : ''}`}
+                                            <button key={card.id} onClick={() => clickCard(card)} disabled={!enabled || used}
+                                                className={wrongKeyId === card.id ? 'a-shake' : (showCardHint && activeBlank && card.syl === activeBlank.expected ? 'a-subtle-blink' : '')}
                                                 style={{
                                                     width: 72, height: 72, borderRadius: 16,
-                                                    border: isWrongKey ? '3px solid #DC2626' : '3px solid #CCC',
+                                                    border: wrongKeyId === card.id ? '3px solid #DC2626' : '3px solid #CCC',
                                                     cursor: enabled ? 'pointer' : 'default',
                                                     fontFamily: 'var(--font-h)', fontWeight: 700, fontSize: 34,
                                                     transition: 'all .2s cubic-bezier(0.16,1,0.3,1)',
-                                                    background: isWrongKey ? '#FEE2E2' : '#FFF',
-                                                    color: isWrongKey ? '#DC2626' : '#333',
-                                                    boxShadow: isWrongKey ? '0 6px 0 #DC2626' : (enabled ? '0 6px 0 #CCC' : '0 0 0 #CCC'),
+                                                    background: wrongKeyId === card.id ? '#FEE2E2' : '#FFF',
+                                                    color: '#333',
+                                                    boxShadow: wrongKeyId === card.id ? '0 6px 0 #DC2626' : (enabled ? '0 6px 0 #CCC' : '0 0 0 #CCC'),
                                                     transform: enabled ? 'translateY(0)' : 'translateY(6px)',
-                                                    opacity: used ? 0.3 : 1,
+                                                    opacity: used ? 0.3 : (enabled ? 1 : 0.6),
                                                     position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center'
                                                 }}>
                                                 <div style={{ position: 'absolute', inset: 4, border: '2px dashed #E5E5E5', borderRadius: 8, pointerEvents: 'none' }} />
@@ -677,13 +697,14 @@
                                 </div>
                             </div>
                         </div>
-                    </div >
+                    </div>
                     {popup && <AcquiredPopup words={Object.keys(filled).map(id => CW.wordMap[id])} onNext={handleNext} isAll={Object.keys(filled).length === blanks.length} />}
                     {timeUpOpen && <TimeUpPopup foundCount={Object.keys(filled).length} onRetry={handleRetry} onContinue={handleContinueAnyway} />}
                 </>
             );
         }
 
+        // 전체 메인 앱 컴포넌트
         function App() {
             return (
                 <div style={{ minHeight: '100vh', background: 'linear-gradient(145deg,#EEF2FF 0%,#F8FAFC 45%,#FFF0F8 100%)' }}>
