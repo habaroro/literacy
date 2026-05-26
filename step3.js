@@ -54,8 +54,8 @@ window.getDynamicComments = function (chosen, tone, seed) {
     const CHAEK_TEXTS = {
         base: '이 글을 읽으니까 명작 동화인 "해와 달이 된 오누이"가 바로 생각나! 남매의 용기가 마음을 몽글몽글하게 만들어주네.',
         fun: '이 글을 읽으니까 유쾌한 재미와 교훈이 가득한 전래동화 "흥부와 놀부"가 바로 생각나! 오빠의 재치 넘치는 대사 덕분에 한참 웃었어.',
-        tense: '콩쥐를 도와주던 착한 동물들이 나오는 전래동화 "콩쥐 팥쥐"처럼, 이번 남매의 밤도 조마조마하고 흥미진진해서 손에 땀을 쥐며 읽었어!',
-        warm: '마치 따뜻한 그림책 "강아지 똥"을 읽었을 때처럼, 쓸쓸한 산골집 밤을 비추는 훈훈한 사랑이 느껴져.'
+        tense: '마치 스릴 넘치는 전래동화 "팥죽할멈과 호랑이"를 읽었을 때처럼, 이번 남매의 밤도 조마조마하고 흥미진진해서 손에 땀을 쥐며 읽었어!',
+        warm: '마치 따뜻한 그림책 "어린 왕자"를 읽었을 때처럼, 쓸쓸한 산골집 밤을 비추는 훈훈한 사랑이 느껴져.'
     };
 
     // 2. 모모: 응원과 찬사 (텐션 짱짱, 리액션 최고, 귀염뽀짝)
@@ -107,7 +107,7 @@ window.getDynamicComments = function (chosen, tone, seed) {
         chaekchaekie: {
             emoji: EMOJI_POOL.chaekchaekie[rnd('chaek_em', EMOJI_POOL.chaekchaekie.length)],
             content: CHAEK_TEXTS[t] || CHAEK_TEXTS.base,
-            book: t === 'base' ? '해와 달이 된 오누이' : t === 'fun' ? '흥부와 놀부' : t === 'tense' ? '콩쥐 팥쥐' : '강아지 똥'
+            book: t === 'base' ? '해와 달이 된 오누이' : t === 'fun' ? '흥부와 놀부' : t === 'tense' ? '팥죽할멈과 호랑이' : '어린 왕자'
         },
         momo: {
             emoji: MOMO_EMOTI[t] || MOMO_EMOTI.base,   // 이미지 이모티콘 객체 { src, isImg }

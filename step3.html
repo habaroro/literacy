@@ -198,7 +198,7 @@
             moonbaksa: { text: '#3B82F6', bg: 'rgba(59, 130, 246, 0.08)', border: 'rgba(59, 130, 246, 0.2)' }, // Vibrant Blue
         };
 
-        function ChatBubble({ msg, liked, onLike, chosen, onSearchSimilar }) {
+        function ChatBubble({ msg, liked, onLike, chosen, onSearchSimilar, onReadBook }) {
             const isLearner = msg.isLearner;
 
             // Highlight chosen words inside chat bubble text
@@ -309,7 +309,11 @@
                             <button
                                 onClick={() => {
                                     if (window.SoundEffects) window.SoundEffects.play('click');
-                                    alert(`"${msg.recommendedBook}" 책을 읽으러 이동합니다!`);
+                                    if (onReadBook) {
+                                        onReadBook(msg.recommendedBook);
+                                    } else {
+                                        alert(`"${msg.recommendedBook}" 책을 읽으러 이동합니다!`);
+                                    }
                                 }}
                                 style={{
                                     marginTop: 6,
@@ -394,7 +398,7 @@
             );
         }
 
-        function FeedbackScreen({ chosen, tone, onRegenerate }) {
+        function FeedbackScreen({ chosen, tone, onRegenerate, onReadBook }) {
             const [showComments, setShowComments] = useState(false);
             const [showPeek, setShowPeek] = useState(false);
             const [showTonePopup, setShowTonePopup] = useState(false);
@@ -885,7 +889,8 @@
                                                     {oldChatMessages.map((msg) => (
                                                         <ChatBubble key={'old-' + msg.keyId} msg={msg} chosen={chosen}
                                                             liked={!!likes[msg.keyId]} onLike={() => toggleLike(msg.keyId)}
-                                                            onSearchSimilar={handleOpenSimilarWords} />
+                                                            onSearchSimilar={handleOpenSimilarWords}
+                                                            onReadBook={onReadBook} />
                                                     ))}
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '6px 0 14px' }}>
                                                         <div style={{ flex: 1, height: 1, background: '#CBD5E1' }} />
@@ -899,7 +904,8 @@
                                             {chatMessages.map((msg) => (
                                                 <ChatBubble key={msg.keyId + '-' + likeKey} msg={msg} chosen={chosen}
                                                     liked={!!likes[msg.keyId]} onLike={() => toggleLike(msg.keyId)}
-                                                    onSearchSimilar={handleOpenSimilarWords} />
+                                                    onSearchSimilar={handleOpenSimilarWords}
+                                                    onReadBook={onReadBook} />
                                             ))}
                                             <div ref={chatEndRef} />
                                             {showPeek && <div style={{ height: 80, flexShrink: 0 }} />}
@@ -1166,8 +1172,76 @@
             );
         }
 
+        function FakeReadingPage({ bookTitle, imgUrl, onClose }) {
+            useEffect(() => {
+                const handleKeyDown = (e) => {
+                    if (e.key === 'Escape') onClose();
+                };
+                window.addEventListener('keydown', handleKeyDown);
+                return () => window.removeEventListener('keydown', handleKeyDown);
+            }, [onClose]);
+
+            return (
+                <div 
+                    onClick={() => {
+                        if (window.SoundEffects) window.SoundEffects.play('click');
+                        onClose();
+                    }}
+                    style={{
+                        position: 'fixed',
+                        inset: 0,
+                        backgroundColor: '#000000',
+                        zIndex: 99999,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        userSelect: 'none'
+                    }}
+                >
+                    <img 
+                        src={imgUrl} 
+                        alt={bookTitle}
+                        style={{
+                            height: '100%',
+                            width: 'auto',
+                            maxWidth: '100vw',
+                            objectFit: 'contain',
+                            boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
+                            display: 'block'
+                        }}
+                    />
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (window.SoundEffects) window.SoundEffects.play('click');
+                            onClose();
+                        }}
+                        style={{
+                            position: 'absolute',
+                            left: 24,
+                            top: 24,
+                            width: 56,
+                            height: 56,
+                            background: 'url(img/btn_library_appbar_back_n.png) no-repeat center center',
+                            backgroundSize: 'contain',
+                            border: 'none',
+                            cursor: 'pointer',
+                            outline: 'none',
+                            padding: 0,
+                            display: 'block',
+                            transform: 'none',
+                            transition: 'none'
+                        }}
+                        title="뒤로가기"
+                    />
+                </div>
+            );
+        }
+
         function App() {
             const [tone, setTone] = useState(() => window.AppState.get('tone', 'base'));
+            const [readingBook, setReadingBook] = useState(null);
             const chosen = window.AppState.get('chosen', ['호랑이', '창호지', '산골집']);
 
             const handleRegenerate = (newTone) => {
@@ -1175,12 +1249,28 @@
                 window.AppState.set('tone', newTone);
             };
 
+            const bookImageMap = {
+                '어린 왕자': 'img/thumb_Prince.png',
+                '어린왕자': 'img/thumb_Prince.png',
+                '해와 달이 된 오누이': 'img/thumb_sunmoon.png',
+                '해와달': 'img/thumb_sunmoon.png',
+                '흥부와 놀부': 'img/thumb_Heungbu.png',
+                '흥부': 'img/thumb_Heungbu.png',
+                '팥죽 할멈과 호랑이': 'img/thumb_tiger.png',
+                '팥죽할멈과 호랑이': 'img/thumb_tiger.png',
+                '콩쥐 팥쥐': 'img/thumb_tiger.png',
+                '콩쥐팥쥐': 'img/thumb_tiger.png'
+            };
+
             return (
-                <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'linear-gradient(145deg,#EEF2FF 0%,#F8FAFC 45%,#FFF0F8 100%)', overflow: 'hidden' }}>
+                <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'linear-gradient(145deg,#EEF2FF 0%,#F8FAFC 45%,#FFF0F8 100%)', overflow: 'hidden', position: 'relative' }}>
                     <window.StepHeader stepIdx={2} />
                     <div className="step3-app-container">
-                        <FeedbackScreen chosen={chosen} tone={tone} onRegenerate={handleRegenerate} />
+                        <FeedbackScreen chosen={chosen} tone={tone} onRegenerate={handleRegenerate} onReadBook={setReadingBook} />
                     </div>
+                    {readingBook && (
+                        <FakeReadingPage bookTitle={readingBook} imgUrl={bookImageMap[readingBook] || 'img/thumb_Prince.png'} onClose={() => setReadingBook(null)} />
+                    )}
                 </div>
             );
         }
