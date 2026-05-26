@@ -130,7 +130,7 @@ window.getDynamicComments = function (chosen, tone, seed) {
 // common.js에는 base 옵션이 없으므로, step3 팝업에서
 // '일반으로 돌아가기' 버튼이 표시되도록 여기서 재정의합니다.
 window.TONE_OPTIONS = [
-    { id: "base", emoji: "📖", label: "기본으로 돌아가기", desc: "처음 기본 분위기로" },
+    { id: "base", icon: "img/icon_04.png", label: "기본으로 돌아가기", desc: "처음 기본 분위기로" },
     { id: "fun", icon: "img/icon_01.png", label: "더 재미있고 유쾌하게", desc: "통통 튀는 이야기로!" },
     { id: "tense", icon: "img/icon_02.png", label: "더 긴장감 넘치게", desc: "두근두근 스릴 가득!" },
     { id: "warm", icon: "img/icon_03.png", label: "더 따뜻하고 뭉클하게", desc: "가슴이 뭉클해지는 이야기로" },
