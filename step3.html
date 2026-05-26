@@ -1030,13 +1030,13 @@
                                                             flexShrink: 0
                                                         }}>
                                                         {opt.icon ? (
-                                                            <img src={opt.icon} alt="" style={{ width: 42, height: 42, objectFit: 'contain', flexShrink: 0 }} />
+                                                            <img src={opt.icon} alt="" style={{ width: 48, height: 48, objectFit: 'contain', flexShrink: 0 }} />
                                                         ) : (
                                                             <span style={{ fontSize: 24, width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{opt.emoji}</span>
                                                         )}
                                                         <div style={{ flex: 1, minWidth: 0 }}>
-                                                            <div className="font-h" style={{ fontSize: 14, color: 'var(--navy-dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{opt.label}</div>
-                                                            <div style={{ fontSize: 11.5, color: 'var(--gray)', marginTop: 2, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{opt.desc}</div>
+                                                            <div className="font-h" style={{ fontSize: 15, color: 'var(--navy-dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{opt.label}</div>
+                                                            <div style={{ fontSize: 13, color: 'var(--gray)', marginTop: 2, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{opt.desc}</div>
                                                         </div>
                                                         {opt.id === tone && <span style={{ fontSize: 10.5, color: 'var(--blue)', fontWeight: 800, flexShrink: 0 }}>지금 분위기</span>}
                                                     </button>
@@ -1052,8 +1052,8 @@
                                                         location.href = 'step2.html';
                                                     }}>
                                                     <div style={{ flex: 1 }}>
-                                                        <div className="font-h" style={{ fontSize: 13.5, color: 'var(--blue)', marginBottom: 2 }}>다른 단어 골라보기</div>
-                                                        <div style={{ fontSize: 11, color: '#64748B', fontWeight: 500 }}>처음 모은 단어로 새로운 조합을 만들어요</div>
+                                                        <div className="font-h" style={{ fontSize: 15, color: 'var(--blue)', marginBottom: 2 }}>다른 단어 골라보기</div>
+                                                        <div style={{ fontSize: 13, color: '#64748B', fontWeight: 500 }}>처음 모은 단어로 새로운 조합을 만들어요</div>
                                                     </div>
                                                     <div style={{ fontSize: 14, color: 'var(--blue)', fontWeight: 800 }}>→</div>
                                                 </div>
