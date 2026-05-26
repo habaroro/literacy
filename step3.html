@@ -1244,6 +1244,19 @@
             const [readingBook, setReadingBook] = useState(null);
             const chosen = window.AppState.get('chosen', ['호랑이', '창호지', '산골집']);
 
+            // 🎵 step3 화면 진입 시 배경음악(puzzle_piano.mp3)을 재생하고, 페이지를 벗어날 때 정지합니다.
+            useEffect(() => {
+                if (window.SoundEffects) {
+                    window.SoundEffects.playBGM("sound/puzzle_piano.mp3");
+                }
+                // 컴포넌트가 언마운트(페이지를 벗어남)될 때는 배경음악을 안전하게 정지시킵니다.
+                return () => {
+                    if (window.SoundEffects) {
+                        window.SoundEffects.stopBGM();
+                    }
+                };
+            }, []);
+
             const handleRegenerate = (newTone) => {
                 setTone(newTone);
                 window.AppState.set('tone', newTone);
