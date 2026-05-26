@@ -279,7 +279,7 @@
 
                                 {/* 카드가 하나도 배치되지 않았을 때의 안내 문구 */}
                                 {placed.length === 0 && !drag && (
-                                    <div style={{ width: '100%', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, opacity: 0.7, paddingTop: 40 }}>
+                                    <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, opacity: 0.7 }}>
                                         <span className="a-bounce" style={{ fontSize: 28 }}>👇</span>
                                         <span style={{ color: 'var(--primary)', fontSize: 15, fontWeight: 700 }}>아래 단어 카드 3장을 배치해주세요!</span>
                                     </div>
